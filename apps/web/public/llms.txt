@@ -1,0 +1,89 @@
+# Gotcha
+
+> A developer-first contextual feedback SDK for React
+
+Gotcha is a lightweight React SDK that lets developers add contextual feedback buttons to any component. Users can provide star ratings and text feedback directly on the UI elements they're interacting with.
+
+## Quick Start
+
+```bash
+npm install gotcha-feedback
+```
+
+```tsx
+import { GotchaProvider, Gotcha } from 'gotcha-feedback';
+
+function App() {
+  return (
+    <GotchaProvider apiKey="your-api-key">
+      <Gotcha elementId="feature-x" mode="feedback">
+        <YourComponent />
+      </Gotcha>
+    </GotchaProvider>
+  );
+}
+```
+
+## Key Features
+
+- **One-line integration**: Wrap any component with `<Gotcha>` to add a feedback button
+- **Contextual feedback**: Feedback is tied to specific UI elements, not just pages
+- **Two modes**: `feedback` (star rating + text) and `vote` (thumbs up/down)
+- **Dashboard**: View and filter all responses at gotcha.cx/dashboard
+- **API key security**: Domain allowlisting to prevent unauthorized usage
+- **TypeScript support**: Full type definitions included
+- **Lightweight**: ~15KB gzipped, zero runtime dependencies except React
+
+## Modes
+
+### Feedback Mode
+Shows a floating "G" button. On click, opens a modal with:
+- 5-star rating
+- Optional text feedback
+- Submit button
+
+### Vote Mode
+Shows a floating "G" button. On click, opens a modal with:
+- Thumbs up button
+- Thumbs down button
+- Optional comment field
+
+## Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `elementId` | string | Yes | Unique identifier for the element |
+| `mode` | 'feedback' \| 'vote' | Yes | Type of feedback to collect |
+| `position` | 'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline' | No | Button position (default: 'bottom-right') |
+| `children` | ReactNode | Yes | The component to wrap |
+
+## Pricing
+
+- **Free**: 500 responses/month, 1 project
+- **Pro**: $29/month, unlimited responses, unlimited projects
+
+## Links
+
+- Website: https://gotcha.cx
+- npm: https://www.npmjs.com/package/gotcha-feedback
+- Dashboard: https://gotcha.cx/dashboard
+
+## Use Cases
+
+1. **Feature feedback**: Add to new features to gauge user satisfaction
+2. **UI element testing**: A/B test different UI approaches
+3. **Bug reporting**: Let users report issues in context
+4. **NPS collection**: Gather Net Promoter Score on key flows
+5. **Content rating**: Let users rate articles, tutorials, documentation
+
+## Why Gotcha?
+
+- **Contextual**: Feedback tied to specific elements, not generic page surveys
+- **Non-intrusive**: Small floating button, doesn't interrupt user flow
+- **Developer-friendly**: Simple API, TypeScript support, works with any React app
+- **Actionable data**: Dashboard shows feedback by element, time, rating
+
+## Contact
+
+- Email: info@braintwopoint0.com
+- Website: https://gotcha.cx

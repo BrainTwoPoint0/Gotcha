@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+
+# Build
+.next
+out
+build
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Prisma generated
+app/generated/prisma
+
+# Netlify
+.netlify
+
+# Vercel
+.vercel
+
+# Debug
+npm-debug.log*

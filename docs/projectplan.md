@@ -1,0 +1,496 @@
+# Gotcha — Project Plan
+
+> **Phase:** 1 (Foundation MVP)
+> **Goal:** Working SDK with feedback + vote modes, deployable API, basic dashboard
+> **Reference:** [Product Spec](./product-spec.md)
+
+---
+
+## Overview
+
+Build the Gotcha MVP as a Turborepo monorepo with:
+- `packages/sdk` — React component library (npm package)
+- `packages/shared` — Shared TypeScript types
+- `apps/web` — Next.js dashboard + API
+
+**MVP Scope:**
+- 2 modes only: `feedback` and `vote`
+- Domain allowlisting for API key security
+- Anonymous user support
+- Basic accessibility
+- Upstash rate limiting
+- Deploy to Netlify
+
+---
+
+## Todo List
+
+### Week 1: Monorepo Setup + SDK Core
+
+#### 1.1 Project Setup
+- [x] Initialize Turborepo monorepo structure
+- [x] Configure pnpm workspaces
+- [x] Set up root `package.json` with scripts
+- [x] Create `turbo.json` configuration
+- [ ] Set up ESLint + Prettier (shared config)
+- [x] Set up TypeScript (shared tsconfig)
+
+#### 1.2 Shared Package (`packages/shared`)
+- [x] Create package structure
+- [x] Define shared types (`ResponseMode`, `GotchaUser`, `GotchaResponse`, etc.)
+- [x] Define API contract types (`SubmitResponsePayload`, `ApiError`)
+- [x] Define constants (API URLs, error codes)
+
+#### 1.3 SDK Package (`packages/sdk`)
+- [x] Create package structure
+- [x] Configure tsup for ESM + CJS builds
+- [x] Implement `GotchaProvider` component
+- [x] Implement `GotchaButton` component (with hover/touch behavior)
+- [x] Implement `GotchaModal` component
+- [x] Implement `FeedbackMode` component
+- [x] Implement `VoteMode` component
+- [x] Implement API client with retry logic
+- [x] Add anonymous user ID generation
+- [x] Add idempotency key generation
+- [x] Add accessibility (ARIA, keyboard nav, focus trap)
+- [x] Export types from `packages/shared`
+
+#### 1.4 Local Testing
+- [x] Create test Next.js app (can be in `apps/web` or separate)
+- [x] Test SDK integration locally
+- [x] Verify hover behavior on desktop
+- [x] Verify touch behavior on mobile (via dev tools)
+
+---
+
+### Week 2: Backend + Database
+
+#### 2.1 Next.js App Setup (`apps/web`)
+- [x] Initialize Next.js 14 with App Router
+- [x] Configure for Netlify deployment
+- [x] Set up Tailwind CSS
+- [ ] Install shadcn/ui base components
+
+#### 2.2 Database Setup
+- [x] Create Supabase project
+- [x] Set up Prisma with schema from spec
+- [x] Configure Prisma Accelerate for connection pooling
+- [x] Run initial migration
+- [ ] Create seed script for development
+
+#### 2.3 Authentication
+- [x] Set up Supabase Auth client utilities
+- [x] Create auth middleware
+- [x] Create login page
+- [x] Create signup page
+- [x] Create auth callback handler
+
+#### 2.4 Rate Limiting
+- [x] Create Upstash Redis project
+- [x] Implement rate limiting middleware
+- [x] Add rate limit headers to responses
+
+#### 2.5 API Endpoints
+- [x] Create API key validation middleware
+- [x] Create domain allowlist validation
+- [x] Implement `POST /api/v1/responses` (feedback + vote)
+- [x] Implement `GET /api/v1/responses` (list with filters)
+- [x] Implement `DELETE /api/v1/users/:userId` (GDPR)
+- [x] Implement `GET /api/v1/users/:userId/export` (GDPR)
+- [x] Add Zod request validation
+- [x] Add idempotency handling
+
+---
+
+### Week 3: Vote Mode + Dashboard + Deployment
+
+#### 3.1 SDK: Vote Mode
+- [x] Implement `VoteMode` component (up/down buttons)
+- [x] Add vote submission to API client
+- [x] Test vote mode locally
+
+#### 3.2 Dashboard: Core Layout
+- [x] Create dashboard layout (sidebar + header)
+- [x] Create project switcher component
+- [x] Create navigation menu
+
+#### 3.3 Dashboard: Project Management
+- [x] Create project list page
+- [x] Create project creation flow
+- [x] Create project settings page
+
+#### 3.4 Dashboard: API Key Management
+- [x] Create API keys list UI
+- [x] Create API key generation flow
+- [x] Add domain allowlist configuration
+- [x] Show/hide key functionality
+- [x] Revoke key functionality
+
+#### 3.5 Dashboard: Responses View
+- [x] Create responses table (TanStack Table)
+- [x] Add date range filter
+- [x] Add mode filter
+- [x] Add element filter
+- [x] Add pagination
+- [x] Create response detail view
+
+#### 3.8 Stripe Integration (Pro Plan)
+- [x] Install stripe package
+- [x] Create Stripe client (`lib/stripe.ts`)
+- [x] Create checkout session endpoint (`/api/stripe/checkout`)
+- [x] Create webhook handler (`/api/stripe/webhook`)
+- [x] Create customer portal endpoint (`/api/stripe/portal`)
+- [x] Add plan upgrade/manage buttons to settings page
+
+#### 3.9 AI/LLM Optimization
+- [x] Create `llms.txt` file for AI crawlers
+- [x] Add "Ask AI about Gotcha" section to footer
+- [x] Add AI company logos (ChatGPT, Claude, Gemini, Perplexity, Grok)
+- [x] Link logos to pre-populated prompts about Gotcha
+
+#### 3.6 Deployment
+- [x] Configure `netlify.toml`
+- [x] Set up environment variables in Netlify
+- [x] Deploy `apps/web` to Netlify
+- [x] Verify API endpoints work in production
+- [x] Publish SDK to npm (scoped: `gotcha-feedback`)
+
+#### 3.7 Dogfooding
+- [ ] Integrate SDK into PLAYBACK
+- [ ] Add 2-3 G buttons to key features
+- [ ] Verify feedback collection works end-to-end
+
+---
+
+## File Structure (Target)
+
+```
+gotcha/
+├── apps/
+│   └── web/
+│       ├── app/
+│       │   ├── (auth)/
+│       │   │   ├── login/page.tsx
+│       │   │   ├── signup/page.tsx
+│       │   │   └── callback/route.ts
+│       │   ├── (dashboard)/
+│       │   │   ├── layout.tsx
+│       │   │   ├── page.tsx
+│       │   │   └── projects/[slug]/
+│       │   │       ├── page.tsx
+│       │   │       ├── responses/page.tsx
+│       │   │       ├── api-keys/page.tsx
+│       │   │       └── settings/page.tsx
+│       │   └── api/v1/
+│       │       ├── responses/route.ts
+│       │       └── users/[userId]/
+│       │           ├── route.ts
+│       │           └── export/route.ts
+│       ├── components/
+│       ├── lib/
+│       │   ├── prisma.ts
+│       │   ├── supabase/
+│       │   └── rate-limit.ts
+│       ├── prisma/schema.prisma
+│       └── netlify.toml
+├── packages/
+│   ├── sdk/
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── api/
+│   │   │   └── utils/
+│   │   ├── package.json
+│   │   └── tsup.config.ts
+│   └── shared/
+│       ├── src/
+│       │   ├── types.ts
+│       │   └── constants.ts
+│       └── package.json
+├── turbo.json
+├── pnpm-workspace.yaml
+└── package.json
+```
+
+---
+
+## Environment Variables
+
+### Development (`.env.local`)
+```env
+DATABASE_URL=
+DIRECT_DATABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRO_PRICE_ID=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+```
+
+### Production (Netlify)
+Same as above, plus:
+```env
+NEXT_PUBLIC_APP_URL=https://app.gotcha.cx
+```
+Note: For production, create a new webhook in Stripe Dashboard pointing to `https://gotcha.cx/api/stripe/webhook` and use that webhook secret.
+
+---
+
+## Dependencies (Key Packages)
+
+### `packages/sdk`
+- react, react-dom (peer)
+- framer-motion (animations)
+- tsup (build)
+
+### `apps/web`
+- next
+- @prisma/client, prisma
+- @supabase/ssr, @supabase/supabase-js
+- @upstash/redis, @upstash/ratelimit
+- zod
+- @tanstack/react-table
+- tailwindcss
+- shadcn/ui components
+
+---
+
+## Success Criteria (Phase 1 Complete)
+
+- [x] SDK installable via npm (`gotcha-feedback`)
+- [x] Feedback mode works end-to-end
+- [x] Vote mode works end-to-end
+- [x] Dashboard shows responses
+- [x] API keys can be created with domain allowlist
+- [x] Rate limiting works
+- [x] Deployed to Netlify (gotcha.cx)
+- [ ] Integrated into PLAYBACK for dogfooding
+
+---
+
+## Notes
+
+- Keep changes minimal and simple per CLAUDE.md guidelines
+- Focus on feedback + vote only; poll/ab/feature-request come in Phase 2
+- Stripe billing added (Pro plan at $29/month)
+- No real-time updates in Phase 1 (polling is fine for MVP)
+
+---
+
+## Review
+
+### Week 1 Completion Summary
+
+**Completed:**
+- Full monorepo setup with Turborepo + pnpm workspaces
+- Shared package with TypeScript types and constants
+- SDK package with:
+  - `GotchaProvider` - Context provider with single-modal management
+  - `Gotcha` - Main component with feedback and vote modes
+  - `GotchaButton` - Animated button with framer-motion (enter/exit animations)
+  - `GotchaModal` - Smart positioning (auto-detects if should appear above/below)
+  - `FeedbackMode` - Star rating + text input
+  - `VoteMode` - Thumbs up/down
+  - API client with exponential backoff retry logic
+  - Anonymous user ID generation (localStorage)
+  - Idempotency key generation
+  - Full accessibility (ARIA labels, focus trap, keyboard navigation)
+- Test app in `apps/web` demonstrating all variants
+
+**Additional Features Added:**
+- Framer-motion animations for smooth button/modal transitions
+- Single modal enforcement (only one modal open at a time)
+- Smart modal positioning (appears above button if not enough space below)
+- Inline position option for placing G button next to text
+
+**Dependencies Added:**
+- `framer-motion` for animations
+
+**Ready for Week 2:** Backend setup with Supabase, Prisma, and API endpoints
+
+### Week 2 Progress Summary
+
+**Completed:**
+- Backend dependencies installed (Prisma, Supabase SSR, Upstash, Zod)
+- Full Prisma schema created with:
+  - Organization & User models
+  - Project & ApiKey models (with domain allowlisting)
+  - Element & Response models (supporting all 5 modes)
+  - Experiment model for A/B testing
+  - Subscription model for billing
+- Supabase client utilities (server + browser)
+- Auth middleware for protected routes
+- Rate limiting middleware with Upstash Redis (per-plan limits)
+- API key validation with domain allowlist checking
+- Core API endpoints:
+  - `POST /api/v1/responses` - Submit feedback/vote with idempotency
+  - `GET /api/v1/responses` - List responses with filtering
+  - `DELETE /api/v1/users/:userId` - GDPR data deletion
+  - `GET /api/v1/users/:userId/export` - GDPR data export
+- Zod request validation for all endpoints
+- Netlify configuration for deployment
+
+**Files Created:**
+- `prisma/schema.prisma` - Full database schema
+- `lib/prisma.ts` - Prisma client singleton
+- `lib/supabase/server.ts` - Supabase server client
+- `lib/supabase/client.ts` - Supabase browser client
+- `lib/rate-limit.ts` - Rate limiting with Upstash
+- `lib/api-auth.ts` - API key validation middleware
+- `lib/validations.ts` - Zod schemas
+- `middleware.ts` - Auth middleware
+- `netlify.toml` - Netlify deployment config
+- `app/api/v1/responses/route.ts` - Responses endpoint
+- `app/api/v1/users/[userId]/route.ts` - User deletion
+- `app/api/v1/users/[userId]/export/route.ts` - User export
+
+**Remaining for Week 2:**
+- Create Supabase project and run migrations
+- Create Upstash Redis project
+- Create auth pages (login, signup, callback)
+- Install shadcn/ui components
+
+**Ready for Week 3:** Dashboard UI and deployment
+
+### Week 3+ Progress Summary (MVP Launch Prep)
+
+**Dashboard & Auth Completed:**
+- Full dashboard layout with sidebar navigation
+- Project list and detail pages
+- API key management with copy/reveal functionality
+- Response viewing with filtering
+- Login/Signup pages with GitHub OAuth (Google removed for simplicity)
+- Auth callback handler
+- Signout functionality with proper redirects to gotcha.cx
+
+**Settings Page:**
+- Profile editing (name - email is read-only)
+- Organization editing (name, slug) with validation
+- Subscription section showing actual usage from database:
+  - Responses this month (counted from DB)
+  - Total responses (all time)
+  - Plan limits and progress bar
+- Simplified plan cards: Free (500/month) and Pro ($29/month unlimited)
+
+**Marketing Site:**
+- Homepage with hero section and npm install code box
+- Pricing page with 2 tiers: Free and Pro
+- Removed testimonials section (not yet launched)
+- Shared Footer component
+- Special Programs section with Contact Us links
+
+**API Improvements:**
+- Fixed API key `lastUsedAt` not updating (was fire-and-forget, now awaited)
+- Added `force-dynamic` to pages to prevent stale data
+
+**Auth Flow Improvements:**
+- Disabled email confirmation - users go directly to dashboard
+- Fixed OAuth redirect to gotcha.cx (was going to Netlify URL)
+- Fixed signout redirect using `headers().get('host')` instead of `request.url`
+- Removed Google OAuth, kept GitHub only
+
+**New Files Created:**
+- `app/(dashboard)/dashboard/settings/settings-forms.tsx` - Client forms for profile/org editing
+- `app/api/user/profile/route.ts` - PATCH endpoint for user name
+- `app/api/organization/route.ts` - PATCH endpoint for org name/slug
+- `app/components/Footer.tsx` - Shared footer component
+
+**Deployment:**
+- Deployed to Netlify
+- Domain configured: gotcha.cx
+- Supabase Auth Site URL set to gotcha.cx
+
+### Video Project (apps/video)
+
+**Launch Announcement Video:**
+- Created Remotion video project for SDK launch
+- Scenes: Intro, Install Package, Wrap Provider, View Dashboard, CTA
+- Animations: Typewriter effects, spring animations, code highlighting
+- Final CTA with npm command and slogan "Turn insights into action."
+- Fixed typewriter flickering with frame-based check
+- Custom highlight delays for code editor lines
+
+### Stripe Integration & Responses Page Updates
+
+**Date Range Filter & Pagination (Responses Page):**
+- Created `responses-filter.tsx` - Client component with start/end date inputs
+- Created `pagination.tsx` - Client component with Previous/Next buttons
+- Updated `responses/page.tsx` to support URL-based filtering and pagination
+- 20 responses per page, filters persist across navigation
+
+**Stripe Integration:**
+- Installed `stripe` package
+- Created `lib/stripe.ts` with Stripe client initialization
+- Created `/api/stripe/checkout/route.ts`:
+  - Creates Stripe customer if needed (stores `stripeCustomerId`)
+  - Creates checkout session with organization metadata
+  - Returns checkout URL for redirect
+- Created `/api/stripe/webhook/route.ts`:
+  - Handles `checkout.session.completed` - updates subscription to PRO
+  - Handles `customer.subscription.updated` - syncs status
+  - Handles `customer.subscription.deleted` - reverts to FREE
+  - Uses `upsert` for reliability (handles missing records)
+- Created `/api/stripe/portal/route.ts` for subscription management
+- Created `plan-actions.tsx` - Upgrade/Manage buttons on settings page
+
+**Files Created:**
+- `apps/web/app/(dashboard)/dashboard/responses/responses-filter.tsx`
+- `apps/web/app/(dashboard)/dashboard/responses/pagination.tsx`
+- `apps/web/lib/stripe.ts`
+- `apps/web/app/api/stripe/checkout/route.ts`
+- `apps/web/app/api/stripe/webhook/route.ts`
+- `apps/web/app/api/stripe/portal/route.ts`
+- `apps/web/app/(dashboard)/dashboard/settings/plan-actions.tsx`
+
+**Files Modified:**
+- `apps/web/app/(dashboard)/dashboard/responses/page.tsx` - Added filtering & pagination
+- `apps/web/app/(dashboard)/dashboard/settings/page.tsx` - Added PlanActions component
+
+**Environment Variables Required:**
+```
+STRIPE_SECRET_KEY=sk_test_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+STRIPE_PRO_PRICE_ID=price_xxxxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
+```
+
+**Testing Notes:**
+- Use Stripe CLI for local webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
+- Test cards: 4242 4242 4242 4242 (success), 4000 0000 0000 0002 (decline)
+- Payment flow tested and working
+
+### AI/LLM Optimization
+
+**Goal:** Make Gotcha discoverable and recommendable by AI assistants (ChatGPT, Claude, etc.)
+
+**Implementation:**
+
+1. **`/public/llms.txt`** - Standard format file for AI crawlers containing:
+   - Product description and tagline
+   - Quick start code examples
+   - Feature list and props documentation
+   - Pricing information
+   - Use cases and benefits
+   - Contact information
+
+2. **Footer "Ask AI about Gotcha" Section:**
+   - Added row of AI company logos to marketing site footer
+   - Icons: ChatGPT, Claude, Gemini, Perplexity, Grok
+   - Each icon links to respective AI with pre-populated prompt asking about Gotcha
+   - Hover effect: gray → white transition
+   - Responsive sizing for visual balance
+
+**Files Created/Modified:**
+- `apps/web/public/llms.txt` - AI-readable product documentation
+- `apps/web/app/components/Footer.tsx` - Added AI links section with SVG icons
+
+**How It Works:**
+- Users can click any AI logo to open that AI's chat with a prompt about Gotcha
+- The `llms.txt` file helps AI crawlers understand the product for accurate recommendations
+- Both approaches increase product visibility in AI-assisted developer workflows
+

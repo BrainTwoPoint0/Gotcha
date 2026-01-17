@@ -1,0 +1,268 @@
+// prisma/schema.prisma
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ============================================
+// ORGANIZATION & AUTH
+// ============================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members      OrganizationMember[]
+  projects     Project[]
+  subscription Subscription?
+
+  @@index([slug])
+}
+
+model OrganizationMember {
+  id             String     @id @default(cuid())
+  organizationId String
+  userId         String
+  role           MemberRole @default(MEMBER)
+  createdAt      DateTime   @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  memberships OrganizationMember[]
+
+  @@index([email])
+}
+
+// ============================================
+// PROJECTS & API KEYS
+// ============================================
+
+model Project {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Settings
+  settings Json @default("{}")
+
+  // Relations
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeys      ApiKey[]
+  elements     Element[]
+  responses    Response[]
+  experiments  Experiment[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  projectId      String
+  name           String // e.g., "Production", "Development"
+  key            String    @unique // gtch_live_xxx or gtch_test_xxx
+  keyHash        String // For secure lookup
+  allowedDomains String[] // ["*.myapp.com", "localhost:*"] for origin validation
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  revokedAt      DateTime?
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@index([projectId])
+}
+
+// ============================================
+// ELEMENTS & FEEDBACK
+// ============================================
+
+model Element {
+  id          String   @id @default(cuid())
+  projectId   String
+  elementId   String // Developer-provided identifier
+  name        String? // Optional friendly name
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  responses Response[]
+
+  @@unique([projectId, elementId])
+  @@index([projectId])
+}
+
+model Response {
+  id           String       @id @default(cuid())
+  projectId    String
+  elementId    String? // FK to Element
+  elementIdRaw String // Original elementId string (for unregistered elements)
+
+  // Response data
+  mode    ResponseMode
+  content String? // Text feedback or feature request description
+  title   String? // For feature requests
+  rating  Int? // 1-5 or 1-10
+  vote    VoteType? // For vote mode
+
+  // Poll specific
+  pollOptions  Json? // Array of options that were presented
+  pollSelected Json? // Array of selected option(s) - indexes or values
+
+  // A/B specific
+  experimentId String?
+  variant      String?
+
+  // User data (flexible JSON for arbitrary metadata)
+  endUserId   String? // The ID passed by developer
+  endUserMeta Json    @default("{}")
+
+  // Context
+  url       String? // Page URL where feedback was given
+  userAgent String?
+
+  // Idempotency
+  idempotencyKey String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  element    Element?    @relation(fields: [elementId], references: [id], onDelete: SetNull)
+  experiment Experiment? @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([elementId])
+  @@index([projectId, elementIdRaw])
+  @@index([experimentId])
+  @@index([createdAt])
+  @@index([endUserId])
+  @@index([idempotencyKey])
+}
+
+enum ResponseMode {
+  FEEDBACK
+  VOTE
+  POLL
+  FEATURE_REQUEST
+  AB
+}
+
+enum VoteType {
+  UP
+  DOWN
+}
+
+// ============================================
+// A/B EXPERIMENTS
+// ============================================
+
+model Experiment {
+  id           String           @id @default(cuid())
+  projectId    String
+  experimentId String // Developer-provided identifier
+  name         String
+  description  String?
+  variants     Json // Array of variant names
+  status       ExperimentStatus @default(DRAFT)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  startedAt    DateTime?
+  endedAt      DateTime?
+
+  // Relations
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  responses Response[]
+
+  @@unique([projectId, experimentId])
+  @@index([projectId])
+}
+
+enum ExperimentStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+// ============================================
+// BILLING
+// ============================================
+
+model Subscription {
+  id               String    @id @default(cuid())
+  organizationId   String    @unique
+  stripeCustomerId String?
+  stripePriceId    String?
+  stripeSubId      String?
+  plan             Plan      @default(FREE)
+  status           SubStatus @default(ACTIVE)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Usage tracking
+  responsesThisMonth Int       @default(0)
+  responsesResetAt   DateTime?
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}

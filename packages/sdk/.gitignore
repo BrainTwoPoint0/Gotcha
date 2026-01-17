@@ -1,0 +1,8 @@
+# Build output (included in npm via "files" field, but not in git)
+dist
+
+# Dependencies
+node_modules
+
+# Misc
+*.log
