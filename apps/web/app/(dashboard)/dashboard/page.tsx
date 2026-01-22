@@ -313,9 +313,7 @@ function getModeColor(mode: string): string {
 function getPlanLimit(plan: string): string {
   const limits: Record<string, string> = {
     FREE: '500',
-    STARTER: '5,000',
     PRO: '∞',
-    ENTERPRISE: '∞',
   };
   return limits[plan] || '500';
 }
