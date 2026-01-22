@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { ResponsesFilter } from './responses-filter';
 import { Pagination } from './pagination';
+import { ExportButton } from './export-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,13 +36,20 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         where: { email: user.email! },
         include: {
           memberships: {
-            include: { organization: true },
+            include: {
+              organization: {
+                include: {
+                  subscription: true,
+                },
+              },
+            },
           },
         },
       })
     : null;
 
   const organization = dbUser?.memberships[0]?.organization;
+  const isPro = organization?.subscription?.plan === 'PRO';
 
   // Parse pagination
   const page = Math.max(1, parseInt(params.page || '1', 10));
@@ -86,9 +94,12 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
-        <p className="text-gray-600">View feedback from all your projects</p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
+          <p className="text-gray-600">View feedback from all your projects</p>
+        </div>
+        <ExportButton isPro={isPro} />
       </div>
 
       <ResponsesFilter />

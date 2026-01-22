@@ -32,7 +32,7 @@ Build the Gotcha MVP as a Turborepo monorepo with:
 - [x] Configure pnpm workspaces
 - [x] Set up root `package.json` with scripts
 - [x] Create `turbo.json` configuration
-- [ ] Set up ESLint + Prettier (shared config)
+- [x] Set up ESLint + Prettier (shared config)
 - [x] Set up TypeScript (shared tsconfig)
 
 #### 1.2 Shared Package (`packages/shared`)
@@ -611,4 +611,110 @@ describe('Feature Name', () => {
 - Removed `packageManager` field from root `package.json`
 - Fixed Prisma client generation path issues on Netlify
 - Build now uses npm directly
+
+---
+
+## Phase 2: Pro Features - Analytics & Export
+
+### Overview
+
+Add two Pro-exclusive features to the dashboard:
+1. **Analytics Dashboard** - Charts showing response trends, sentiment breakdown, ratings over time
+2. **Export Functionality** - CSV/JSON export with date range selection
+
+### Todo List
+
+#### 1. Analytics Dashboard
+
+- [x] Install recharts (lightweight React charting library)
+- [x] Create `/dashboard/analytics/page.tsx` - Analytics page (Pro only)
+- [x] Add "Analytics" nav item to dashboard layout (with Pro badge)
+- [x] Implement response trends chart (daily responses over last 30 days)
+- [x] Implement sentiment breakdown (pie chart: upvotes vs downvotes)
+- [x] Implement average rating chart (line chart over time)
+- [x] Implement mode distribution chart (bar chart: feedback vs vote counts)
+- [x] Add Pro gate - redirect FREE users to upgrade page
+
+#### 2. Export Functionality
+
+- [x] Create `/api/export/responses/route.ts` - Export API endpoint
+- [x] Add export button to responses page (Pro only)
+- [x] Support CSV format export
+- [x] Support JSON format export
+- [x] Use existing date filters for export range
+- [x] Add Pro gate on API endpoint
+
+### Implementation Details
+
+#### New Files
+- `apps/web/app/(dashboard)/dashboard/analytics/page.tsx` - Analytics page
+- `apps/web/app/(dashboard)/dashboard/analytics/charts.tsx` - Client-side chart components
+- `apps/web/app/api/export/responses/route.ts` - Export API
+
+#### Modified Files
+- `apps/web/app/(dashboard)/layout.tsx` - Add Analytics nav link
+- `apps/web/app/(dashboard)/dashboard/responses/page.tsx` - Add export button
+- `apps/web/package.json` - Add recharts dependency
+
+#### Chart Library
+Using `recharts` - lightweight, React-native, good TypeScript support
+
+#### Pro Gating
+- Check subscription plan in server components
+- FREE users see "Upgrade to Pro" prompt instead of analytics/export
+
+### Phase 2 Implementation Summary
+
+**Analytics Dashboard (`/dashboard/analytics`):**
+- Pro-only page with upgrade prompt for FREE users
+- Summary stats: Total responses, Avg rating, Positive rate, Most common type
+- Response trends line chart (last 30 days)
+- Response types horizontal bar chart (color-coded by mode)
+- Vote sentiment pie chart (positive vs negative)
+- Average rating over time line chart
+
+**Export Functionality:**
+- Export button on responses page (top right)
+- Pro users see dropdown with CSV/JSON options
+- FREE users see grayed button linking to upgrade
+- Respects existing date filters from URL params
+- Downloads file with date-stamped filename
+
+**Files Created:**
+- `app/(dashboard)/dashboard/analytics/page.tsx` - Analytics page with Pro gate
+- `app/(dashboard)/dashboard/analytics/charts.tsx` - Recharts client components
+- `app/(dashboard)/dashboard/responses/export-button.tsx` - Export button component
+- `app/api/export/responses/route.ts` - Export API with Pro gate
+
+**Files Modified:**
+- `app/(dashboard)/layout.tsx` - Added Analytics nav with Pro badge, ChartIcon
+- `app/(dashboard)/dashboard/responses/page.tsx` - Added export button, subscription query
+
+**Dependencies Added:**
+- `recharts` - React charting library
+
+---
+
+### ESLint + Prettier Setup
+
+**Installed Packages:**
+- `eslint@^8.57.0` - ESLint (v8 for Next.js 14 compatibility)
+- `eslint-config-next@14.2.10` - Next.js ESLint rules
+- `eslint-config-prettier` - Disables ESLint rules that conflict with Prettier
+- `prettier` - Code formatter
+
+**Configuration Files Created:**
+- `.eslintrc.json` - Extends `next/core-web-vitals` and `prettier`
+- `.prettierrc` - Consistent formatting (single quotes, 2 spaces, trailing commas)
+- `.prettierignore` - Excludes build outputs and generated files
+
+**Scripts Added:**
+- `npm run lint` - Check for ESLint errors
+- `npm run lint:fix` - Auto-fix ESLint errors
+- `npm run format` - Format all files with Prettier
+- `npm run format:check` - Check if files are formatted
+
+**Formatting Applied:**
+- Ran `npm run format` to fix 42 files
+- All 63 existing tests still pass
 
