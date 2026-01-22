@@ -37,10 +37,7 @@ export const rateLimiters = {
 
 export type PlanType = keyof typeof rateLimiters;
 
-export async function checkRateLimit(
-  identifier: string,
-  plan: PlanType = 'free'
-) {
+export async function checkRateLimit(identifier: string, plan: PlanType = 'free') {
   const limiter = rateLimiters[plan];
   const { success, remaining, reset } = await limiter.limit(identifier);
 
@@ -49,7 +46,8 @@ export async function checkRateLimit(
     remaining,
     resetAt: new Date(reset),
     headers: {
-      'X-RateLimit-Limit': plan === 'free' ? '60' : plan === 'starter' ? '120' : plan === 'pro' ? '300' : '1000',
+      'X-RateLimit-Limit':
+        plan === 'free' ? '60' : plan === 'starter' ? '120' : plan === 'pro' ? '300' : '1000',
       'X-RateLimit-Remaining': remaining.toString(),
       'X-RateLimit-Reset': reset.toString(),
     },
@@ -63,7 +61,9 @@ const idempotencyCache = new Ratelimit({
   prefix: 'gotcha:idempotency',
 });
 
-export async function checkIdempotency(key: string): Promise<{ isDuplicate: boolean; cachedResponse?: string }> {
+export async function checkIdempotency(
+  key: string
+): Promise<{ isDuplicate: boolean; cachedResponse?: string }> {
   // Check if this key was already used
   const cached = await redis.get<string>(`gotcha:idempotency:response:${key}`);
   if (cached) {

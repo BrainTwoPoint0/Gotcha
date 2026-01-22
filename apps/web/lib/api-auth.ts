@@ -125,12 +125,14 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
   }
 
   // Update last used timestamp
-  await prisma.apiKey.update({
-    where: { id: apiKey.id },
-    data: { lastUsedAt: new Date() },
-  }).catch(() => {
-    // Ignore errors - this is non-critical
-  });
+  await prisma.apiKey
+    .update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch(() => {
+      // Ignore errors - this is non-critical
+    });
 
   const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
 
@@ -148,16 +150,17 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
 
 // Helper to create error responses
 export function apiError(code: string, message: string, status: number) {
-  return Response.json(
-    { error: { code, message, status } },
-    { status }
-  );
+  return Response.json({ error: { code, message, status } }, { status });
 }
 
 // Generate a new API key
 export function generateApiKey(type: 'live' | 'test' = 'live'): { key: string; hash: string } {
-  const randomPart = Array.from({ length: 32 }, () =>
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 62)]
+  const randomPart = Array.from(
+    { length: 32 },
+    () =>
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[
+        Math.floor(Math.random() * 62)
+      ]
   ).join('');
 
   const key = `gtch_${type}_${randomPart}`;

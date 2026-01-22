@@ -13,29 +13,33 @@ interface ProjectItem {
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const dbUser = user ? await prisma.user.findUnique({
-    where: { email: user.email! },
-    include: {
-      memberships: {
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { email: user.email! },
         include: {
-          organization: {
+          memberships: {
             include: {
-              projects: {
+              organization: {
                 include: {
-                  _count: {
-                    select: { responses: true, apiKeys: true }
-                  }
+                  projects: {
+                    include: {
+                      _count: {
+                        select: { responses: true, apiKeys: true },
+                      },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                  },
                 },
-                orderBy: { createdAt: 'desc' }
-              }
-            }
-          }
-        }
-      }
-    }
-  }) : null;
+              },
+            },
+          },
+        },
+      })
+    : null;
 
   const organization = dbUser?.memberships[0]?.organization;
   const projects: ProjectItem[] = organization?.projects ?? [];
@@ -60,8 +64,18 @@ export default async function ProjectsPage() {
 
       {projects.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+            />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No projects yet</h3>
           <p className="mt-2 text-gray-500">Get started by creating your first project.</p>
@@ -83,19 +97,31 @@ export default async function ProjectsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{project.description || 'No description'}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {project.description || 'No description'}
+                  </p>
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
                   </svg>
                   {project._count.responses} responses
                 </span>
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
                   </svg>
                   {project._count.apiKeys} keys
                 </span>

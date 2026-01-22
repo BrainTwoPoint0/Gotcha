@@ -107,12 +107,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      id: response.id,
-      status: 'created',
-      createdAt: response.createdAt.toISOString(),
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        id: response.id,
+        status: 'created',
+        createdAt: response.createdAt.toISOString(),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('POST /api/v1/internal/responses error:', error);
     return NextResponse.json(

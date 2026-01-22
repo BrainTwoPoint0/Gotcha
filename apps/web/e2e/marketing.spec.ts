@@ -17,7 +17,10 @@ test.describe('Marketing Pages', () => {
     test('should navigate to pricing page', async ({ page }) => {
       await page.goto('/');
 
-      await page.getByRole('link', { name: /pricing/i }).first().click();
+      await page
+        .getByRole('link', { name: /pricing/i })
+        .first()
+        .click();
       await expect(page).toHaveURL('/pricing');
     });
   });

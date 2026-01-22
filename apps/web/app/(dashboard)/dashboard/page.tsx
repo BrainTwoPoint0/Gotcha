@@ -25,30 +25,34 @@ interface ProjectItem {
 export default async function DashboardPage() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     // Get user's organization and stats
-    let dbUser = user ? await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: {
-        memberships: {
+    let dbUser = user
+      ? await prisma.user.findUnique({
+          where: { email: user.email! },
           include: {
-            organization: {
+            memberships: {
               include: {
-                projects: {
+                organization: {
                   include: {
-                    _count: {
-                      select: { responses: true }
-                    }
-                  }
+                    projects: {
+                      include: {
+                        _count: {
+                          select: { responses: true },
+                        },
+                      },
+                    },
+                    subscription: true,
+                  },
                 },
-                subscription: true,
-              }
-            }
-          }
-        }
-      }
-    }) : null;
+              },
+            },
+          },
+        })
+      : null;
 
     // If user is authenticated but doesn't exist in our database, create them
     if (user?.email && !dbUser) {
@@ -62,7 +66,10 @@ export default async function DashboardPage() {
         });
 
         // Create a default organization for the user
-        const orgSlug = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const orgSlug = user.email
+          .split('@')[0]
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-');
         await prisma.organization.create({
           data: {
             name: `${newUser.name || 'My'}'s Organization`,
@@ -92,16 +99,16 @@ export default async function DashboardPage() {
                     projects: {
                       include: {
                         _count: {
-                          select: { responses: true }
-                        }
-                      }
+                          select: { responses: true },
+                        },
+                      },
                     },
                     subscription: true,
-                  }
-                }
-              }
-            }
-          }
+                  },
+                },
+              },
+            },
+          },
         });
       } catch (createError) {
         console.error('Error creating user in database:', createError);
@@ -115,166 +122,195 @@ export default async function DashboardPage() {
     const subscription = organization?.subscription;
 
     // Get recent responses
-    const recentResponses: ResponseItem[] = organization ? await prisma.response.findMany({
-      where: {
-        project: {
-          organizationId: organization.id
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: {
-        project: {
-          select: { name: true, slug: true }
-        }
-      }
-    }) : [];
+    const recentResponses: ResponseItem[] = organization
+      ? await prisma.response.findMany({
+          where: {
+            project: {
+              organizationId: organization.id,
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            project: {
+              select: { name: true, slug: true },
+            },
+          },
+        })
+      : [];
 
-  return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          label="Total Responses"
-          value={totalResponses.toString()}
-          subtext="All time"
-        />
-        <StatCard
-          label="Projects"
-          value={projects.length.toString()}
-          subtext="Active"
-        />
-        <StatCard
-          label="Plan"
-          value={subscription?.plan || 'Free'}
-          subtext={subscription ? `${subscription.responsesThisMonth} / ${getPlanLimit(subscription.plan)} this month` : 'No subscription'}
-        />
-        <StatCard
-          label="This Month"
-          value={(subscription?.responsesThisMonth || 0).toString()}
-          subtext="Responses collected"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
-            <Link href="/dashboard/responses" className="text-sm text-slate-600 hover:text-slate-500">
-              View all
-            </Link>
-          </div>
-
-          {recentResponses.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No responses yet.</p>
-              <p className="text-sm mt-1">Create a project and integrate the SDK to start collecting feedback.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {recentResponses.map((response) => (
-                <div key={response.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
-                  <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 truncate">
-                      {response.content || response.title || `${response.mode.toLowerCase()} response`}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {response.project.name} · {formatTimeAgo(response.createdAt)}
-                    </p>
-                  </div>
-                  {response.rating && (
-                    <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
-                  )}
-                  {response.vote && (
-                    <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
-                      {response.vote === 'UP' ? '👍' : '👎'}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+    return (
+      <div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
         </div>
 
-        {/* Projects */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
-            <Link href="/dashboard/projects" className="text-sm text-slate-600 hover:text-slate-500">
-              View all
-            </Link>
-          </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <StatCard label="Total Responses" value={totalResponses.toString()} subtext="All time" />
+          <StatCard label="Projects" value={projects.length.toString()} subtext="Active" />
+          <StatCard
+            label="Plan"
+            value={subscription?.plan || 'Free'}
+            subtext={
+              subscription
+                ? `${subscription.responsesThisMonth} / ${getPlanLimit(subscription.plan)} this month`
+                : 'No subscription'
+            }
+          />
+          <StatCard
+            label="This Month"
+            value={(subscription?.responsesThisMonth || 0).toString()}
+            subtext="Responses collected"
+          />
+        </div>
 
-          {projects.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No projects yet.</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
               <Link
-                href="/dashboard/projects/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
+                href="/dashboard/responses"
+                className="text-sm text-slate-600 hover:text-slate-500"
               >
-                Create your first project
+                View all
               </Link>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {projects.slice(0, 5).map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/dashboard/projects/${project.slug}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{project.name}</p>
-                    <p className="text-sm text-gray-500">{project._count.responses} responses</p>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Quick Start Guide */}
-      {projects.length === 0 && (
-        <div className="mt-8 bg-slate-50 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Start Guide</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
-              <div>
-                <h3 className="font-medium text-slate-900">Create a project</h3>
-                <p className="text-sm text-slate-700">Set up your first project to get an API key.</p>
+            {recentResponses.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No responses yet.</p>
+                <p className="text-sm mt-1">
+                  Create a project and integrate the SDK to start collecting feedback.
+                </p>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
-              <div>
-                <h3 className="font-medium text-slate-900">Install the SDK</h3>
-                <p className="text-sm text-slate-700">npm install gotcha-feedback</p>
+            ) : (
+              <div className="space-y-4">
+                {recentResponses.map((response) => (
+                  <div
+                    key={response.id}
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50"
+                  >
+                    <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 truncate">
+                        {response.content ||
+                          response.title ||
+                          `${response.mode.toLowerCase()} response`}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {response.project.name} · {formatTimeAgo(response.createdAt)}
+                      </p>
+                    </div>
+                    {response.rating && (
+                      <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
+                    )}
+                    {response.vote && (
+                      <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
+                        {response.vote === 'UP' ? '👍' : '👎'}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
+          </div>
+
+          {/* Projects */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
+              <Link
+                href="/dashboard/projects"
+                className="text-sm text-slate-600 hover:text-slate-500"
+              >
+                View all
+              </Link>
             </div>
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">3</div>
-              <div>
-                <h3 className="font-medium text-slate-900">Add the G button</h3>
-                <p className="text-sm text-slate-700">Wrap your app and add Gotcha components.</p>
+
+            {projects.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">No projects yet.</p>
+                <Link
+                  href="/dashboard/projects/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
+                >
+                  Create your first project
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {projects.slice(0, 5).map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/dashboard/projects/${project.slug}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{project.name}</p>
+                      <p className="text-sm text-gray-500">{project._count.responses} responses</p>
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Start Guide */}
+        {projects.length === 0 && (
+          <div className="mt-8 bg-slate-50 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Start Guide</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-medium text-slate-900">Create a project</h3>
+                  <p className="text-sm text-slate-700">
+                    Set up your first project to get an API key.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-medium text-slate-900">Install the SDK</h3>
+                  <p className="text-sm text-slate-700">npm install gotcha-feedback</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-medium text-slate-900">Add the G button</h3>
+                  <p className="text-sm text-slate-700">Wrap your app and add Gotcha components.</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
   } catch (error) {
     console.error('Dashboard error:', error);
     return (

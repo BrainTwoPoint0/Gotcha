@@ -6,7 +6,9 @@ export async function GET() {
   try {
     // Test Supabase
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     // Test Prisma
     const userCount = await prisma.user.count();
@@ -16,9 +18,12 @@ export async function GET() {
       prismaUserCount: userCount,
     });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -15,11 +15,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -34,13 +30,12 @@ export async function POST(request: Request) {
         console.log('checkout.session.completed - subscription:', session.subscription);
 
         if (organizationId && session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          );
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
           console.log('Retrieved subscription:', subscription.id);
 
           // Get period end - handle both old and new Stripe API versions
-          const periodEnd = (subscription as unknown as { current_period_end: number }).current_period_end;
+          const periodEnd = (subscription as unknown as { current_period_end: number })
+            .current_period_end;
 
           // Use upsert to handle case where subscription record might not exist
           await prisma.subscription.upsert({
@@ -60,7 +55,7 @@ export async function POST(request: Request) {
               plan: 'PRO',
               status: 'ACTIVE',
               currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-            }
+            },
           });
           console.log('Subscription updated to PRO');
         } else {
@@ -74,23 +69,28 @@ export async function POST(request: Request) {
         const customerId = subscription.customer as string;
 
         const sub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId }
+          where: { stripeCustomerId: customerId },
         });
 
         if (sub) {
-          const status = subscription.status === 'active' ? 'ACTIVE' :
-                        subscription.status === 'past_due' ? 'PAST_DUE' :
-                        subscription.status === 'trialing' ? 'TRIALING' :
-                        'CANCELED';
+          const status =
+            subscription.status === 'active'
+              ? 'ACTIVE'
+              : subscription.status === 'past_due'
+                ? 'PAST_DUE'
+                : subscription.status === 'trialing'
+                  ? 'TRIALING'
+                  : 'CANCELED';
 
-          const periodEnd = (subscription as unknown as { current_period_end: number }).current_period_end;
+          const periodEnd = (subscription as unknown as { current_period_end: number })
+            .current_period_end;
 
           await prisma.subscription.update({
             where: { id: sub.id },
             data: {
               status,
               currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-            }
+            },
           });
         }
         break;
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         const customerId = subscription.customer as string;
 
         const sub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId }
+          where: { stripeCustomerId: customerId },
         });
 
         if (sub) {
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
               status: 'CANCELED',
               stripeSubId: null,
               stripePriceId: null,
-            }
+            },
           });
         }
         break;
@@ -123,13 +123,13 @@ export async function POST(request: Request) {
         const customerId = invoice.customer as string;
 
         const sub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId }
+          where: { stripeCustomerId: customerId },
         });
 
         if (sub) {
           await prisma.subscription.update({
             where: { id: sub.id },
-            data: { status: 'PAST_DUE' }
+            data: { status: 'PAST_DUE' },
           });
         }
         break;

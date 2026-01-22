@@ -5,7 +5,9 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user?.email) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -40,7 +42,10 @@ export async function GET() {
     });
 
     // Create organization
-    const orgSlug = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const orgSlug = user.email
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
     const organization = await prisma.organization.create({
       data: {
         name: `${newUser.name || 'My'}'s Organization`,
@@ -66,10 +71,13 @@ export async function GET() {
       organization,
     });
   } catch (error) {
-    return NextResponse.json({
-      status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

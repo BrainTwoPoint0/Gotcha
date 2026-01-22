@@ -49,7 +49,9 @@ export default function SignupPage() {
     setError(null);
     // Use current origin for localhost, NEXT_PUBLIC_SITE_URL for production
     const isLocalhost = window.location.hostname === 'localhost';
-    const siteUrl = isLocalhost ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin);
+    const siteUrl = isLocalhost
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
@@ -66,9 +68,7 @@ export default function SignupPage() {
     <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-center text-3xl font-bold text-gray-900">
-            Gotcha
-          </h1>
+          <h1 className="text-center text-3xl font-bold text-gray-900">Gotcha</h1>
           <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
             Create your account
           </h2>
@@ -175,9 +175,14 @@ export default function SignupPage() {
 
           <p className="text-xs text-center text-gray-500">
             By creating an account, you agree to our{' '}
-            <a href="#" className="text-slate-600 hover:text-slate-500">Terms of Service</a>
-            {' '}and{' '}
-            <a href="#" className="text-slate-600 hover:text-slate-500">Privacy Policy</a>.
+            <a href="#" className="text-slate-600 hover:text-slate-500">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-slate-600 hover:text-slate-500">
+              Privacy Policy
+            </a>
+            .
           </p>
         </form>
       </div>

@@ -7,23 +7,27 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const dbUser = user ? await prisma.user.findUnique({
-    where: { email: user.email! },
-    include: {
-      memberships: {
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { email: user.email! },
         include: {
-          organization: {
+          memberships: {
             include: {
-              subscription: true,
-              projects: true,
-            }
-          }
-        }
-      }
-    }
-  }) : null;
+              organization: {
+                include: {
+                  subscription: true,
+                  projects: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    : null;
 
   const organization = dbUser?.memberships[0]?.organization;
   const subscription = organization?.subscription;
@@ -35,18 +39,24 @@ export default async function SettingsPage() {
 
   const projectIds = organization?.projects?.map((p: { id: string }) => p.id) || [];
 
-  const responsesThisMonth = projectIds.length > 0 ? await prisma.response.count({
-    where: {
-      projectId: { in: projectIds },
-      createdAt: { gte: startOfMonth },
-    },
-  }) : 0;
+  const responsesThisMonth =
+    projectIds.length > 0
+      ? await prisma.response.count({
+          where: {
+            projectId: { in: projectIds },
+            createdAt: { gte: startOfMonth },
+          },
+        })
+      : 0;
 
-  const totalResponses = projectIds.length > 0 ? await prisma.response.count({
-    where: {
-      projectId: { in: projectIds },
-    },
-  }) : 0;
+  const totalResponses =
+    projectIds.length > 0
+      ? await prisma.response.count({
+          where: {
+            projectId: { in: projectIds },
+          },
+        })
+      : 0;
 
   return (
     <div>
@@ -65,10 +75,7 @@ export default async function SettingsPage() {
         {/* Organization Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Organization</h2>
-          <OrganizationForm
-            name={organization?.name || ''}
-            slug={organization?.slug || ''}
-          />
+          <OrganizationForm name={organization?.name || ''} slug={organization?.slug || ''} />
         </div>
 
         {/* Subscription Section */}
@@ -80,9 +87,13 @@ export default async function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-500">Current Plan</label>
                 <p className="mt-1 text-gray-900 font-semibold">{subscription?.plan || 'Free'}</p>
               </div>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                subscription?.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-              }`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  subscription?.status === 'ACTIVE'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
                 {subscription?.status || 'Active'}
               </span>
             </div>
@@ -91,20 +102,24 @@ export default async function SettingsPage() {
               <div className="mt-2">
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-gray-600">{responsesThisMonth} responses</span>
-                  <span className="text-gray-400">/ {getPlanLimit(subscription?.plan || 'FREE')}</span>
+                  <span className="text-gray-400">
+                    / {getPlanLimit(subscription?.plan || 'FREE')}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-slate-700 h-2 rounded-full"
                     style={{
-                      width: `${Math.min((responsesThisMonth / getPlanLimitNum(subscription?.plan || 'FREE')) * 100, 100)}%`
+                      width: `${Math.min((responsesThisMonth / getPlanLimitNum(subscription?.plan || 'FREE')) * 100, 100)}%`,
                     }}
                   />
                 </div>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-500">Total Responses (All Time)</label>
+              <label className="block text-sm font-medium text-gray-500">
+                Total Responses (All Time)
+              </label>
               <p className="mt-1 text-gray-900 font-semibold">{totalResponses}</p>
             </div>
           </div>
@@ -148,7 +163,9 @@ function PlanCard({
   popular?: boolean;
 }) {
   return (
-    <div className={`relative rounded-lg border p-4 ${current ? 'border-slate-600 bg-slate-50' : 'border-gray-200'}`}>
+    <div
+      className={`relative rounded-lg border p-4 ${current ? 'border-slate-600 bg-slate-50' : 'border-gray-200'}`}
+    >
       {popular && (
         <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-white">
           Popular
@@ -156,9 +173,7 @@ function PlanCard({
       )}
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-gray-900">{name}</h4>
-        {current && (
-          <span className="text-xs text-slate-600 font-medium">Current</span>
-        )}
+        {current && <span className="text-xs text-slate-600 font-medium">Current</span>}
       </div>
       <p className="mt-1 text-2xl font-bold text-gray-900">
         {price}
@@ -167,8 +182,18 @@ function PlanCard({
       <ul className="mt-3 space-y-1">
         {features.map((feature, i) => (
           <li key={i} className="text-sm text-gray-600 flex items-center gap-1">
-            <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-4 h-4 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             {feature}
           </li>

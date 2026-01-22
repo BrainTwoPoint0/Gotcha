@@ -22,7 +22,7 @@ test.describe('Feedback API', () => {
     test('should return 401 with invalid API key', async ({ request }) => {
       const response = await request.post('/api/v1/responses', {
         headers: {
-          'Authorization': 'Bearer gtch_invalid_key',
+          Authorization: 'Bearer gtch_invalid_key',
         },
         data: {
           elementId: 'test-element',
@@ -37,7 +37,7 @@ test.describe('Feedback API', () => {
     test('should return 400 for missing elementId', async ({ request }) => {
       const response = await request.post('/api/v1/responses', {
         headers: {
-          'Authorization': 'Bearer gtch_test_xxx',
+          Authorization: 'Bearer gtch_test_xxx',
         },
         data: {
           mode: 'feedback',
@@ -52,7 +52,7 @@ test.describe('Feedback API', () => {
     test('should return 400 for invalid mode', async ({ request }) => {
       const response = await request.post('/api/v1/responses', {
         headers: {
-          'Authorization': 'Bearer gtch_test_xxx',
+          Authorization: 'Bearer gtch_test_xxx',
         },
         data: {
           elementId: 'test',

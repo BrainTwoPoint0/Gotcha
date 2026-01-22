@@ -494,3 +494,121 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 - The `llms.txt` file helps AI crawlers understand the product for accurate recommendations
 - Both approaches increase product visibility in AI-assisted developer workflows
 
+### Testing Infrastructure & TDD
+
+**Test Setup Completed:**
+- Jest + React Testing Library for unit tests
+- Playwright for E2E tests
+- Test scripts added to `package.json`
+
+**Test Coverage (92 tests total):**
+
+| Category | Framework | Tests | Coverage |
+|----------|-----------|-------|----------|
+| Validation Schemas | Jest | 37 | All modes (feedback, vote, poll, feature-request, A/B) |
+| Plan Limits | Jest | 6 | FREE, PRO |
+| API Logic | Jest | 20 | Mode mapping, poll calculations, query validation |
+| Auth Pages | Playwright | 12 | Login, Signup, password validation, protected routes |
+| Marketing Pages | Playwright | 9 | Homepage, Pricing, Demo |
+| API Endpoints | Playwright | 8 | Auth errors, CORS, demo submission |
+
+**Test Commands:**
+```bash
+npm test              # Run Jest unit tests
+npm run test:watch    # Jest in watch mode
+npm run test:coverage # Jest with coverage report
+npm run test:e2e      # Run Playwright E2E tests
+npm run test:e2e:ui   # Playwright with visual UI
+```
+
+**Files Created:**
+- `jest.config.js` - Jest configuration with Next.js support
+- `jest.setup.js` - Test setup with mocks for next/navigation
+- `playwright.config.ts` - Playwright configuration (Chromium, Firefox, WebKit, Mobile)
+- `__tests__/lib/validations.test.ts` - Validation schema tests
+- `__tests__/lib/plan-limits.test.ts` - Plan limit tests
+- `__tests__/api/responses.test.ts` - API logic tests
+- `e2e/auth.spec.ts` - Authentication E2E tests
+- `e2e/marketing.spec.ts` - Marketing pages E2E tests
+- `e2e/api.spec.ts` - API endpoint E2E tests
+
+**Updated `.gitignore`:**
+- Added `test-results/`, `playwright-report/`, `coverage/` to prevent test artifacts from being committed
+
+---
+
+## TDD Guidelines
+
+All new development should follow Test-Driven Development principles:
+
+### 1. Write Tests First
+Before implementing any new feature or fixing a bug:
+1. Write a failing test that describes the expected behavior
+2. Run the test to confirm it fails
+3. Implement the minimum code to make the test pass
+4. Refactor while keeping tests green
+
+### 2. Test Categories
+
+**Unit Tests (Jest)** - Use for:
+- Validation logic (Zod schemas)
+- Utility functions
+- Data transformations
+- Business logic that doesn't require HTTP
+
+**E2E Tests (Playwright)** - Use for:
+- User flows (signup, login, dashboard navigation)
+- API endpoint integration
+- Cross-page interactions
+- Visual regression (if needed)
+
+### 3. Test File Naming
+- Unit tests: `__tests__/<category>/<name>.test.ts`
+- E2E tests: `e2e/<feature>.spec.ts`
+
+### 4. Test Structure
+```typescript
+describe('Feature Name', () => {
+  describe('Scenario', () => {
+    it('should do expected behavior', () => {
+      // Arrange
+      // Act
+      // Assert
+    });
+  });
+});
+```
+
+### 5. Before Merging
+- All tests must pass: `npm test && npm run test:e2e`
+- New features must have corresponding tests
+- Bug fixes should include regression tests
+
+---
+
+### Recent Fixes & Updates
+
+**GitHub OAuth Fix:**
+- Fixed redirect loop where OAuth was going to `/login?code=...` instead of `/auth/callback`
+- Root cause: `NEXT_PUBLIC_SITE_URL` was being used on localhost, redirecting to production
+- Solution: Use `window.location.origin` for localhost, `NEXT_PUBLIC_SITE_URL` for production
+- Files modified: `login/page.tsx`, `signup/page.tsx`
+
+**Auth Callback User Creation:**
+- Updated `/auth/callback/route.ts` to create Prisma user after OAuth
+- Creates user record with email, name, avatar from GitHub metadata
+- Creates default organization with FREE subscription
+- Properly handles cookies for session persistence
+
+**Plan Simplification:**
+- Removed STARTER and ENTERPRISE plans from application code
+- Only two plans now: FREE (500/month) and PRO (unlimited)
+- Updated `getPlanLimit()` functions in dashboard
+- Note: Prisma enum still has all values (no migration needed)
+
+**pnpm to npm Migration:**
+- Removed `pnpm-lock.yaml` and `pnpm-workspace.yaml`
+- Removed `packageManager` field from root `package.json`
+- Fixed Prisma client generation path issues on Netlify
+- Build now uses npm directly
+

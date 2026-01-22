@@ -7,12 +7,7 @@ const tiers = [
     period: 'forever',
     description: 'Perfect for trying out Gotcha',
     responses: '500',
-    features: [
-      '500 responses/month',
-      '1 project',
-      'Basic analytics',
-      '30-day data retention',
-    ],
+    features: ['500 responses/month', '1 project', 'Basic analytics', '30-day data retention'],
     cta: 'Get Started',
     href: '/signup',
     highlighted: false,
@@ -104,9 +99,7 @@ export default function PricingPage() {
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
             Simple, transparent pricing
           </h1>
-          <p className="text-xl text-gray-600 mb-2">
-            Add feedback to any component in 5 minutes.
-          </p>
+          <p className="text-xl text-gray-600 mb-2">Add feedback to any component in 5 minutes.</p>
           <p className="text-lg text-gray-500">
             No credit card required. Start free, upgrade when you need.
           </p>
@@ -139,9 +132,7 @@ export default function PricingPage() {
                 <span className="text-gray-500 ml-1">{tier.period}</span>
               </div>
               <div className="mb-6">
-                <div className="text-2xl font-semibold text-slate-600">
-                  {tier.responses}
-                </div>
+                <div className="text-2xl font-semibold text-slate-600">{tier.responses}</div>
                 <div className="text-sm text-gray-500">responses/month</div>
               </div>
               <ul className="space-y-3 mb-6">
@@ -182,7 +173,10 @@ export default function PricingPage() {
         <div className="mt-8 bg-slate-100 rounded-2xl p-6 text-center">
           <p className="text-gray-600">
             Need SSO, SLA, or custom integrations?{' '}
-            <a href="mailto:info@braintwopoint0.com" className="text-slate-700 font-medium hover:underline">
+            <a
+              href="mailto:info@braintwopoint0.com"
+              className="text-slate-700 font-medium hover:underline"
+            >
               Contact us
             </a>
           </p>
@@ -195,8 +189,8 @@ export default function PricingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Special Programs</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Special pricing for students, startups, and investors.
-              Program managers get visibility into their entire cohort.
+              Special pricing for students, startups, and investors. Program managers get visibility
+              into their entire cohort.
             </p>
           </div>
 
@@ -256,8 +250,18 @@ export default function PricingPage() {
             <div className="bg-white rounded-2xl p-6 border border-red-200">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">{buildVsBuy.build.title}</h3>
@@ -286,8 +290,18 @@ export default function PricingPage() {
             <div className="bg-white rounded-2xl p-6 border-2 border-green-500 shadow-lg">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">{buildVsBuy.buy.title}</h3>
@@ -348,12 +362,11 @@ function App() {
           </h2>
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                What counts as a response?
-              </h3>
+              <h3 className="font-semibold text-gray-900 mb-2">What counts as a response?</h3>
               <p className="text-gray-600">
-                A response is any feedback submission from your users - whether it&apos;s a star rating,
-                thumbs up/down vote, or written feedback. Each unique submission counts as one response.
+                A response is any feedback submission from your users - whether it&apos;s a star
+                rating, thumbs up/down vote, or written feedback. Each unique submission counts as
+                one response.
               </p>
             </div>
             <div>
@@ -371,8 +384,8 @@ function App() {
               </h3>
               <p className="text-gray-600">
                 We&apos;ll notify you when you reach 80% of your 500 responses. If you exceed it,
-                responses are still collected but you&apos;ll need to upgrade to Pro to access new data.
-                Pro has unlimited responses.
+                responses are still collected but you&apos;ll need to upgrade to Pro to access new
+                data. Pro has unlimited responses.
               </p>
             </div>
             <div>
@@ -381,7 +394,8 @@ function App() {
               </h3>
               <p className="text-gray-600">
                 We offer special pricing for students, universities, accelerators, and investors.
-                Contact us to discuss partnership opportunities and custom pricing for your organization.
+                Contact us to discuss partnership opportunities and custom pricing for your
+                organization.
               </p>
             </div>
           </div>
@@ -413,7 +427,6 @@ function App() {
           </div>
         </div>
       </div>
-
     </main>
   );
 }

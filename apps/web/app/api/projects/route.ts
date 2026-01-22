@@ -6,7 +6,9 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,9 +32,9 @@ export async function POST(request: Request) {
       where: { email: user.email! },
       include: {
         memberships: {
-          include: { organization: true }
-        }
-      }
+          include: { organization: true },
+        },
+      },
     });
 
     let organization = dbUser?.memberships[0]?.organization;
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
         data: {
           name: `${user.email?.split('@')[0]}'s Organization`,
           slug: `org-${Date.now()}`,
-        }
+        },
       });
 
       // Create user
@@ -56,14 +58,14 @@ export async function POST(request: Request) {
             create: {
               organizationId: organization.id,
               role: 'OWNER',
-            }
-          }
+            },
+          },
         },
         include: {
           memberships: {
-            include: { organization: true }
-          }
-        }
+            include: { organization: true },
+          },
+        },
       });
 
       // Create subscription
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
           plan: 'FREE',
           status: 'ACTIVE',
           responsesResetAt: new Date(),
-        }
+        },
       });
     }
 
@@ -87,12 +89,15 @@ export async function POST(request: Request) {
         organizationId_slug: {
           organizationId: organization.id,
           slug,
-        }
-      }
+        },
+      },
     });
 
     if (existingProject) {
-      return NextResponse.json({ error: 'A project with this name already exists' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'A project with this name already exists' },
+        { status: 400 }
+      );
     }
 
     // Create project
@@ -102,7 +107,7 @@ export async function POST(request: Request) {
         name: name.trim(),
         slug,
         description: description?.trim() || null,
-      }
+      },
     });
 
     // Generate initial API key
@@ -115,7 +120,7 @@ export async function POST(request: Request) {
         key,
         keyHash: hash,
         allowedDomains: [],
-      }
+      },
     });
 
     return NextResponse.json({
@@ -133,7 +138,9 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -149,16 +156,16 @@ export async function GET() {
                 projects: {
                   include: {
                     _count: {
-                      select: { responses: true }
-                    }
+                      select: { responses: true },
+                    },
                   },
-                  orderBy: { createdAt: 'desc' }
-                }
-              }
-            }
-          }
-        }
-      }
+                  orderBy: { createdAt: 'desc' },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     const projects = dbUser?.memberships[0]?.organization?.projects || [];

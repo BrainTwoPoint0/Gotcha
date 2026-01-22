@@ -73,13 +73,9 @@ export function ProfileForm({ name, email }: ProfileFormProps) {
         />
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {success && (
-        <p className="text-sm text-green-600">Profile updated successfully!</p>
-      )}
+      {success && <p className="text-sm text-green-600">Profile updated successfully!</p>}
 
       <button
         type="submit"
@@ -170,13 +166,9 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
         <p className="mt-1 text-xs text-gray-400">Only lowercase letters, numbers, and hyphens</p>
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {success && (
-        <p className="text-sm text-green-600">Organization updated successfully!</p>
-      )}
+      {success && <p className="text-sm text-green-600">Organization updated successfully!</p>}
 
       <button
         type="submit"

@@ -7,7 +7,9 @@ import { headers } from 'next/headers';
 export async function POST() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,11 +21,11 @@ export async function POST() {
         memberships: {
           include: {
             organization: {
-              include: { subscription: true }
-            }
-          }
-        }
-      }
+              include: { subscription: true },
+            },
+          },
+        },
+      },
     });
 
     const organization = dbUser?.memberships[0]?.organization;
@@ -37,7 +39,7 @@ export async function POST() {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email!,
-        metadata: { organizationId: organization.id }
+        metadata: { organizationId: organization.id },
       });
       customerId = customer.id;
 
@@ -50,7 +52,7 @@ export async function POST() {
           stripeCustomerId: customerId,
           plan: 'FREE',
           status: 'ACTIVE',
-        }
+        },
       });
     }
 
@@ -67,7 +69,7 @@ export async function POST() {
       line_items: [{ price: STRIPE_PRO_PRICE_ID, quantity: 1 }],
       success_url: `${baseUrl}/dashboard/settings?success=true`,
       cancel_url: `${baseUrl}/dashboard/settings?canceled=true`,
-      metadata: { organizationId: organization.id }
+      metadata: { organizationId: organization.id },
     });
 
     return NextResponse.json({ url: session.url });

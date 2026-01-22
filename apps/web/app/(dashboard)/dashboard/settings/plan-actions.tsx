@@ -50,9 +50,7 @@ export function PlanActions({ currentPlan }: PlanActionsProps) {
 
   return (
     <div className="mt-6 pt-6 border-t border-gray-200">
-      {error && (
-        <p className="text-sm text-red-600 mb-4">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {currentPlan === 'PRO' ? (
         <button

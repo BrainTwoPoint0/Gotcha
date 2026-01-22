@@ -13,11 +13,14 @@ export async function GET() {
       message: 'Prisma connection successful',
     });
   } catch (error) {
-    return NextResponse.json({
-      status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : undefined,
-      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : undefined,
+        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

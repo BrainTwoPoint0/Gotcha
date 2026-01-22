@@ -32,7 +32,9 @@ export async function GET(request: Request) {
 
     if (!error) {
       // Get the user to create in Prisma
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (user?.email) {
         // Check if user exists in Prisma, create if not
@@ -51,7 +53,10 @@ export async function GET(request: Request) {
           });
 
           // Create default organization for new user
-          const orgSlug = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '-');
+          const orgSlug = user.email
+            .split('@')[0]
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
           await prisma.organization.create({
             data: {
               name: `${newUser.name || 'My'}'s Organization`,

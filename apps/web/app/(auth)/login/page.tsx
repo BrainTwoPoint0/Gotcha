@@ -37,7 +37,9 @@ export default function LoginPage() {
     setError(null);
     // Use current origin for localhost, NEXT_PUBLIC_SITE_URL for production
     const isLocalhost = window.location.hostname === 'localhost';
-    const siteUrl = isLocalhost ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin);
+    const siteUrl = isLocalhost
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
@@ -54,9 +56,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-center text-3xl font-bold text-gray-900">
-            Gotcha
-          </h1>
+          <h1 className="text-center text-3xl font-bold text-gray-900">Gotcha</h1>
           <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
             Sign in to your account
           </h2>

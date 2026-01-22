@@ -390,11 +390,7 @@ describe('Response API Logic', () => {
 
     it('should ignore null pollSelected', () => {
       const options = ['A', 'B'];
-      const responses = [
-        { pollSelected: ['A'] },
-        { pollSelected: null },
-        { pollSelected: ['B'] },
-      ];
+      const responses = [{ pollSelected: ['A'] }, { pollSelected: null }, { pollSelected: ['B'] }];
 
       const results = calculatePollResults(options, responses);
 

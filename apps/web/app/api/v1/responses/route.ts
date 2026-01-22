@@ -1,7 +1,12 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey, apiError } from '@/lib/api-auth';
-import { checkRateLimit, checkIdempotency, cacheIdempotencyResponse, type PlanType } from '@/lib/rate-limit';
+import {
+  checkRateLimit,
+  checkIdempotency,
+  cacheIdempotencyResponse,
+  type PlanType,
+} from '@/lib/rate-limit';
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 
 // Define types locally instead of importing Prisma enums
@@ -46,11 +51,7 @@ export async function POST(request: NextRequest) {
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError(
-        'INVALID_REQUEST',
-        firstError?.message || 'Invalid request body',
-        400
-      );
+      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid request body', 400);
     }
 
     const data = validation.data;
@@ -61,10 +62,13 @@ export async function POST(request: NextRequest) {
       const idempotencyResult = await checkIdempotency(idempotencyKey);
       if (idempotencyResult.isDuplicate && idempotencyResult.cachedResponse) {
         const cached = JSON.parse(idempotencyResult.cachedResponse);
-        return Response.json({ ...cached, status: 'duplicate' }, {
-          status: 201,
-          headers: rateLimit.headers,
-        });
+        return Response.json(
+          { ...cached, status: 'duplicate' },
+          {
+            status: 201,
+            headers: rateLimit.headers,
+          }
+        );
       }
     }
 
@@ -116,12 +120,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Increment usage counter (fire and forget)
-    prisma.subscription.updateMany({
-      where: { organizationId: apiKey.organizationId },
-      data: { responsesThisMonth: { increment: 1 } },
-    }).catch(() => {
-      // Ignore errors - this is non-critical
-    });
+    prisma.subscription
+      .updateMany({
+        where: { organizationId: apiKey.organizationId },
+        data: { responsesThisMonth: { increment: 1 } },
+      })
+      .catch(() => {
+        // Ignore errors - this is non-critical
+      });
 
     // Prepare response
     const result = {
@@ -203,11 +209,7 @@ export async function GET(request: NextRequest) {
     const validation = listResponsesSchema.safeParse(params);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError(
-        'INVALID_REQUEST',
-        firstError?.message || 'Invalid query parameters',
-        400
-      );
+      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid query parameters', 400);
     }
 
     const { elementId, mode, startDate, endDate, page, limit } = validation.data;
@@ -263,7 +265,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform responses
-    const data = responses.map((r: typeof responses[number]) => ({
+    const data = responses.map((r: (typeof responses)[number]) => ({
       id: r.id,
       elementId: r.elementIdRaw,
       mode: Object.keys(modeMap).find((k) => modeMap[k] === r.mode) || r.mode.toLowerCase(),
@@ -275,7 +277,9 @@ export async function GET(request: NextRequest) {
       pollSelected: r.pollSelected,
       experimentId: r.experimentId,
       variant: r.variant,
-      user: r.endUserId ? { id: r.endUserId, ...r.endUserMeta as Record<string, unknown> } : r.endUserMeta,
+      user: r.endUserId
+        ? { id: r.endUserId, ...(r.endUserMeta as Record<string, unknown>) }
+        : r.endUserMeta,
       createdAt: r.createdAt.toISOString(),
     }));
 

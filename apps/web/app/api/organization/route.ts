@@ -5,7 +5,9 @@ import { NextResponse } from 'next/server';
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -45,7 +47,10 @@ export async function PATCH(request: Request) {
 
     // Validate slug format
     if (!/^[a-z0-9-]+$/.test(slug)) {
-      return NextResponse.json({ error: 'Slug can only contain lowercase letters, numbers, and hyphens' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Slug can only contain lowercase letters, numbers, and hyphens' },
+        { status: 400 }
+      );
     }
 
     // Check if slug is already taken by another organization

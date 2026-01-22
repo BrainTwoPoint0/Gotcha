@@ -26,16 +26,20 @@ interface PageProps {
 export default async function ResponsesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const dbUser = user ? await prisma.user.findUnique({
-    where: { email: user.email! },
-    include: {
-      memberships: {
-        include: { organization: true }
-      }
-    }
-  }) : null;
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { email: user.email! },
+        include: {
+          memberships: {
+            include: { organization: true },
+          },
+        },
+      })
+    : null;
 
   const organization = dbUser?.memberships[0]?.organization;
 
@@ -49,14 +53,16 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   // Build where clause
   const where = {
     project: {
-      organizationId: organization?.id
+      organizationId: organization?.id,
     },
-    ...(startDate || endDate ? {
-      createdAt: {
-        ...(startDate && { gte: startDate }),
-        ...(endDate && { lte: endDate }),
-      }
-    } : {})
+    ...(startDate || endDate
+      ? {
+          createdAt: {
+            ...(startDate && { gte: startDate }),
+            ...(endDate && { lte: endDate }),
+          },
+        }
+      : {}),
   };
 
   // Get total count for pagination
@@ -64,17 +70,19 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / LIMIT);
 
   // Get paginated responses
-  const responses: ResponseItem[] = organization ? await prisma.response.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    skip: (page - 1) * LIMIT,
-    take: LIMIT,
-    include: {
-      project: {
-        select: { name: true, slug: true }
-      }
-    }
-  }) : [];
+  const responses: ResponseItem[] = organization
+    ? await prisma.response.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * LIMIT,
+        take: LIMIT,
+        include: {
+          project: {
+            select: { name: true, slug: true },
+          },
+        },
+      })
+    : [];
 
   return (
     <div>
@@ -87,8 +95,18 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
 
       {responses.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+            />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No responses found</h3>
           <p className="mt-2 text-gray-500">
@@ -131,7 +149,9 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                           </span>
                         )}
                         {response.vote && (
-                          <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
+                          <span
+                            className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}
+                          >
                             {response.vote === 'UP' ? '👍' : '👎'}
                           </span>
                         )}
@@ -144,7 +164,9 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                       {response.project.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
+                      >
                         {response.mode.toLowerCase()}
                       </span>
                     </td>

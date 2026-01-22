@@ -32,16 +32,20 @@ interface ResponseItem {
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const dbUser = user ? await prisma.user.findUnique({
-    where: { email: user.email! },
-    include: {
-      memberships: {
-        include: { organization: true }
-      }
-    }
-  }) : null;
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { email: user.email! },
+        include: {
+          memberships: {
+            include: { organization: true },
+          },
+        },
+      })
+    : null;
 
   const organization = dbUser?.memberships[0]?.organization;
 
@@ -54,21 +58,21 @@ export default async function ProjectPage({ params }: Props) {
       organizationId_slug: {
         organizationId: organization.id,
         slug,
-      }
+      },
     },
     include: {
       apiKeys: {
         where: { revokedAt: null },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       },
       responses: {
         orderBy: { createdAt: 'desc' },
         take: 20,
       },
       _count: {
-        select: { responses: true }
-      }
-    }
+        select: { responses: true },
+      },
+    },
   });
 
   if (!project) {
@@ -83,16 +87,19 @@ export default async function ProjectPage({ params }: Props) {
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back to Projects
         </Link>
         <div className="mt-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            {project.description && (
-              <p className="text-gray-600">{project.description}</p>
-            )}
+            {project.description && <p className="text-gray-600">{project.description}</p>}
           </div>
         </div>
       </div>
@@ -133,7 +140,7 @@ export default async function ProjectPage({ params }: Props) {
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Quick Start</h3>
             <pre className="text-xs bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">
-{`npm install gotcha-feedback
+              {`npm install gotcha-feedback
 
 import { GotchaProvider, Gotcha } from 'gotcha-feedback'
 
@@ -160,10 +167,15 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
           ) : (
             <div className="space-y-3">
               {(project.responses as ResponseItem[]).map((response) => (
-                <div key={response.id} className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                <div
+                  key={response.id}
+                  className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModeStyle(response.mode)}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModeStyle(response.mode)}`}
+                      >
                         {response.mode.toLowerCase()}
                       </span>
                       <span className="text-xs text-gray-400">
@@ -172,7 +184,8 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
                     </div>
                     {response.rating && (
                       <span className="text-yellow-500 text-sm">
-                        {'★'.repeat(response.rating)}{'☆'.repeat(5 - response.rating)}
+                        {'★'.repeat(response.rating)}
+                        {'☆'.repeat(5 - response.rating)}
                       </span>
                     )}
                     {response.vote && (
@@ -184,9 +197,7 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
                   {response.content && (
                     <p className="mt-2 text-sm text-gray-700">{response.content}</p>
                   )}
-                  <p className="mt-1 text-xs text-gray-400">
-                    Element: {response.elementIdRaw}
-                  </p>
+                  <p className="mt-1 text-xs text-gray-400">Element: {response.elementIdRaw}</p>
                 </div>
               ))}
             </div>

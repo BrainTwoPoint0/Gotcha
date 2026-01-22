@@ -7,7 +7,9 @@ import { headers } from 'next/headers';
 export async function POST() {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,10 +20,10 @@ export async function POST() {
       include: {
         memberships: {
           include: {
-            organization: { include: { subscription: true } }
-          }
-        }
-      }
+            organization: { include: { subscription: true } },
+          },
+        },
+      },
     });
 
     const customerId = dbUser?.memberships[0]?.organization?.subscription?.stripeCustomerId;
