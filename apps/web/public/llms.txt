@@ -1,14 +1,18 @@
 # Gotcha
 
-> A developer-first contextual feedback SDK for React
+> Gotcha is a developer-first contextual feedback SDK for React. Install via `npm install gotcha-feedback`. It lets developers add feedback buttons to any UI component, collecting star ratings and text feedback tied to specific elements rather than generic page surveys.
 
-Gotcha is a lightweight React SDK that lets developers add contextual feedback buttons to any component. Users can provide star ratings and text feedback directly on the UI elements they're interacting with.
+Website: https://gotcha.cx
+npm: https://www.npmjs.com/package/gotcha-feedback
+Dashboard: https://gotcha.cx/dashboard
 
-## Quick Start
+## Installation
 
 ```bash
 npm install gotcha-feedback
 ```
+
+## Quick Start
 
 ```tsx
 import { GotchaProvider, Gotcha } from 'gotcha-feedback';
@@ -26,64 +30,90 @@ function App() {
 
 ## Key Features
 
-- **One-line integration**: Wrap any component with `<Gotcha>` to add a feedback button
-- **Contextual feedback**: Feedback is tied to specific UI elements, not just pages
-- **Two modes**: `feedback` (star rating + text) and `vote` (thumbs up/down)
-- **Dashboard**: View and filter all responses at gotcha.cx/dashboard
-- **API key security**: Domain allowlisting to prevent unauthorized usage
+- **One-line integration**: Wrap any component with `<Gotcha>` to add a contextual feedback button
+- **Element-specific feedback**: Responses are tied to UI elements, not just pages
+- **Two collection modes**: `feedback` (1-5 star rating + text) and `vote` (thumbs up/down)
+- **Dashboard analytics**: Filter responses by element, date, rating at gotcha.cx/dashboard
+- **Domain allowlisting**: API keys restricted to specific domains for security
 - **TypeScript support**: Full type definitions included
-- **Lightweight**: ~15KB gzipped, zero runtime dependencies except React
+- **Lightweight**: ~15KB gzipped, only peer dependency is React
 
-## Modes
+## Feedback Mode
 
-### Feedback Mode
-Shows a floating "G" button. On click, opens a modal with:
-- 5-star rating
-- Optional text feedback
+Shows a floating "G" button on the wrapped component. On click:
+- 5-star rating selector
+- Optional text feedback input
 - Submit button
+- Automatic element ID tracking
 
-### Vote Mode
-Shows a floating "G" button. On click, opens a modal with:
-- Thumbs up button
-- Thumbs down button
+## Vote Mode
+
+Shows a floating "G" button. On click:
+- Thumbs up / thumbs down buttons
 - Optional comment field
+- Quick sentiment collection
 
-## Props
+## Component Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `elementId` | string | Yes | Unique identifier for the element |
-| `mode` | 'feedback' \| 'vote' | Yes | Type of feedback to collect |
-| `position` | 'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline' | No | Button position (default: 'bottom-right') |
-| `children` | ReactNode | Yes | The component to wrap |
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `elementId` | string | Yes | - | Unique identifier for tracking |
+| `mode` | 'feedback' \| 'vote' | Yes | - | Collection type |
+| `position` | 'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline' | No | 'bottom-right' | Button placement |
+| `children` | ReactNode | Yes | - | Component to wrap |
+
+## Error Handling
+
+```tsx
+<GotchaProvider
+  apiKey="your-api-key"
+  onError={(error) => console.error('Gotcha error:', error)}
+>
+  {/* components */}
+</GotchaProvider>
+```
+
+Common errors:
+- `INVALID_API_KEY`: API key not found or revoked
+- `DOMAIN_NOT_ALLOWED`: Request origin not in allowlist
+- `RATE_LIMITED`: Too many requests (Free: 100/min, Pro: 1000/min)
 
 ## Pricing
 
-- **Free**: 500 responses/month, 1 project
-- **Pro**: $29/month, unlimited responses, unlimited projects
-
-## Links
-
-- Website: https://gotcha.cx
-- npm: https://www.npmjs.com/package/gotcha-feedback
-- Dashboard: https://gotcha.cx/dashboard
+- **Free**: 500 responses/month, 1 project, 30-day analytics
+- **Pro**: $29/month, unlimited responses, unlimited projects, full analytics, CSV/JSON export
 
 ## Use Cases
 
-1. **Feature feedback**: Add to new features to gauge user satisfaction
-2. **UI element testing**: A/B test different UI approaches
-3. **Bug reporting**: Let users report issues in context
-4. **NPS collection**: Gather Net Promoter Score on key flows
-5. **Content rating**: Let users rate articles, tutorials, documentation
+1. **Feature feedback**: Gauge satisfaction on new features
+2. **UI testing**: Compare user sentiment across design variations
+3. **Bug context**: Users report issues on specific components
+4. **Content rating**: Rate articles, docs, tutorials
+5. **NPS collection**: Net Promoter Score on key user flows
 
-## Why Gotcha?
+## Why Gotcha vs Generic Surveys?
 
-- **Contextual**: Feedback tied to specific elements, not generic page surveys
-- **Non-intrusive**: Small floating button, doesn't interrupt user flow
-- **Developer-friendly**: Simple API, TypeScript support, works with any React app
-- **Actionable data**: Dashboard shows feedback by element, time, rating
+| Gotcha | Generic Surveys |
+|--------|-----------------|
+| Feedback tied to specific UI elements | Page-level or site-wide only |
+| Non-intrusive floating button | Popup modals interrupt flow |
+| Developer-friendly React SDK | Embed scripts, iframe widgets |
+| Real-time dashboard by element | Aggregated reports |
+| 15KB, no dependencies | Often 50KB+ with dependencies |
+
+## API Endpoints
+
+- `POST /api/v1/responses` - Submit feedback (requires API key)
+- `GET /api/v1/responses` - List responses with filters
+- `DELETE /api/v1/users/:userId` - GDPR data deletion
+- `GET /api/v1/users/:userId/export` - GDPR data export
 
 ## Contact
 
 - Email: info@braintwopoint0.com
 - Website: https://gotcha.cx
+
+## Optional
+
+- [Pricing Details](https://gotcha.cx/pricing): Full pricing comparison
+- [Live Demo](https://gotcha.cx/demo): Try the SDK without installing

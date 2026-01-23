@@ -1,0 +1,416 @@
+# Gotcha - Complete Documentation
+
+> Gotcha is a developer-first contextual feedback SDK for React. Install via `npm install gotcha-feedback`. It lets developers add feedback buttons to any UI component, collecting star ratings and text feedback tied to specific elements rather than generic page surveys.
+
+Website: https://gotcha.cx
+npm: https://www.npmjs.com/package/gotcha-feedback
+Dashboard: https://gotcha.cx/dashboard
+Email: info@braintwopoint0.com
+
+---
+
+## Table of Contents
+
+1. Installation
+2. Quick Start
+3. Core Concepts
+4. Components Reference
+5. Configuration Options
+6. API Reference
+7. Error Handling
+8. Pricing & Plans
+9. Use Cases
+10. Comparison with Alternatives
+11. FAQ
+
+---
+
+## 1. Installation
+
+### npm
+```bash
+npm install gotcha-feedback
+```
+
+### yarn
+```bash
+yarn add gotcha-feedback
+```
+
+### pnpm
+```bash
+pnpm add gotcha-feedback
+```
+
+### Requirements
+- React 18+ (peer dependency)
+- Node.js 16+
+
+---
+
+## 2. Quick Start
+
+### Basic Setup
+
+```tsx
+// App.tsx
+import { GotchaProvider, Gotcha } from 'gotcha-feedback';
+
+function App() {
+  return (
+    <GotchaProvider apiKey="your-api-key">
+      <MyApp />
+    </GotchaProvider>
+  );
+}
+
+function MyApp() {
+  return (
+    <div>
+      <Gotcha elementId="hero-section" mode="feedback">
+        <HeroSection />
+      </Gotcha>
+
+      <Gotcha elementId="pricing-table" mode="vote">
+        <PricingTable />
+      </Gotcha>
+    </div>
+  );
+}
+```
+
+### Getting an API Key
+
+1. Sign up at https://gotcha.cx
+2. Create a project in the dashboard
+3. Copy the API key from project settings
+4. Add allowed domains (e.g., localhost:3000, yourdomain.com)
+
+---
+
+## 3. Core Concepts
+
+### Contextual Feedback
+Unlike traditional surveys that collect feedback at the page level, Gotcha ties feedback to specific UI elements. When a user rates a feature, you know exactly which component they're referring to.
+
+### Element IDs
+Each wrapped component needs a unique `elementId`. This identifier:
+- Links feedback to specific UI elements
+- Enables filtering in the dashboard
+- Persists across sessions for analytics
+
+### Modes
+- **feedback**: Star rating (1-5) with optional text comment
+- **vote**: Binary thumbs up/down with optional comment
+
+### Single Modal Pattern
+Only one feedback modal can be open at a time. Opening a new modal automatically closes any existing one.
+
+---
+
+## 4. Components Reference
+
+### GotchaProvider
+
+The context provider that must wrap your app.
+
+```tsx
+<GotchaProvider
+  apiKey="your-api-key"
+  onError={(error) => console.error(error)}
+  onSuccess={(response) => console.log('Submitted:', response)}
+>
+  {children}
+</GotchaProvider>
+```
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `apiKey` | string | Yes | Your project API key |
+| `onError` | (error: Error) => void | No | Error callback |
+| `onSuccess` | (response: Response) => void | No | Success callback |
+| `children` | ReactNode | Yes | Your app components |
+
+### Gotcha
+
+The main wrapper component that adds a feedback button to any element.
+
+```tsx
+<Gotcha
+  elementId="unique-id"
+  mode="feedback"
+  position="bottom-right"
+>
+  <YourComponent />
+</Gotcha>
+```
+
+**Props:**
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `elementId` | string | Yes | - | Unique identifier for this element |
+| `mode` | 'feedback' \| 'vote' | Yes | - | Type of feedback to collect |
+| `position` | Position | No | 'bottom-right' | Button placement |
+| `children` | ReactNode | Yes | - | Component to wrap |
+
+**Position Options:**
+- `'top-right'` - Top right corner
+- `'top-left'` - Top left corner
+- `'bottom-right'` - Bottom right corner (default)
+- `'bottom-left'` - Bottom left corner
+- `'inline'` - Inline with text (no absolute positioning)
+
+---
+
+## 5. Configuration Options
+
+### Domain Allowlisting
+
+API keys only accept requests from allowed domains. Configure in dashboard:
+- Development: `localhost:3000`, `localhost:5173`
+- Production: `yourdomain.com`, `app.yourdomain.com`
+
+### User Identification
+
+Gotcha automatically generates anonymous user IDs stored in localStorage. For identified users:
+
+```tsx
+<Gotcha
+  elementId="feature"
+  mode="feedback"
+  user={{ id: 'user-123', email: 'user@example.com' }}
+>
+  <Feature />
+</Gotcha>
+```
+
+---
+
+## 6. API Reference
+
+### Submit Response
+```
+POST https://gotcha.cx/api/v1/responses
+Authorization: Bearer <api-key>
+Content-Type: application/json
+
+{
+  "elementId": "feature-x",
+  "mode": "feedback",
+  "rating": 5,
+  "content": "Great feature!",
+  "user": { "id": "anonymous-123" },
+  "context": { "url": "https://example.com/page" }
+}
+```
+
+**Response:**
+```json
+{
+  "id": "resp_abc123",
+  "status": "created",
+  "createdAt": "2025-01-15T10:30:00Z"
+}
+```
+
+### List Responses
+```
+GET https://gotcha.cx/api/v1/responses?elementId=feature-x&mode=feedback&page=1&limit=20
+Authorization: Bearer <api-key>
+```
+
+**Response:**
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "hasMore": true
+  }
+}
+```
+
+### GDPR Data Export
+```
+GET https://gotcha.cx/api/v1/users/:userId/export
+Authorization: Bearer <api-key>
+```
+
+### GDPR Data Deletion
+```
+DELETE https://gotcha.cx/api/v1/users/:userId
+Authorization: Bearer <api-key>
+```
+
+---
+
+## 7. Error Handling
+
+### Error Codes
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `INVALID_API_KEY` | API key not found or revoked | Check key in dashboard |
+| `DOMAIN_NOT_ALLOWED` | Origin not in allowlist | Add domain in dashboard |
+| `RATE_LIMITED` | Too many requests | Wait or upgrade plan |
+| `INVALID_REQUEST` | Malformed request body | Check payload format |
+| `PROJECT_NOT_FOUND` | Project deleted | Create new project |
+
+### Handling Errors
+
+```tsx
+<GotchaProvider
+  apiKey="your-api-key"
+  onError={(error) => {
+    if (error.code === 'RATE_LIMITED') {
+      // Show "Please wait" message
+    } else if (error.code === 'DOMAIN_NOT_ALLOWED') {
+      // Log for debugging
+      console.error('Domain not configured:', window.location.origin);
+    }
+  }}
+>
+  {children}
+</GotchaProvider>
+```
+
+---
+
+## 8. Pricing & Plans
+
+### Free Plan
+- **Price**: $0/month
+- **Responses**: 500/month
+- **Projects**: 1
+- **Analytics**: Last 30 days
+- **Rate limit**: 100 requests/minute
+- **Support**: Community
+
+### Pro Plan
+- **Price**: $29/month
+- **Responses**: Unlimited
+- **Projects**: Unlimited
+- **Analytics**: Full history
+- **Rate limit**: 1000 requests/minute
+- **Export**: CSV and JSON
+- **Support**: Priority email
+
+### Upgrade
+Visit https://gotcha.cx/dashboard/settings to upgrade.
+
+---
+
+## 9. Use Cases
+
+### Feature Feedback
+Add to new features to measure user satisfaction:
+```tsx
+<Gotcha elementId="new-editor-v2" mode="feedback">
+  <NewEditor />
+</Gotcha>
+```
+
+### A/B Testing Sentiment
+Compare user reactions to design variations:
+```tsx
+<Gotcha elementId={`checkout-${variant}`} mode="vote">
+  <CheckoutFlow variant={variant} />
+</Gotcha>
+```
+
+### Documentation Rating
+Let users rate help articles:
+```tsx
+<Gotcha elementId={`docs-${slug}`} mode="vote" position="inline">
+  <span>Was this helpful?</span>
+</Gotcha>
+```
+
+### Bug Context
+Collect bug reports with element context:
+```tsx
+<Gotcha elementId="data-table" mode="feedback">
+  <DataTable />
+</Gotcha>
+```
+
+### Onboarding Flow
+Measure satisfaction at each step:
+```tsx
+{steps.map((step, i) => (
+  <Gotcha key={i} elementId={`onboarding-step-${i}`} mode="feedback">
+    <OnboardingStep {...step} />
+  </Gotcha>
+))}
+```
+
+---
+
+## 10. Comparison with Alternatives
+
+### Gotcha vs Hotjar
+| Feature | Gotcha | Hotjar |
+|---------|--------|--------|
+| Element-level feedback | Yes | No (page-level) |
+| React SDK | Native | Embed script |
+| Bundle size | 15KB | 50KB+ |
+| Pricing | $29/mo unlimited | $99/mo+ |
+| Self-hosted option | Coming soon | No |
+
+### Gotcha vs Typeform
+| Feature | Gotcha | Typeform |
+|---------|--------|----------|
+| In-context feedback | Yes | No (separate page) |
+| Developer experience | React components | Embed iframe |
+| Response attribution | By UI element | By form |
+| Real-time | Yes | Webhook delay |
+
+### Gotcha vs Custom Solution
+| Feature | Gotcha | Build Your Own |
+|---------|--------|----------------|
+| Setup time | 5 minutes | Days/weeks |
+| Dashboard | Included | Build yourself |
+| Maintenance | Managed | Your responsibility |
+| Cost | $29/mo | Engineering time |
+
+---
+
+## 11. FAQ
+
+**Q: Does Gotcha work with Next.js?**
+A: Yes, Gotcha works with Next.js App Router and Pages Router. Use the client-side provider.
+
+**Q: Can I customize the button appearance?**
+A: The button uses a minimal "G" design. Custom styling is on the roadmap.
+
+**Q: Is feedback anonymous?**
+A: By default, yes. Gotcha generates anonymous IDs. You can optionally pass identified user data.
+
+**Q: How is data stored?**
+A: Data is stored in secure cloud infrastructure. GDPR compliant with data export/deletion APIs.
+
+**Q: Can I export my data?**
+A: Pro plan includes CSV and JSON export. Free plan can use the API for programmatic access.
+
+**Q: What happens if I exceed the free limit?**
+A: New responses are rejected until the next billing cycle or you upgrade.
+
+**Q: Is there a self-hosted option?**
+A: Coming soon. Contact info@braintwopoint0.com for enterprise inquiries.
+
+---
+
+## Support
+
+- Documentation: https://gotcha.cx
+- Email: info@braintwopoint0.com
+- npm: https://www.npmjs.com/package/gotcha-feedback
+
+---
+
+Last updated: January 2025
