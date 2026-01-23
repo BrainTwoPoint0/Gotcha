@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Footer } from '../components/Footer';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -71,6 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Main Content */}
       <main className="pt-16 pb-20 md:pb-0 md:pl-64">
         <div className="p-4 md:p-8">{children}</div>
+        <Footer />
       </main>
     </div>
   );

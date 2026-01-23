@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,6 +146,76 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
         </div>
+
+        {/* Plan Limit Warnings */}
+        {subscription && isOverLimit(subscription.plan, subscription.responsesThisMonth) && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg
+                className="w-5 h-5 text-red-600 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <div>
+                <h3 className="font-medium text-red-800">Response limit exceeded</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  You've exceeded the 500 response limit for the Free plan. New responses will not
+                  be recorded until you upgrade.
+                </p>
+                <a
+                  href="/dashboard/settings"
+                  className="inline-block mt-2 text-sm font-medium text-red-800 hover:text-red-900 underline"
+                >
+                  Upgrade to Pro →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {subscription &&
+          !isOverLimit(subscription.plan, subscription.responsesThisMonth) &&
+          shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth) && (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-yellow-600 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div>
+                  <h3 className="font-medium text-yellow-800">Approaching response limit</h3>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    You've used {subscription.responsesThisMonth} of 500 responses this month (
+                    {Math.round((subscription.responsesThisMonth / 500) * 100)}%). Upgrade to Pro
+                    for unlimited responses.
+                  </p>
+                  <a
+                    href="/dashboard/settings"
+                    className="inline-block mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline"
+                  >
+                    Upgrade to Pro →
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -344,14 +415,6 @@ function getModeColor(mode: string): string {
     AB: 'bg-pink-500',
   };
   return colors[mode] || 'bg-gray-500';
-}
-
-function getPlanLimit(plan: string): string {
-  const limits: Record<string, string> = {
-    FREE: '500',
-    PRO: '∞',
-  };
-  return limits[plan] || '500';
 }
 
 function formatTimeAgo(date: Date): string {

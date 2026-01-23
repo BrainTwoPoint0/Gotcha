@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { sendProActivatedEmail } from '@/lib/emails/send';
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -58,6 +59,9 @@ export async function POST(request: Request) {
             },
           });
           console.log('Subscription updated to PRO');
+
+          // Send Pro activation email (fire-and-forget)
+          sendProActivatedEmail(organizationId).catch(console.error);
         } else {
           console.log('Missing organizationId or subscription in session');
         }

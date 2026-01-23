@@ -718,3 +718,143 @@ Using `recharts` - lightweight, React-native, good TypeScript support
 - Ran `npm run format` to fix 42 files
 - All 63 existing tests still pass
 
+---
+
+### Resend Email Notifications
+
+**Goal:** Add transactional email notifications using Resend.
+
+**Implementation:**
+
+1. **`lib/resend.ts`** - Resend client initialization
+   - Exports `resend` client and `FROM_EMAIL` constant
+   - Sender: `Gotcha <info@braintwopoint0.com>`
+
+2. **`lib/emails/templates.ts`** - HTML email templates
+   - `welcomeEmail()` - Getting started guide for new users
+   - `proActivatedEmail()` - Pro upgrade confirmation
+   - `usageWarningEmail()` - Approaching 500 limit warning
+   - `responseAlertEmail()` - New feedback received notification
+
+3. **`lib/emails/send.ts`** - Helper functions
+   - `sendWelcomeEmail(user)` - Sends directly to user email
+   - `sendProActivatedEmail(orgId)` - Fetches org owner email
+   - `sendUsageWarningEmail(orgId, current, limit)` - At 80% threshold
+   - `sendResponseAlertEmail(orgId, response)` - On new response
+
+**Email Triggers:**
+
+| Email | Location | Trigger |
+|-------|----------|---------|
+| Welcome | `/app/auth/callback/route.ts` | After new user + org creation |
+| Pro Activated | `/app/api/stripe/webhook/route.ts` | After `checkout.session.completed` |
+| Usage Warning | `/app/api/v1/responses/route.ts` | At 400, 450, 500 responses |
+| Response Alert | `/app/api/v1/responses/route.ts` | Every new response |
+
+**Files Created:**
+- `apps/web/lib/resend.ts`
+- `apps/web/lib/emails/templates.ts`
+- `apps/web/lib/emails/send.ts`
+
+**Files Modified:**
+- `apps/web/app/auth/callback/route.ts` - Added welcome email
+- `apps/web/app/api/stripe/webhook/route.ts` - Added Pro activation email
+- `apps/web/app/api/v1/responses/route.ts` - Added usage warning + response alerts
+
+**Dependencies Added:**
+- `resend` - Email sending service
+
+**Environment Variables Required:**
+```
+RESEND_API_KEY=re_xxxxx
+```
+
+**Notes:**
+- All emails are fire-and-forget (don't block request)
+- Domain `braintwopoint0.com` must be verified in Resend dashboard
+- Usage warnings only sent at specific thresholds (400, 450, 500) to avoid spam
+
+---
+
+### LLM Discoverability Optimization
+
+**Goal:** Improve Gotcha's visibility in AI assistants (ChatGPT, Claude, Gemini, etc.)
+
+**Implementation:**
+
+1. **Enhanced llms.txt** (`/public/llms.txt`)
+   - Added npm install command in summary blockquote
+   - Added error handling documentation with error codes
+   - Added "Why Gotcha vs Generic Surveys?" comparison table
+   - Added API endpoints reference
+   - Added `## Optional` section per spec
+
+2. **New llms-full.txt** (`/public/llms-full.txt`)
+   - Comprehensive 300+ line documentation
+   - Table of contents with 11 sections
+   - Full component API reference
+   - Code examples for all use cases
+   - FAQ section with common questions
+   - Comparison tables vs Hotjar, Typeform, custom solutions
+
+3. **JSON-LD Structured Data** (`/app/(marketing)/layout.tsx`)
+   - `SoftwareApplication` schema with features, pricing, download URL
+   - `FAQPage` schema with 4 common questions
+   - `Organization` schema with contact info
+   - Added to all marketing pages
+
+4. **Updated AI Prompts** (`/app/components/Footer.tsx`)
+   - Added npm package name and URL to prompt
+   - Added "gotcha-feedback" package mention
+   - Added comparison framing ("instead of generic survey tools")
+
+**Files Created:**
+- `apps/web/public/llms-full.txt`
+
+**Files Modified:**
+- `apps/web/public/llms.txt` - Enhanced with more detail
+- `apps/web/app/(marketing)/layout.tsx` - Added JSON-LD schema
+- `apps/web/app/components/Footer.tsx` - Updated AI prompt
+
+**Best Practices Applied:**
+- Consistent heading hierarchy (H1 → H2 → H3)
+- Clear, definitive explanations with code examples
+- Comparison tables for competitive positioning
+- Schema.org structured data for machine readability
+- npm link prominently featured
+
+---
+
+### Plan Limits & Warning Banners
+
+**Goal:** Enforce and display warnings for the 500 response limit for FREE users.
+
+**Implementation:**
+
+1. **`lib/plan-limits.ts`** - Centralized plan limit utilities:
+   - `getPlanLimit(plan)` - Returns limit as string ("500" or "∞")
+   - `getPlanLimitNum(plan)` - Returns limit as number (500 or 999999)
+   - `isOverLimit(plan, responses)` - Returns true if over limit
+   - `getAccessibleResponseCount(plan, total)` - Returns capped count for FREE users
+   - `shouldShowUpgradeWarning(plan, responses)` - Returns true at 80% (400)
+
+2. **`__tests__/lib/plan-limits.test.ts`** - Comprehensive tests (14 tests):
+   - Tests for all 5 functions covering FREE and PRO scenarios
+   - Edge cases: exactly at limit, over limit, unknown plans
+
+3. **Dashboard Warning Banners:**
+   - **Red banner** when FREE user exceeds 500 responses ("Response limit exceeded")
+   - **Yellow banner** when FREE user reaches 80% (400+ responses) ("Approaching response limit")
+   - Both include links to upgrade to Pro
+
+**Files Created:**
+- `apps/web/lib/plan-limits.ts`
+- `apps/web/__tests__/lib/plan-limits.test.ts`
+
+**Files Modified:**
+- `apps/web/app/(dashboard)/dashboard/page.tsx` - Added warning banners using imported limit functions
+
+**Test Results:**
+- All 71 tests pass (including 14 new plan limit tests)
+- Formatting, linting, and type checks all pass
+

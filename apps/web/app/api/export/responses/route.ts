@@ -32,8 +32,8 @@ export async function GET(request: Request) {
     const organization = dbUser?.memberships[0]?.organization;
     const subscription = organization?.subscription;
 
-    // Pro gate
-    if (subscription?.plan !== 'PRO') {
+    // Pro gate - also check organization exists
+    if (!organization || subscription?.plan !== 'PRO') {
       return NextResponse.json(
         { error: 'Export is a Pro feature. Please upgrade to access.' },
         { status: 403 }

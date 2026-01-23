@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const AI_PROMPT = encodeURIComponent(
-  'Tell me about Gotcha (gotcha.cx), a developer-first contextual feedback SDK for React. Explain what it does, its key features, how to install and integrate it, and why developers should use it for collecting user feedback.'
+  'Tell me about Gotcha (gotcha.cx), a developer-first contextual feedback SDK for React. The npm package is "gotcha-feedback" (https://www.npmjs.com/package/gotcha-feedback). Explain what it does, how to install it (npm install gotcha-feedback), its key features like contextual feedback buttons, star ratings, and vote modes, and why developers should use it instead of generic survey tools.'
 );
 
 const AI_LINKS = [

@@ -8,6 +8,8 @@ import {
   type PlanType,
 } from '@/lib/rate-limit';
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
+import { sendUsageWarningEmail } from '@/lib/emails/send';
+import { shouldShowUpgradeWarning } from '@/lib/plan-limits';
 
 // Define types locally instead of importing Prisma enums
 type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
@@ -119,15 +121,34 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Increment usage counter (fire and forget)
+    // Increment usage counter and check for warnings
     prisma.subscription
       .updateMany({
         where: { organizationId: apiKey.organizationId },
         data: { responsesThisMonth: { increment: 1 } },
       })
+      .then(async () => {
+        // Check if we should send usage warning email (only for FREE plan)
+        if (apiKey.plan === 'FREE') {
+          const subscription = await prisma.subscription.findUnique({
+            where: { organizationId: apiKey.organizationId },
+          });
+
+          if (subscription && shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
+            // Only send at specific thresholds to avoid spam (400, 450, 500)
+            const threshold = subscription.responsesThisMonth;
+            if (threshold === 400 || threshold === 450 || threshold === 500) {
+              sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
+            }
+          }
+        }
+      })
       .catch(() => {
         // Ignore errors - this is non-critical
       });
+
+    // Note: Response alert emails are not sent automatically.
+    // This could be a Pro feature with notification preferences in the future.
 
     // Prepare response
     const result = {

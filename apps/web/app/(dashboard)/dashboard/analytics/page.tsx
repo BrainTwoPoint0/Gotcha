@@ -2,10 +2,16 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
+import { AnalyticsFilter } from './analytics-filter';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AnalyticsPage() {
+interface PageProps {
+  searchParams: Promise<{ startDate?: string; endDate?: string; projectId?: string }>;
+}
+
+export default async function AnalyticsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,8 +38,8 @@ export default async function AnalyticsPage() {
   const subscription = organization?.subscription;
   const isPro = subscription?.plan === 'PRO';
 
-  // Pro gate - show upgrade prompt for FREE users
-  if (!isPro) {
+  // Pro gate - show upgrade prompt for FREE users or if no organization
+  if (!isPro || !organization) {
     return (
       <div>
         <div className="mb-6">
@@ -73,16 +79,36 @@ export default async function AnalyticsPage() {
     );
   }
 
-  // Fetch analytics data for Pro users
+  // Fetch projects for filter dropdown
+  const projects = await prisma.project.findMany({
+    where: { organizationId: organization.id },
+    select: { id: true, name: true, slug: true },
+    orderBy: { name: 'asc' },
+  });
+
+  // Parse date filters (default to last 30 days if no filters)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  // Get daily response counts for the last 30 days
-  const responses = await prisma.response.findMany({
-    where: {
-      project: { organizationId: organization.id },
-      createdAt: { gte: thirtyDaysAgo },
+  const startDate = params.startDate ? new Date(params.startDate) : thirtyDaysAgo;
+  const endDate = params.endDate ? new Date(`${params.endDate}T23:59:59.999Z`) : new Date();
+  const projectId = params.projectId || undefined;
+
+  // Build where clause
+  const where = {
+    project: {
+      organizationId: organization.id,
+      ...(projectId && { id: projectId }),
     },
+    createdAt: {
+      gte: startDate,
+      lte: endDate,
+    },
+  };
+
+  // Get responses for the selected period
+  const responses = await prisma.response.findMany({
+    where,
     select: {
       createdAt: true,
       mode: true,
@@ -91,15 +117,24 @@ export default async function AnalyticsPage() {
     },
   });
 
+  // Calculate date range for display
+  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const dateRangeLabel =
+    params.startDate || params.endDate
+      ? `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+      : 'Last 30 days';
+  const selectedProject = projectId ? projects.find((p) => p.id === projectId) : null;
+
   // Process data for charts
   const dailyCounts: Record<string, number> = {};
   const modeCounts: Record<string, number> = {};
   const voteCounts = { UP: 0, DOWN: 0 };
   const ratings: { date: string; rating: number }[] = [];
 
-  // Initialize last 30 days
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
+  // Initialize days in range
+  const daysToShow = Math.min(daysDiff, 90); // Cap at 90 days for readability
+  for (let i = daysToShow - 1; i >= 0; i--) {
+    const date = new Date(endDate);
     date.setDate(date.getDate() - i);
     const key = date.toISOString().split('T')[0];
     dailyCounts[key] = 0;
@@ -170,8 +205,13 @@ export default async function AnalyticsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-600">Insights from the last 30 days</p>
+        <p className="text-gray-600">
+          {selectedProject ? `${selectedProject.name} - ` : 'All projects - '}
+          {dateRangeLabel}
+        </p>
       </div>
+
+      <AnalyticsFilter projects={projects} />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

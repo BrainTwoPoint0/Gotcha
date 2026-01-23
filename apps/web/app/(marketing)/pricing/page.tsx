@@ -7,7 +7,7 @@ const tiers = [
     period: 'forever',
     description: 'Perfect for trying out Gotcha',
     responses: '500',
-    features: ['500 responses/month', '1 project', 'Basic analytics', '30-day data retention'],
+    features: ['500 responses/month', '1 project', 'Basic analytics', '30-day analytics view'],
     cta: 'Get Started',
     href: '/signup',
     highlighted: false,

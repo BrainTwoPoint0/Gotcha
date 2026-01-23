@@ -58,15 +58,20 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const startDate = params.startDate ? new Date(params.startDate) : undefined;
   const endDate = params.endDate ? new Date(`${params.endDate}T23:59:59.999Z`) : undefined;
 
+  // FREE users are limited to last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const effectiveStartDate = !isPro && !startDate ? thirtyDaysAgo : startDate;
+
   // Build where clause
   const where = {
     project: {
       organizationId: organization?.id,
     },
-    ...(startDate || endDate
+    ...(effectiveStartDate || endDate
       ? {
           createdAt: {
-            ...(startDate && { gte: startDate }),
+            ...(effectiveStartDate && { gte: effectiveStartDate }),
             ...(endDate && { lte: endDate }),
           },
         }
@@ -103,6 +108,18 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       </div>
 
       <ResponsesFilter />
+
+      {!isPro && (
+        <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-slate-600">
+            Showing responses from the last 30 days.{' '}
+            <a href="/dashboard/settings" className="text-slate-700 font-medium hover:underline">
+              Upgrade to Pro
+            </a>{' '}
+            to view all historical data.
+          </p>
+        </div>
+      )}
 
       {responses.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">

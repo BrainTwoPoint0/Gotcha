@@ -15,6 +15,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "check": "npm run format:check && npm run lint && npm run test",
+    "release": "npm run format && npm run lint:fix && npm run test && npm run build",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
@@ -29,6 +31,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^3.7.0",
+    "resend": "^6.8.0",
     "stripe": "^20.2.0",
     "zod": "^4.3.5"
   },
