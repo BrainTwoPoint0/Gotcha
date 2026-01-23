@@ -45,7 +45,7 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
         <select
           value={elementId}
           onChange={(e) => setElementId(e.target.value)}
-          className="w-full sm:w-auto px-3 py-[9px] border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          className="w-full sm:w-auto sm:min-w-[140px] h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
         >
           <option value="">All Elements</option>
           {elements.map((el) => (
@@ -61,7 +61,7 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          className="w-full sm:w-auto h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
         />
       </div>
       <div className="w-full sm:w-auto">
@@ -70,7 +70,7 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          className="w-full sm:w-auto h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
         />
       </div>
       <div className="flex gap-2 sm:gap-4">

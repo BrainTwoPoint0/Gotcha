@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { generateApiKey } from '@/lib/api-auth';
+import { isOverProjectLimit } from '@/lib/plan-limits';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -81,6 +82,26 @@ export async function POST(request: Request) {
 
     if (!organization) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 500 });
+    }
+
+    // Check project limit
+    const subscription = await prisma.subscription.findUnique({
+      where: { organizationId: organization.id },
+    });
+
+    const projectCount = await prisma.project.count({
+      where: { organizationId: organization.id },
+    });
+
+    const plan = subscription?.plan || 'FREE';
+    if (isOverProjectLimit(plan, projectCount)) {
+      return NextResponse.json(
+        {
+          error: 'Project limit reached. Upgrade to Pro for unlimited projects.',
+          code: 'PROJECT_LIMIT_REACHED',
+        },
+        { status: 403 }
+      );
     }
 
     // Check if project slug already exists

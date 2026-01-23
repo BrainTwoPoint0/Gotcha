@@ -1192,3 +1192,37 @@ Added element filtering to dashboard pages, allowing users to filter responses a
 - `app/(dashboard)/dashboard/analytics/segments/segment-charts.tsx` - Added element filter
 - `app/(dashboard)/dashboard/analytics/segments/page.tsx` - Fetch elements, handle query
 
+---
+
+### Project Limit Enforcement
+
+**Added:** January 2026
+
+FREE plan users are now properly limited to 1 project. Previously, users could bypass the limit by directly navigating to `/dashboard/projects/new`.
+
+**Changes:**
+
+1. **Plan Limit Functions** (`lib/plan-limits.ts`):
+   - `getProjectLimit(plan)` - Returns project limit (1 for FREE, 999999 for PRO)
+   - `getProjectLimitDisplay(plan)` - Returns display string ("1" or "∞")
+   - `isOverProjectLimit(plan, count)` - Returns true if at or over limit
+
+2. **API Enforcement** (`app/api/projects/route.ts`):
+   - Checks project count against plan limit before creating
+   - Returns 403 with `PROJECT_LIMIT_REACHED` code if over limit
+
+3. **UI Enforcement** (`app/(dashboard)/dashboard/projects/new/`):
+   - Split into server component (`page.tsx`) and client component (`new-project-form.tsx`)
+   - Server component checks limit and shows "Project Limit Reached" message with upgrade CTA
+   - Only shows form if user is under limit
+
+**Files Created:**
+- `app/(dashboard)/dashboard/projects/new/new-project-form.tsx` - Client form component
+
+**Files Modified:**
+- `lib/plan-limits.ts` - Added project limit functions
+- `app/api/projects/route.ts` - Added limit check before project creation
+- `app/(dashboard)/dashboard/projects/new/page.tsx` - Converted to server component with limit gate
+
+**Test Results:** All 739 tests pass
+
