@@ -128,9 +128,9 @@ describe('Stripe Webhook Logic', () => {
   });
 
   describe('Checkout Session Metadata', () => {
-    const extractMetadata = (
-      session: { metadata?: Record<string, string> | null }
-    ): { organizationId: string | null } => {
+    const extractMetadata = (session: {
+      metadata?: Record<string, string> | null;
+    }): { organizationId: string | null } => {
       return {
         organizationId: session.metadata?.organizationId || null,
       };

@@ -27,11 +27,7 @@ describe('SDK Retry Logic', () => {
   });
 
   describe('Exponential Backoff Calculation', () => {
-    const calculateDelay = (
-      attempt: number,
-      baseDelayMs: number,
-      maxDelayMs: number
-    ): number => {
+    const calculateDelay = (attempt: number, baseDelayMs: number, maxDelayMs: number): number => {
       return Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs);
     };
 

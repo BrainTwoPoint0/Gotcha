@@ -5,10 +5,7 @@
 
 describe('SDK Device Utilities', () => {
   describe('Touch Device Detection', () => {
-    const isTouchDevice = (
-      hasOntouchstart: boolean,
-      maxTouchPoints: number
-    ): boolean => {
+    const isTouchDevice = (hasOntouchstart: boolean, maxTouchPoints: number): boolean => {
       return hasOntouchstart || maxTouchPoints > 0;
     };
 
@@ -30,10 +27,7 @@ describe('SDK Device Utilities', () => {
   });
 
   describe('Responsive Size Calculation', () => {
-    const getResponsiveSize = (
-      size: 'sm' | 'md' | 'lg',
-      isTouch: boolean
-    ): number => {
+    const getResponsiveSize = (size: 'sm' | 'md' | 'lg', isTouch: boolean): number => {
       const sizes = {
         sm: { desktop: 24, mobile: 32 },
         md: { desktop: 32, mobile: 36 },

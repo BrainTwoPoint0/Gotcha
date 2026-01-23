@@ -120,9 +120,11 @@ test.describe('Dashboard Navigation', () => {
     // Check that analytics is mentioned somewhere on the site
     const analyticsText = page.getByText(/analytics/i);
     // Analytics should be mentioned (either in nav or as a feature)
-    await expect(analyticsText.first()).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Analytics might only show after login, that's okay
-    });
+    await expect(analyticsText.first())
+      .toBeVisible({ timeout: 5000 })
+      .catch(() => {
+        // Analytics might only show after login, that's okay
+      });
   });
 
   test('should show Pro badge for premium features', async ({ page }) => {

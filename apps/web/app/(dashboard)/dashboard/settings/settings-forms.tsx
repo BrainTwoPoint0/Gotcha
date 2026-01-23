@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/app/components/Button';
 
 interface ProfileFormProps {
   name: string | null;
@@ -77,13 +78,9 @@ export function ProfileForm({ name, email }: ProfileFormProps) {
 
       {success && <p className="text-sm text-green-600">Profile updated successfully!</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-      >
-        {loading ? 'Saving...' : 'Save Changes'}
-      </button>
+      <Button type="submit" loading={loading} loadingText="Saving...">
+        Save Changes
+      </Button>
     </form>
   );
 }
@@ -170,13 +167,9 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
 
       {success && <p className="text-sm text-green-600">Organization updated successfully!</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-      >
-        {loading ? 'Saving...' : 'Save Changes'}
-      </button>
+      <Button type="submit" loading={loading} loadingText="Saving...">
+        Save Changes
+      </Button>
     </form>
   );
 }

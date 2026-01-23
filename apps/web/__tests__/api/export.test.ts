@@ -211,7 +211,17 @@ describe('Export Functionality', () => {
   });
 
   describe('CSV Headers', () => {
-    const CSV_HEADERS = ['ID', 'Project', 'Type', 'Content', 'Title', 'Rating', 'Vote', 'Element', 'Date'];
+    const CSV_HEADERS = [
+      'ID',
+      'Project',
+      'Type',
+      'Content',
+      'Title',
+      'Rating',
+      'Vote',
+      'Element',
+      'Date',
+    ];
 
     it('should have correct header count', () => {
       expect(CSV_HEADERS.length).toBe(9);

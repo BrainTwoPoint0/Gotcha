@@ -5,10 +5,7 @@
 
 describe('GDPR Endpoint Logic', () => {
   describe('User Data Deletion Response', () => {
-    const createDeletionResponse = (
-      userId: string,
-      responsesDeleted: number
-    ) => {
+    const createDeletionResponse = (userId: string, responsesDeleted: number) => {
       return {
         status: 'deleted',
         userId,
@@ -249,9 +246,7 @@ describe('GDPR Endpoint Logic', () => {
     });
 
     it('should skip null and undefined values', () => {
-      const responses = [
-        { endUserMeta: { name: 'John', age: null, city: undefined } },
-      ];
+      const responses = [{ endUserMeta: { name: 'John', age: null, city: undefined } }];
 
       const result = aggregateMetadata(responses);
 

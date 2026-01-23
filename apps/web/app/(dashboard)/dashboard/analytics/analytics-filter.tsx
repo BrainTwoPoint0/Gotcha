@@ -47,7 +47,7 @@ export function AnalyticsFilter({ projects }: AnalyticsFilterProps) {
           <select
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 px-3 py-[9px] text-sm focus:border-slate-500 focus:ring-slate-500"
+            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-[9px] text-sm text-gray-900 focus:border-slate-500 focus:ring-slate-500"
           >
             <option value="">All Projects</option>
             {projects.map((project) => (
@@ -64,7 +64,7 @@ export function AnalyticsFilter({ projects }: AnalyticsFilterProps) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-slate-500"
+            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
 
@@ -74,7 +74,7 @@ export function AnalyticsFilter({ projects }: AnalyticsFilterProps) {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-slate-500"
+            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
 

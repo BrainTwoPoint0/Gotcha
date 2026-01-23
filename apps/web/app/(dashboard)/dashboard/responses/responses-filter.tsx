@@ -34,7 +34,7 @@ export function ResponsesFilter() {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          className="px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
         />
       </div>
       <div>
@@ -43,7 +43,7 @@ export function ResponsesFilter() {
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          className="px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
         />
       </div>
       <button

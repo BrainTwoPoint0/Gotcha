@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/app/components/Button';
 
 interface PlanActionsProps {
   currentPlan: string;
@@ -53,21 +54,18 @@ export function PlanActions({ currentPlan }: PlanActionsProps) {
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {currentPlan === 'PRO' ? (
-        <button
+        <Button
+          variant="secondary"
           onClick={handleManage}
-          disabled={loading}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
+          loading={loading}
+          loadingText="Loading..."
         >
-          {loading ? 'Loading...' : 'Manage Subscription'}
-        </button>
+          Manage Subscription
+        </Button>
       ) : (
-        <button
-          onClick={handleUpgrade}
-          disabled={loading}
-          className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-        >
-          {loading ? 'Loading...' : 'Upgrade to Pro - $29/month'}
-        </button>
+        <Button onClick={handleUpgrade} loading={loading} loadingText="Loading...">
+          Upgrade to Pro - $29/month
+        </Button>
       )}
     </div>
   );
