@@ -501,7 +501,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 - Playwright for E2E tests
 - Test scripts added to `package.json`
 
-**Test Coverage (323 unit tests + E2E):**
+**Test Coverage (468 unit tests + E2E):**
 
 | Category | Framework | Tests | Coverage |
 |----------|-----------|-------|----------|
@@ -521,6 +521,11 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 | GDPR Endpoints | Jest | 24 | Data deletion, export, metadata aggregation |
 | Dashboard Project | Jest | 17 | Slug generation, name validation |
 | Dashboard API Key | Jest | 34 | Key generation, hashing, masking, domain validation |
+| Component Logic | Jest | 22 | Button variants, Spinner sizes, Skeleton patterns |
+| Middleware Logic | Jest | 29 | Route protection, auth redirects, session validation |
+| URL Parameters | Jest | 35 | Pagination, date filters, slug parsing, API key extraction |
+| Error Handling | Jest | 37 | Response formatting, status codes, message sanitization |
+| Form Validation | Jest | 47 | Email, password, project name, slug, domain, rating |
 | Auth Pages | Playwright | 12 | Login, Signup, password validation, protected routes |
 | Marketing Pages | Playwright | 9 | Homepage, Pricing, Demo |
 | API Endpoints | Playwright | 8 | Auth errors, CORS, demo submission |
@@ -555,6 +560,11 @@ npm run test:e2e:ui   # Playwright with visual UI
 - `__tests__/sdk/constants.test.ts` - SDK constants tests
 - `__tests__/dashboard/project.test.ts` - Dashboard project logic tests
 - `__tests__/dashboard/api-key.test.ts` - Dashboard API key logic tests
+- `__tests__/components/button.test.tsx` - Button/Spinner/Skeleton component tests
+- `__tests__/lib/middleware.test.ts` - Middleware and auth redirect tests
+- `__tests__/lib/url-params.test.ts` - URL parameter handling tests
+- `__tests__/lib/error-handling.test.ts` - Error response formatting tests
+- `__tests__/lib/form-validation.test.ts` - Client-side form validation tests
 - `e2e/auth.spec.ts` - Authentication E2E tests
 - `e2e/marketing.spec.ts` - Marketing pages E2E tests
 - `e2e/api.spec.ts` - API endpoint E2E tests
