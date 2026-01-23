@@ -58,9 +58,21 @@ export interface SubmitResponsePayload {
 
 export interface GotchaResponse {
   id: string;
-  status: 'created' | 'duplicate';
+  status: 'created' | 'duplicate' | 'updated';
   createdAt: string;
   results?: PollResults;
+}
+
+export interface ExistingResponse {
+  id: string;
+  mode: ResponseMode;
+  content?: string | null;
+  title?: string | null;
+  rating?: number | null;
+  vote?: VoteType | null;
+  pollOptions?: string[] | null;
+  pollSelected?: string[] | null;
+  createdAt: string;
 }
 
 export interface PollResults {

@@ -138,7 +138,13 @@ describe('Export Formatting', () => {
     it('should escape content with special characters', () => {
       const headers = ['id', 'type', 'content', 'rating', 'createdAt'];
       const rows: ResponseData[] = [
-        { id: '1', type: 'feedback', content: 'Good, but "needs work"', rating: 3, createdAt: '2024-01-01' },
+        {
+          id: '1',
+          type: 'feedback',
+          content: 'Good, but "needs work"',
+          rating: 3,
+          createdAt: '2024-01-01',
+        },
       ];
       const csv = generateCSV(headers, rows);
 
@@ -334,7 +340,9 @@ describe('Export Formatting', () => {
     });
 
     it('should sanitize filename', () => {
-      expect(getContentDisposition('my file (1).csv')).toBe('attachment; filename="my_file__1_.csv"');
+      expect(getContentDisposition('my file (1).csv')).toBe(
+        'attachment; filename="my_file__1_.csv"'
+      );
     });
   });
 
@@ -401,7 +409,14 @@ describe('Export Formatting', () => {
 
     it('should select specified columns', () => {
       const data: Row[] = [
-        { id: '1', type: 'feedback', content: 'test', rating: 5, userId: 'u1', createdAt: '2024-01-01' },
+        {
+          id: '1',
+          type: 'feedback',
+          content: 'test',
+          rating: 5,
+          userId: 'u1',
+          createdAt: '2024-01-01',
+        },
       ];
       const result = selectColumns(data, ['id', 'type', 'content']);
 
@@ -411,7 +426,14 @@ describe('Export Formatting', () => {
 
     it('should handle empty selection', () => {
       const data: Row[] = [
-        { id: '1', type: 'feedback', content: 'test', rating: 5, userId: 'u1', createdAt: '2024-01-01' },
+        {
+          id: '1',
+          type: 'feedback',
+          content: 'test',
+          rating: 5,
+          userId: 'u1',
+          createdAt: '2024-01-01',
+        },
       ];
       const result = selectColumns(data, []);
 
@@ -420,7 +442,14 @@ describe('Export Formatting', () => {
 
     it('should handle multiple rows', () => {
       const data: Row[] = [
-        { id: '1', type: 'feedback', content: 'a', rating: 5, userId: 'u1', createdAt: '2024-01-01' },
+        {
+          id: '1',
+          type: 'feedback',
+          content: 'a',
+          rating: 5,
+          userId: 'u1',
+          createdAt: '2024-01-01',
+        },
         { id: '2', type: 'vote', content: 'b', rating: 4, userId: 'u2', createdAt: '2024-01-02' },
       ];
       const result = selectColumns(data, ['id', 'rating']);

@@ -21,7 +21,12 @@ interface ResponseItem {
 }
 
 interface PageProps {
-  searchParams: Promise<{ startDate?: string; endDate?: string; page?: string }>;
+  searchParams: Promise<{
+    startDate?: string;
+    endDate?: string;
+    page?: string;
+    elementId?: string;
+  }>;
 }
 
 export default async function ResponsesPage({ searchParams }: PageProps) {
@@ -68,6 +73,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     project: {
       organizationId: organization?.id,
     },
+    ...(params.elementId && { elementIdRaw: params.elementId }),
     ...(effectiveStartDate || endDate
       ? {
           createdAt: {
@@ -77,6 +83,31 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         }
       : {}),
   };
+
+  // Fetch unique elements for filter dropdown
+  const elements = organization
+    ? await prisma.response.groupBy({
+        by: ['elementIdRaw'],
+        where: {
+          project: {
+            organizationId: organization.id,
+          },
+        },
+        _count: {
+          elementIdRaw: true,
+        },
+        orderBy: {
+          _count: {
+            elementIdRaw: 'desc',
+          },
+        },
+      })
+    : [];
+
+  const elementOptions = elements.map((e) => ({
+    elementIdRaw: e.elementIdRaw,
+    count: e._count.elementIdRaw,
+  }));
 
   // Get total count for pagination
   const total = organization ? await prisma.response.count({ where }) : 0;
@@ -99,7 +130,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
           <p className="text-gray-600">View feedback from all your projects</p>
@@ -107,7 +138,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         <ExportButton isPro={isPro} />
       </div>
 
-      <ResponsesFilter />
+      <ResponsesFilter elements={elementOptions} />
 
       {!isPro && (
         <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
@@ -138,8 +169,8 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No responses found</h3>
           <p className="mt-2 text-gray-500">
-            {params.startDate || params.endDate
-              ? 'Try adjusting your date filters.'
+            {params.startDate || params.endDate || params.elementId
+              ? 'Try adjusting your filters.'
               : 'Responses from your SDK integrations will appear here.'}
           </p>
         </div>
@@ -149,19 +180,19 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
             <table className="min-w-full divide-y divide-gray-200 whitespace-nowrap">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Response
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Project
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Element
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
@@ -169,7 +200,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {responses.map((response) => (
                   <tr key={response.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4">
                       <div className="flex items-center gap-2">
                         {response.rating && (
                           <span className="text-yellow-500 text-sm">
@@ -183,25 +214,25 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                             {response.vote === 'UP' ? '👍' : '👎'}
                           </span>
                         )}
-                        <span className="text-sm text-gray-900 truncate max-w-xs">
+                        <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
                           {response.content || response.title || '-'}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       {response.project.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
                       >
                         {response.mode.toLowerCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                    <td className="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono">
                       {response.elementIdRaw}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       {new Date(response.createdAt).toLocaleString()}
                     </td>
                   </tr>

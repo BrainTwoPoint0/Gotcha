@@ -67,22 +67,22 @@ export default async function SettingsPage() {
 
       <div className="space-y-8">
         {/* Profile Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
           <ProfileForm name={dbUser?.name || null} email={user?.email || ''} />
         </div>
 
         {/* Organization Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Organization</h2>
           <OrganizationForm name={organization?.name || ''} slug={organization?.slug || ''} />
         </div>
 
         {/* Subscription Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscription</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <label className="block text-sm font-medium text-gray-500">Current Plan</label>
                 <p className="mt-1 text-gray-900 font-semibold">{subscription?.plan || 'Free'}</p>

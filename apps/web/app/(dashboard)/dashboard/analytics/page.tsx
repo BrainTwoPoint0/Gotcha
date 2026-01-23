@@ -7,7 +7,12 @@ import { AnalyticsFilter } from './analytics-filter';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ startDate?: string; endDate?: string; projectId?: string }>;
+  searchParams: Promise<{
+    startDate?: string;
+    endDate?: string;
+    projectId?: string;
+    elementId?: string;
+  }>;
 }
 
 export default async function AnalyticsPage({ searchParams }: PageProps) {
@@ -86,6 +91,30 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     orderBy: { name: 'asc' },
   });
 
+  // Fetch unique elements for filter
+  const elementsData = await prisma.response.groupBy({
+    by: ['elementIdRaw'],
+    where: {
+      project: {
+        organizationId: organization.id,
+        ...(params.projectId && { id: params.projectId }),
+      },
+    },
+    _count: {
+      elementIdRaw: true,
+    },
+    orderBy: {
+      _count: {
+        elementIdRaw: 'desc',
+      },
+    },
+  });
+
+  const elements = elementsData.map((e) => ({
+    elementIdRaw: e.elementIdRaw,
+    count: e._count.elementIdRaw,
+  }));
+
   // Parse date filters (default to last 30 days if no filters)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -93,6 +122,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   const startDate = params.startDate ? new Date(params.startDate) : thirtyDaysAgo;
   const endDate = params.endDate ? new Date(`${params.endDate}T23:59:59.999Z`) : new Date();
   const projectId = params.projectId || undefined;
+  const elementId = params.elementId || undefined;
 
   // Build where clause
   const where = {
@@ -100,6 +130,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       organizationId: organization.id,
       ...(projectId && { id: projectId }),
     },
+    ...(elementId && { elementIdRaw: elementId }),
     createdAt: {
       gte: startDate,
       lte: endDate,
@@ -124,6 +155,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       ? `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
       : 'Last 30 days';
   const selectedProject = projectId ? projects.find((p) => p.id === projectId) : null;
+  const selectedElement = elementId || null;
 
   // Process data for charts
   const dailyCounts: Record<string, number> = {};
@@ -206,15 +238,17 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
         <p className="text-gray-600">
-          {selectedProject ? `${selectedProject.name} - ` : 'All projects - '}
+          {selectedProject ? selectedProject.name : 'All projects'}
+          {selectedElement ? ` / ${selectedElement}` : ''}
+          {' - '}
           {dateRangeLabel}
         </p>
       </div>
 
-      <AnalyticsFilter projects={projects} />
+      <AnalyticsFilter projects={projects} elements={elements} />
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Responses" value={totalResponses.toString()} />
         <StatCard label="Avg Rating" value={avgRating ? `${avgRating}/5` : '-'} />
         <StatCard label="Positive Rate" value={positiveRate !== null ? `${positiveRate}%` : '-'} />

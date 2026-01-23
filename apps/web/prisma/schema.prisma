@@ -84,11 +84,12 @@ model Project {
   settings Json @default("{}")
 
   // Relations
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeys      ApiKey[]
-  elements     Element[]
-  responses    Response[]
-  experiments  Experiment[]
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeys        ApiKey[]
+  elements       Element[]
+  responses      Response[]
+  experiments    Experiment[]
+  metadataFields MetadataField[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -173,6 +174,8 @@ model Response {
   element    Element?    @relation(fields: [elementId], references: [id], onDelete: SetNull)
   experiment Experiment? @relation(fields: [experimentId], references: [id], onDelete: SetNull)
 
+  // Note: Unique constraint on [projectId, elementIdRaw, endUserId] not used
+  // because existing data has duplicates. Edit checks handled in application layer.
   @@index([projectId])
   @@index([elementId])
   @@index([projectId, elementIdRaw])
@@ -225,6 +228,26 @@ enum ExperimentStatus {
   RUNNING
   PAUSED
   COMPLETED
+}
+
+// ============================================
+// METADATA FIELDS
+// ============================================
+
+model MetadataField {
+  id          String   @id @default(cuid())
+  projectId   String
+  fieldKey    String   // e.g., "age", "location", "plan"
+  displayName String?  // e.g., "Age Group", "Country"
+  fieldType   String   @default("string") // "string" | "number" | "boolean"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, fieldKey])
+  @@index([projectId])
 }
 
 // ============================================

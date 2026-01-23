@@ -141,7 +141,7 @@ export function Gotcha({
     };
   }, [showOnHover]);
 
-  const { submit, isLoading, error } = useSubmit({
+  const { submit, isLoading, error, existingResponse, isEditing } = useSubmit({
     elementId,
     mode,
     experimentId,
@@ -224,10 +224,12 @@ export function Gotcha({
           promptText={promptText}
           placeholder={placeholder}
           submitText={submitText}
-          thankYouMessage={thankYouMessage}
+          thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
           isLoading={isLoading}
           isSubmitted={isSubmitted}
           error={error}
+          existingResponse={existingResponse}
+          isEditing={isEditing}
           onSubmit={handleSubmit}
           onClose={handleClose}
           anchorRect={anchorRect || undefined}
@@ -254,10 +256,12 @@ export function Gotcha({
               promptText={promptText}
               placeholder={placeholder}
               submitText={submitText}
-              thankYouMessage={thankYouMessage}
+              thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
               isLoading={isLoading}
               isSubmitted={isSubmitted}
               error={error}
+              existingResponse={existingResponse}
+              isEditing={isEditing}
               onSubmit={handleSubmit}
               onClose={handleClose}
               anchorRect={anchorRect || undefined}

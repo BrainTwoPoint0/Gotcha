@@ -6,22 +6,33 @@ interface VoteModeProps {
   theme: 'light' | 'dark' | 'custom';
   isLoading: boolean;
   onSubmit: (data: { vote: 'up' | 'down' }) => void;
+  initialVote?: 'up' | 'down' | null;
+  isEditing?: boolean;
 }
 
-export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
+export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = false }: VoteModeProps) {
   const [isTouch, setIsTouch] = useState(false);
-  const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(null);
+  const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(initialVote || null);
+  const [previousVote, setPreviousVote] = useState<'up' | 'down' | null>(initialVote || null);
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
   }, []);
 
-  // Reset active vote when loading completes
+  // Update when initialVote changes (e.g., after loading existing response)
   useEffect(() => {
-    if (!isLoading) {
+    if (initialVote !== undefined) {
+      setPreviousVote(initialVote);
+      setActiveVote(initialVote);
+    }
+  }, [initialVote]);
+
+  // Reset active vote when loading completes (but keep previous vote for edit mode)
+  useEffect(() => {
+    if (!isLoading && !isEditing) {
       setActiveVote(null);
     }
-  }, [isLoading]);
+  }, [isLoading, isEditing]);
 
   const handleVote = (vote: 'up' | 'down') => {
     setActiveVote(vote);
@@ -30,20 +41,27 @@ export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
 
   const isDark = theme === 'dark';
 
-  const buttonBase: React.CSSProperties = {
-    flex: 1,
-    padding: isTouch ? '16px 20px' : '12px 16px',
-    border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-    borderRadius: isTouch ? 12 : 8,
-    backgroundColor: isDark ? '#374151' : '#f9fafb',
-    color: isDark ? '#f9fafb' : '#111827',
-    fontSize: isTouch ? 28 : 24,
-    cursor: isLoading ? 'not-allowed' : 'pointer',
-    transition: 'all 150ms ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: isTouch ? 10 : 8,
+  const getButtonStyles = (voteType: 'up' | 'down'): React.CSSProperties => {
+    const isSelected = previousVote === voteType;
+    return {
+      flex: 1,
+      padding: isTouch ? '16px 20px' : '12px 16px',
+      border: isSelected
+        ? `2px solid ${voteType === 'up' ? '#22c55e' : '#ef4444'}`
+        : `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+      borderRadius: isTouch ? 12 : 8,
+      backgroundColor: isSelected
+        ? (voteType === 'up' ? (isDark ? '#14532d' : '#dcfce7') : (isDark ? '#450a0a' : '#fee2e2'))
+        : (isDark ? '#374151' : '#f9fafb'),
+      color: isDark ? '#f9fafb' : '#111827',
+      fontSize: isTouch ? 28 : 24,
+      cursor: isLoading ? 'not-allowed' : 'pointer',
+      transition: 'all 150ms ease',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: isTouch ? 10 : 8,
+    };
   };
 
   const iconSize = isTouch ? 28 : 24;
@@ -61,18 +79,23 @@ export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
         type="button"
         onClick={() => handleVote('up')}
         disabled={isLoading}
-        style={buttonBase}
+        style={getButtonStyles('up')}
         aria-label="Vote up - I like this"
+        aria-pressed={previousVote === 'up'}
       >
         {isLoading && activeVote === 'up' ? (
           <>
             <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
-            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Sending...</span>
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>
+              {isEditing ? 'Updating...' : 'Sending...'}
+            </span>
           </>
         ) : (
           <>
             <ThumbsUpIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Like</span>
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>
+              {previousVote === 'up' ? 'Liked' : 'Like'}
+            </span>
           </>
         )}
       </button>
@@ -81,18 +104,23 @@ export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
         type="button"
         onClick={() => handleVote('down')}
         disabled={isLoading}
-        style={buttonBase}
+        style={getButtonStyles('down')}
         aria-label="Vote down - I don't like this"
+        aria-pressed={previousVote === 'down'}
       >
         {isLoading && activeVote === 'down' ? (
           <>
             <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
-            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Sending...</span>
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>
+              {isEditing ? 'Updating...' : 'Sending...'}
+            </span>
           </>
         ) : (
           <>
             <ThumbsDownIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Dislike</span>
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>
+              {previousVote === 'down' ? 'Disliked' : 'Dislike'}
+            </span>
           </>
         )}
       </button>

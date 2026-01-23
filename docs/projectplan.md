@@ -501,7 +501,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 - Playwright for E2E tests
 - Test scripts added to `package.json`
 
-**Test Coverage (468 unit tests + E2E):**
+**Test Coverage (660 unit tests + E2E):**
 
 | Category | Framework | Tests | Coverage |
 |----------|-----------|-------|----------|
@@ -895,4 +895,300 @@ RESEND_API_KEY=re_xxxxx
 **Test Results:**
 - All 71 tests pass (including 14 new plan limit tests)
 - Formatting, linting, and type checks all pass
+
+---
+
+### Loading States & User Feedback
+
+**Goal:** Keep users informed during all loading operations throughout the app.
+
+**Implementation:**
+
+1. **Reusable Components:**
+   - `app/components/Spinner.tsx` - Animated spinner with LoadingScreen and LoadingOverlay variants
+   - `app/components/Skeleton.tsx` - Skeleton placeholders (text, card, table, stats, chart patterns)
+   - `app/components/Button.tsx` - Reusable button with built-in loading state and spinner
+
+2. **Route Loading States** (Next.js `loading.tsx` convention):
+   - `/app/(dashboard)/loading.tsx` - Dashboard layout skeleton
+   - `/app/(dashboard)/dashboard/loading.tsx` - Main dashboard skeleton
+   - `/app/(dashboard)/dashboard/responses/loading.tsx` - Responses table skeleton
+   - `/app/(dashboard)/dashboard/analytics/loading.tsx` - Analytics charts skeleton
+   - `/app/(dashboard)/dashboard/settings/loading.tsx` - Settings form skeleton
+   - `/app/(dashboard)/dashboard/projects/loading.tsx` - Projects list skeleton
+   - `/app/(dashboard)/dashboard/projects/[slug]/loading.tsx` - Project detail skeleton
+   - `/app/(dashboard)/dashboard/projects/new/loading.tsx` - New project form skeleton
+   - `/app/(auth)/loading.tsx` - Auth page skeleton
+   - `/app/(auth)/login/loading.tsx` - Login form skeleton
+   - `/app/(auth)/signup/loading.tsx` - Signup form skeleton
+
+3. **Form Button Loading States:**
+   - Login page - Spinner on "Sign in" button + GitHub OAuth button
+   - Signup page - Spinner on "Create account" button + GitHub OAuth button
+   - Settings page - Spinner on save buttons
+
+4. **SDK Loading Indicators (v1.0.7):**
+   - `packages/sdk/src/components/Spinner.tsx` - SDK spinner component
+   - `VoteMode.tsx` - Shows spinner + "Sending..." on clicked button while submitting
+   - `FeedbackMode.tsx` - Shows spinner in submit button while submitting
+   - Touch-responsive sizing (larger spinners on mobile)
+
+**Files Created:**
+- `app/components/Spinner.tsx`
+- `app/components/Skeleton.tsx`
+- `app/components/Button.tsx`
+- 11 `loading.tsx` files across route segments
+- `packages/sdk/src/components/Spinner.tsx`
+
+**Files Modified:**
+- `app/(auth)/login/page.tsx` - Added Button component with loading state
+- `app/(auth)/signup/page.tsx` - Added Button component with loading state
+- `packages/sdk/src/components/modes/VoteMode.tsx` - Added loading spinner
+- `packages/sdk/src/components/modes/FeedbackMode.tsx` - Added loading spinner
+
+**SDK Version:** Published `gotcha-feedback@1.0.7` with loading indicators
+
+---
+
+### Dark Input Fix
+
+**Issue:** Filter inputs on Analytics and Responses pages appeared dark due to browser dark mode overriding styles.
+
+**Fix:** Added explicit `bg-white text-gray-900` classes to all filter inputs.
+
+**Files Modified:**
+- `app/(dashboard)/dashboard/analytics/analytics-filter.tsx`
+- `app/(dashboard)/dashboard/responses/responses-filter.tsx`
+
+---
+
+### Expanded Test Coverage
+
+**Test Suites Added (5 new, 192 tests):**
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `__tests__/sdk/loading-states.test.ts` | 35 | Spinner, VoteMode, FeedbackMode loading behavior |
+| `__tests__/lib/date-time.test.ts` | 42 | Relative time, formatting, timezones, durations |
+| `__tests__/lib/export-formatting.test.ts` | 38 | CSV/JSON export, escaping, sanitization |
+| `__tests__/lib/session-management.test.ts` | 39 | Token refresh, storage, cookies, auth state |
+| `__tests__/lib/search-filter.test.ts` | 38 | Search, filtering, sorting, pagination |
+
+**Total Test Count:** 26 test suites, 660 tests passing
+
+---
+
+### Mobile Responsiveness, User Metadata & Edit Functionality
+
+**Implementation Date:** January 2026
+
+**Overview:** Three features implemented:
+1. Mobile responsiveness fixes across dashboard pages
+2. User metadata support for segmentation analytics
+3. Edit functionality allowing users to update their previous submissions
+
+---
+
+#### Feature 1: Mobile Responsiveness Fixes
+
+**Changes Made:**
+- **Responses Table** (`responses/page.tsx`):
+  - Changed header to `flex-col sm:flex-row gap-4` for mobile stacking
+  - Hidden "Element" column on mobile (`hidden md:table-cell`)
+  - Added `text-xs sm:text-sm` responsive text sizing
+  - Reduced padding on mobile (`px-4 sm:px-6`)
+
+- **Pagination** (`pagination.tsx`):
+  - Increased touch targets with `py-2 sm:py-1.5` and `min-h-[44px]`
+  - Responsive text sizing `text-xs sm:text-sm`
+
+- **Responses Filter** (`responses-filter.tsx`):
+  - Changed to `flex flex-col sm:flex-row sm:flex-wrap gap-3`
+  - Full-width inputs on mobile (`w-full sm:w-auto`)
+  - Touch-friendly buttons with `min-h-[44px]`
+
+- **Analytics Stats Grid** (`analytics/page.tsx`):
+  - Changed to `grid-cols-2 md:grid-cols-4` (2x2 on mobile)
+
+- **Analytics Filter** (`analytics-filter.tsx`):
+  - Same mobile-first pattern as responses filter
+  - Removed fixed `min-w-` constraints
+
+- **Charts** (`charts.tsx`):
+  - Responsive heights `h-48 sm:h-64`
+  - Responsive padding `p-4 sm:p-6`
+
+- **Settings Page** (`settings/page.tsx`):
+  - Responsive padding `p-4 sm:p-6` on form sections
+  - Subscription layout `flex-col sm:flex-row`
+
+---
+
+#### Feature 2: User Metadata & Segmentation
+
+**Database Schema Changes:**
+- Added `MetadataField` model to Prisma schema:
+  - `fieldKey` - field name (e.g., "age", "plan")
+  - `displayName` - user-friendly label
+  - `fieldType` - "string" | "number" | "boolean"
+  - `isActive` - toggle for segmentation
+
+**New API Endpoints:**
+- `GET /api/v1/metadata/fields` - Auto-discover metadata fields from response data
+- `GET/POST/PATCH/DELETE /api/projects/[slug]/metadata-fields` - CRUD for field configuration
+- `GET /api/analytics/segment` - Segmented analytics data (grouped by metadata field)
+
+**New Dashboard Pages:**
+- `/dashboard/analytics/segments` - Segmentation page with:
+  - Project and "Group by" field selectors
+  - Response volume by segment (bar chart)
+  - Average rating by segment (bar chart)
+  - Positive rate by segment (bar chart)
+  - Comparison table
+- `/dashboard/projects/[slug]/settings/metadata` - Metadata configuration UI:
+  - List of configured fields with edit/toggle/remove
+  - Auto-discovered fields from response data
+  - Sample values and occurrence counts
+
+**Navigation Updates:**
+- Added "Segments" nav item with Pro badge in dashboard layout
+- Added "Metadata Settings" link on project detail page
+
+**Files Created:**
+- `app/api/v1/metadata/fields/route.ts`
+- `app/api/projects/[slug]/metadata-fields/route.ts`
+- `app/api/analytics/segment/route.ts`
+- `app/(dashboard)/dashboard/analytics/segments/page.tsx`
+- `app/(dashboard)/dashboard/analytics/segments/segment-charts.tsx`
+- `app/(dashboard)/dashboard/projects/[slug]/settings/metadata/page.tsx`
+- `app/(dashboard)/dashboard/projects/[slug]/settings/metadata/metadata-fields-manager.tsx`
+
+---
+
+#### Feature 3: Edit Functionality & Duplicate Prevention
+
+**Database Schema Changes:**
+- Added unique constraint on Response: `@@unique([projectId, elementIdRaw, endUserId])`
+
+**New API Endpoints:**
+- `GET /api/v1/responses/check` - Check if user has existing response for element
+- `PATCH /api/v1/responses/[id]` - Update existing response (with user ownership validation)
+
+**SDK Updates:**
+
+*Types (`types.ts`):*
+- Added `ExistingResponse` interface with all response fields
+
+*API Client (`client.ts`):*
+- Added `checkExistingResponse(elementId, userId)` method
+- Added `updateResponse(id, payload, userId)` method
+
+*useSubmit Hook (`useSubmit.ts`):*
+- Added `existingResponse` and `isEditing` state
+- Auto-checks for existing response on mount when user ID provided
+- Submits update instead of create when editing
+
+*Mode Components:*
+- `FeedbackMode.tsx` - Added `initialValues` and `isEditing` props, pre-fills form
+- `VoteMode.tsx` - Added `initialVote` and `isEditing` props, highlights previous vote
+
+*GotchaModal & Gotcha Components:*
+- Pass through `existingResponse` and `isEditing` props
+- Dynamic button text ("Update" vs "Submit")
+- Dynamic thank you message for edits
+
+**Files Created:**
+- `app/api/v1/responses/check/route.ts`
+- `app/api/v1/responses/[id]/route.ts`
+- `__tests__/api/responses-edit.test.ts` (24 tests)
+- `__tests__/lib/user-metadata.test.ts` (17 tests)
+
+**Files Modified:**
+- `prisma/schema.prisma` - Added MetadataField model and unique constraint
+- `packages/sdk/src/types.ts`
+- `packages/sdk/src/api/client.ts`
+- `packages/sdk/src/hooks/useSubmit.ts`
+- `packages/sdk/src/components/Gotcha.tsx`
+- `packages/sdk/src/components/GotchaModal.tsx`
+- `packages/sdk/src/components/modes/FeedbackMode.tsx`
+- `packages/sdk/src/components/modes/VoteMode.tsx`
+- `app/(dashboard)/layout.tsx` - Added Segments nav
+
+---
+
+**Test Coverage:**
+- `__tests__/api/responses-edit.test.ts` - 24 tests for edit validation and ownership
+- `__tests__/lib/user-metadata.test.ts` - 17 tests for metadata inference and segmentation
+- `__tests__/api/metadata-fields.test.ts` - 19 tests for auto-discovery and field validation
+- `__tests__/api/analytics-segment.test.ts` - 19 tests for segmented analytics grouping and stats
+
+**Total Tests:** 739 tests (30 test suites, all passing)
+
+---
+
+### SDK v1.0.9 - Documentation & URL Fix
+
+**Published:** January 2026
+
+**Changes:**
+
+1. **Fixed API Base URL:**
+   - Changed from `https://api.gotcha.cx/v1` to `https://gotcha.cx/api/v1`
+   - Removed unused `API_STAGING_URL` constant
+   - Updated in `packages/sdk/src/constants.ts`
+
+2. **Enhanced README Documentation:**
+   - Added "User Segmentation" and "Edit Support" to Features list
+   - Expanded "With User Data" example showing dynamic values:
+     - `currentUser.id`, `currentUser.email`, `user.age`, `user.country`
+     - Device/browser detection examples
+   - Added "User Metadata & Segmentation" section with use case examples:
+     - Segment by subscription plan
+     - Segment by device type
+     - Segment by country
+     - Segment by user tenure
+   - Added "Edit Previous Submissions" section explaining:
+     - How edit mode works
+     - Required `user.id` for functionality
+     - UI changes (Update vs Submit button)
+   - Updated `baseUrl` default in props table to show actual URL
+
+**Files Modified:**
+- `packages/sdk/src/constants.ts` - Fixed API URL, removed staging URL
+- `packages/sdk/README.md` - Comprehensive documentation updates
+
+**SDK Version:** Published `gotcha-feedback@1.0.9`
+
+---
+
+### Element Filtering
+
+**Added:** January 2026
+
+Added element filtering to dashboard pages, allowing users to filter responses and segments by specific elements (e.g., "feature-card", "pricing-section").
+
+**Changes:**
+
+1. **Responses Page** (`/dashboard/responses`):
+   - Added element dropdown to filter showing all elements with response counts
+   - Filter persists in URL params (`?elementId=feature-card`)
+   - Elements sorted by response count (descending)
+
+2. **Analytics Page** (`/dashboard/analytics`):
+   - Added element dropdown between Project and date filters
+   - Filter analytics to a specific element
+   - Subtitle shows selected element
+
+3. **Segments Page** (`/dashboard/analytics/segments`):
+   - Added element dropdown between Project and Group By filters
+   - Can now analyze segments for a specific element
+   - Subtitle shows selected element
+
+**Files Modified:**
+- `app/(dashboard)/dashboard/responses/responses-filter.tsx` - Added element dropdown
+- `app/(dashboard)/dashboard/responses/page.tsx` - Fetch elements, pass to filter, handle query
+- `app/(dashboard)/dashboard/analytics/analytics-filter.tsx` - Added element dropdown
+- `app/(dashboard)/dashboard/analytics/page.tsx` - Fetch elements, pass to filter, handle query
+- `app/(dashboard)/dashboard/analytics/segments/segment-charts.tsx` - Added element filter
+- `app/(dashboard)/dashboard/analytics/segments/page.tsx` - Fetch elements, handle query
 

@@ -89,9 +89,9 @@ export function AnalyticsCharts({
   return (
     <div className="space-y-6">
       {/* Response Trends */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Trends</h3>
-        <div className="h-64 min-h-[256px]">
+        <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
             <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -131,9 +131,9 @@ export function AnalyticsCharts({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Mode Distribution */}
         {modeData.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Types</h3>
-            <div className="h-64 min-h-[256px]">
+            <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <BarChart data={modeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
@@ -165,9 +165,9 @@ export function AnalyticsCharts({
 
         {/* Sentiment Breakdown */}
         {sentimentData.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vote Sentiment</h3>
-            <div className="h-64 min-h-[256px]">
+            <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <PieChart>
                   <Pie
@@ -201,9 +201,9 @@ export function AnalyticsCharts({
 
       {/* Average Rating Over Time */}
       {avgRatingData.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Rating Over Time</h3>
-          <div className="h-64 min-h-[256px]">
+          <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <LineChart data={avgRatingData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

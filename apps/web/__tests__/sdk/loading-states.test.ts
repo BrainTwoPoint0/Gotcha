@@ -222,17 +222,10 @@ describe('SDK Loading States', () => {
       opacity: number;
     }
 
-    const getLoadingButtonStyles = (
-      isLoading: boolean,
-      isDark: boolean
-    ): ButtonStyles => {
+    const getLoadingButtonStyles = (isLoading: boolean, isDark: boolean): ButtonStyles => {
       return {
         cursor: isLoading ? 'not-allowed' : 'pointer',
-        backgroundColor: isLoading
-          ? isDark
-            ? '#4b5563'
-            : '#9ca3af'
-          : '#6366f1',
+        backgroundColor: isLoading ? (isDark ? '#4b5563' : '#9ca3af') : '#6366f1',
         opacity: isLoading ? 0.8 : 1,
       };
     };

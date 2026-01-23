@@ -1,5 +1,5 @@
 import { API_BASE_URL, RETRY_CONFIG } from '../constants';
-import { SubmitResponsePayload, GotchaResponse, GotchaError } from '../types';
+import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType } from '../types';
 import { getAnonymousId } from '../utils/anonymous';
 
 interface ApiClientConfig {
@@ -145,6 +145,97 @@ export function createApiClient(config: ApiClientConfig) {
       };
 
       return request<GotchaResponse>('POST', '/responses', fullPayload);
+    },
+
+    /**
+     * Check if a user has an existing response for an element
+     */
+    async checkExistingResponse(
+      elementId: string,
+      userId: string
+    ): Promise<ExistingResponse | null> {
+      const url = `${baseUrl}/responses/check?elementId=${encodeURIComponent(elementId)}&userId=${encodeURIComponent(userId)}`;
+
+      if (debug) {
+        console.log(`[Gotcha] GET /responses/check`);
+      }
+
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'GET',
+          headers,
+        },
+        DEFAULT_RETRY_CONFIG,
+        debug
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = data.error as GotchaError;
+        if (debug) {
+          console.error(`[Gotcha] Error: ${error.code} - ${error.message}`);
+        }
+        throw error;
+      }
+
+      if (data.exists) {
+        if (debug) {
+          console.log(`[Gotcha] Found existing response:`, data.response);
+        }
+        return data.response as ExistingResponse;
+      }
+
+      return null;
+    },
+
+    /**
+     * Update an existing response
+     */
+    async updateResponse(
+      id: string,
+      payload: {
+        content?: string;
+        title?: string;
+        rating?: number;
+        vote?: VoteType;
+        pollSelected?: string[];
+      },
+      userId?: string
+    ): Promise<GotchaResponse> {
+      const url = `${baseUrl}/responses/${id}${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`;
+
+      if (debug) {
+        console.log(`[Gotcha] PATCH /responses/${id}`, payload);
+      }
+
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify(payload),
+        },
+        DEFAULT_RETRY_CONFIG,
+        debug
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = data.error as GotchaError;
+        if (debug) {
+          console.error(`[Gotcha] Error: ${error.code} - ${error.message}`);
+        }
+        throw error;
+      }
+
+      if (debug) {
+        console.log(`[Gotcha] Response updated:`, data);
+      }
+
+      return data as GotchaResponse;
     },
 
     /**

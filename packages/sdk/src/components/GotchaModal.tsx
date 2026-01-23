@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Theme, GotchaStyles, ResponseMode } from '../types';
+import { Theme, GotchaStyles, ResponseMode, ExistingResponse } from '../types';
 import { cn } from '../utils/cn';
 import { FeedbackMode } from './modes/FeedbackMode';
 import { VoteMode } from './modes/VoteMode';
@@ -16,6 +16,9 @@ export interface GotchaModalProps {
   isLoading: boolean;
   isSubmitted: boolean;
   error: string | null;
+  // Edit mode
+  existingResponse?: ExistingResponse | null;
+  isEditing?: boolean;
   // Handlers
   onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down' }) => void;
   onClose: () => void;
@@ -34,6 +37,8 @@ export function GotchaModal({
   isLoading,
   isSubmitted,
   error,
+  existingResponse,
+  isEditing = false,
   onSubmit,
   onClose,
   anchorRect,
@@ -272,6 +277,11 @@ export function GotchaModal({
               isLoading={isLoading}
               onSubmit={onSubmit}
               customStyles={customStyles}
+              initialValues={existingResponse ? {
+                content: existingResponse.content,
+                rating: existingResponse.rating,
+              } : undefined}
+              isEditing={isEditing}
             />
           )}
           {mode === 'vote' && (
@@ -279,6 +289,8 @@ export function GotchaModal({
               theme={resolvedTheme}
               isLoading={isLoading}
               onSubmit={onSubmit}
+              initialVote={existingResponse?.vote || undefined}
+              isEditing={isEditing}
             />
           )}
         </>

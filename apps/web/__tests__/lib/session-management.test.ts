@@ -180,10 +180,7 @@ describe('Session Management', () => {
       ];
     };
 
-    const simulateCleanup = (
-      existingKeys: string[],
-      keysToRemove: string[]
-    ): CleanupResult => {
+    const simulateCleanup = (existingKeys: string[], keysToRemove: string[]): CleanupResult => {
       const clearedKeys: string[] = [];
       const errors: string[] = [];
 
@@ -315,7 +312,10 @@ describe('Session Management', () => {
   describe('Session Activity Tracking', () => {
     const IDLE_TIMEOUT_MINUTES = 30;
 
-    const isUserIdle = (lastActivityTime: number, timeoutMinutes: number = IDLE_TIMEOUT_MINUTES): boolean => {
+    const isUserIdle = (
+      lastActivityTime: number,
+      timeoutMinutes: number = IDLE_TIMEOUT_MINUTES
+    ): boolean => {
       const idleMs = Date.now() - lastActivityTime;
       return idleMs > timeoutMinutes * 60 * 1000;
     };
@@ -370,10 +370,7 @@ describe('Session Management', () => {
       domain?: string;
     }
 
-    const getSecureCookieOptions = (
-      isProduction: boolean,
-      maxAge?: number
-    ): CookieOptions => {
+    const getSecureCookieOptions = (isProduction: boolean, maxAge?: number): CookieOptions => {
       return {
         httpOnly: true,
         secure: isProduction,
@@ -410,8 +407,20 @@ describe('Session Management', () => {
   });
 
   describe('Auth State Machine', () => {
-    type AuthState = 'unauthenticated' | 'authenticating' | 'authenticated' | 'refreshing' | 'error';
-    type AuthEvent = 'LOGIN_START' | 'LOGIN_SUCCESS' | 'LOGIN_FAILURE' | 'LOGOUT' | 'REFRESH_START' | 'REFRESH_SUCCESS' | 'REFRESH_FAILURE';
+    type AuthState =
+      | 'unauthenticated'
+      | 'authenticating'
+      | 'authenticated'
+      | 'refreshing'
+      | 'error';
+    type AuthEvent =
+      | 'LOGIN_START'
+      | 'LOGIN_SUCCESS'
+      | 'LOGIN_FAILURE'
+      | 'LOGOUT'
+      | 'REFRESH_START'
+      | 'REFRESH_SUCCESS'
+      | 'REFRESH_FAILURE';
 
     const authTransition = (state: AuthState, event: AuthEvent): AuthState => {
       switch (state) {

@@ -1,6 +1,5 @@
-// API URLs
-export const API_BASE_URL = 'https://api.gotcha.cx/v1';
-export const API_STAGING_URL = 'https://api.staging.gotcha.cx/v1';
+// API URL
+export const API_BASE_URL = 'https://gotcha.cx/api/v1';
 
 // Error codes
 export const ERROR_CODES = {

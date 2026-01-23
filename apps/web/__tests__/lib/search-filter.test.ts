@@ -157,11 +157,7 @@ describe('Search & Filter Logic', () => {
     });
 
     it('should filter by date range', () => {
-      const results = filterByDateRange(
-        items,
-        new Date('2024-02-01'),
-        new Date('2024-03-31')
-      );
+      const results = filterByDateRange(items, new Date('2024-02-01'), new Date('2024-03-31'));
       expect(results).toHaveLength(2);
       expect(results.map((r) => r.id)).toEqual(['2', '3']);
     });
@@ -436,7 +432,10 @@ describe('Search & Filter Logic', () => {
     const applyFilters = (items: ResponseItem[], criteria: FilterCriteria): ResponseItem[] => {
       return items.filter((item) => {
         // Search filter
-        if (criteria.search && !item.content.toLowerCase().includes(criteria.search.toLowerCase())) {
+        if (
+          criteria.search &&
+          !item.content.toLowerCase().includes(criteria.search.toLowerCase())
+        ) {
           return false;
         }
 
@@ -468,10 +467,38 @@ describe('Search & Filter Logic', () => {
     };
 
     const items: ResponseItem[] = [
-      { id: '1', type: 'feedback', content: 'Great product', rating: 5, projectId: 'proj_a', createdAt: new Date('2024-01-15') },
-      { id: '2', type: 'vote', content: '', rating: null, projectId: 'proj_a', createdAt: new Date('2024-02-15') },
-      { id: '3', type: 'feedback', content: 'Needs work', rating: 2, projectId: 'proj_b', createdAt: new Date('2024-03-15') },
-      { id: '4', type: 'feedback', content: 'Great support', rating: 4, projectId: 'proj_a', createdAt: new Date('2024-04-15') },
+      {
+        id: '1',
+        type: 'feedback',
+        content: 'Great product',
+        rating: 5,
+        projectId: 'proj_a',
+        createdAt: new Date('2024-01-15'),
+      },
+      {
+        id: '2',
+        type: 'vote',
+        content: '',
+        rating: null,
+        projectId: 'proj_a',
+        createdAt: new Date('2024-02-15'),
+      },
+      {
+        id: '3',
+        type: 'feedback',
+        content: 'Needs work',
+        rating: 2,
+        projectId: 'proj_b',
+        createdAt: new Date('2024-03-15'),
+      },
+      {
+        id: '4',
+        type: 'feedback',
+        content: 'Great support',
+        rating: 4,
+        projectId: 'proj_a',
+        createdAt: new Date('2024-04-15'),
+      },
     ];
 
     it('should apply no filters when criteria is empty', () => {

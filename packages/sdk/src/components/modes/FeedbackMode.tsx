@@ -10,6 +10,11 @@ interface FeedbackModeProps {
   isLoading: boolean;
   onSubmit: (data: { content?: string; rating?: number }) => void;
   customStyles?: GotchaStyles;
+  initialValues?: {
+    content?: string | null;
+    rating?: number | null;
+  };
+  isEditing?: boolean;
 }
 
 export function FeedbackMode({
@@ -19,14 +24,26 @@ export function FeedbackMode({
   isLoading,
   onSubmit,
   customStyles,
+  initialValues,
+  isEditing = false,
 }: FeedbackModeProps) {
-  const [content, setContent] = useState('');
-  const [rating, setRating] = useState<number | null>(null);
+  const [content, setContent] = useState(initialValues?.content || '');
+  const [rating, setRating] = useState<number | null>(initialValues?.rating ?? null);
   const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
   }, []);
+
+  // Update local state when initialValues change (e.g., after loading existing response)
+  useEffect(() => {
+    if (initialValues?.content !== undefined) {
+      setContent(initialValues.content || '');
+    }
+    if (initialValues?.rating !== undefined) {
+      setRating(initialValues.rating ?? null);
+    }
+  }, [initialValues?.content, initialValues?.rating]);
 
   const isDark = theme === 'dark';
 
@@ -96,7 +113,7 @@ export function FeedbackMode({
         }}
       >
         {isLoading && <Spinner size={isTouch ? 18 : 16} color="#ffffff" />}
-        {isLoading ? 'Submitting...' : submitText}
+        {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : submitText)}
       </button>
     </form>
   );
