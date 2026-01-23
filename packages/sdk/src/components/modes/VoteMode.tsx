@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { isTouchDevice } from '../../utils/device';
+import { Spinner } from '../Spinner';
 
 interface VoteModeProps {
   theme: 'light' | 'dark' | 'custom';
@@ -9,10 +10,23 @@ interface VoteModeProps {
 
 export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
   const [isTouch, setIsTouch] = useState(false);
+  const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(null);
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
   }, []);
+
+  // Reset active vote when loading completes
+  useEffect(() => {
+    if (!isLoading) {
+      setActiveVote(null);
+    }
+  }, [isLoading]);
+
+  const handleVote = (vote: 'up' | 'down') => {
+    setActiveVote(vote);
+    onSubmit({ vote });
+  };
 
   const isDark = theme === 'dark';
 
@@ -45,24 +59,42 @@ export function VoteMode({ theme, isLoading, onSubmit }: VoteModeProps) {
     >
       <button
         type="button"
-        onClick={() => onSubmit({ vote: 'up' })}
+        onClick={() => handleVote('up')}
         disabled={isLoading}
         style={buttonBase}
         aria-label="Vote up - I like this"
       >
-        <ThumbsUpIcon size={iconSize} />
-        <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Like</span>
+        {isLoading && activeVote === 'up' ? (
+          <>
+            <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Sending...</span>
+          </>
+        ) : (
+          <>
+            <ThumbsUpIcon size={iconSize} />
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Like</span>
+          </>
+        )}
       </button>
 
       <button
         type="button"
-        onClick={() => onSubmit({ vote: 'down' })}
+        onClick={() => handleVote('down')}
         disabled={isLoading}
         style={buttonBase}
         aria-label="Vote down - I don't like this"
       >
-        <ThumbsDownIcon size={iconSize} />
-        <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Dislike</span>
+        {isLoading && activeVote === 'down' ? (
+          <>
+            <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Sending...</span>
+          </>
+        ) : (
+          <>
+            <ThumbsDownIcon size={iconSize} />
+            <span style={{ fontSize: isTouch ? 16 : 14, fontWeight: 500 }}>Dislike</span>
+          </>
+        )}
       </button>
     </div>
   );

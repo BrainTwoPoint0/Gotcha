@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GotchaStyles } from '../../types';
 import { isTouchDevice } from '../../utils/device';
+import { Spinner } from '../Spinner';
 
 interface FeedbackModeProps {
   theme: 'light' | 'dark' | 'custom';
@@ -88,8 +89,13 @@ export function FeedbackMode({
           ...buttonStyles,
           marginTop: 12,
           opacity: (!content.trim() && rating === null) ? 0.5 : 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
         }}
       >
+        {isLoading && <Spinner size={isTouch ? 18 : 16} color="#ffffff" />}
         {isLoading ? 'Submitting...' : submitText}
       </button>
     </form>
