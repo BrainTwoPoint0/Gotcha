@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -58,7 +59,21 @@ export function AnalyticsCharts({
   sentimentData,
   avgRatingData,
 }: AnalyticsChartsProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const hasData = trendData.some((d) => d.responses > 0);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+        <p className="text-gray-400">Loading charts...</p>
+      </div>
+    );
+  }
 
   if (!hasData) {
     return (
