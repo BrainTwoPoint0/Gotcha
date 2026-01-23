@@ -501,16 +501,30 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 - Playwright for E2E tests
 - Test scripts added to `package.json`
 
-**Test Coverage (92 tests total):**
+**Test Coverage (323 unit tests + E2E):**
 
 | Category | Framework | Tests | Coverage |
 |----------|-----------|-------|----------|
 | Validation Schemas | Jest | 37 | All modes (feedback, vote, poll, feature-request, A/B) |
 | Plan Limits | Jest | 6 | FREE, PRO |
-| API Logic | Jest | 20 | Mode mapping, poll calculations, query validation |
+| API Responses Logic | Jest | 20 | Mode mapping, poll calculations, query validation |
+| Email Templates | Jest | 20 | All 4 email types, fallback handling |
+| API Auth Logic | Jest | 27 | API key validation, domain allowlist, header parsing |
+| Stripe Webhooks | Jest | 24 | Event types, status mapping, subscription extraction |
+| Export Functionality | Jest | 23 | CSV escaping, date filtering, data transformation |
+| Rate Limiting | Jest | 23 | Plan limits, headers, idempotency |
+| Analytics Data | Jest | 18 | Aggregations, formatting, calculations |
+| SDK Device Utils | Jest | 15 | Touch detection, responsive sizing |
+| SDK Anonymous ID | Jest | 14 | ID generation, format validation |
+| SDK Retry Logic | Jest | 22 | Exponential backoff, retry decisions |
+| SDK Constants | Jest | 19 | URLs, error codes, defaults |
+| GDPR Endpoints | Jest | 24 | Data deletion, export, metadata aggregation |
+| Dashboard Project | Jest | 17 | Slug generation, name validation |
+| Dashboard API Key | Jest | 34 | Key generation, hashing, masking, domain validation |
 | Auth Pages | Playwright | 12 | Login, Signup, password validation, protected routes |
 | Marketing Pages | Playwright | 9 | Homepage, Pricing, Demo |
 | API Endpoints | Playwright | 8 | Auth errors, CORS, demo submission |
+| Pro Features | Playwright | 15 | Analytics access, export auth, Stripe endpoints |
 
 **Test Commands:**
 ```bash
@@ -527,10 +541,24 @@ npm run test:e2e:ui   # Playwright with visual UI
 - `playwright.config.ts` - Playwright configuration (Chromium, Firefox, WebKit, Mobile)
 - `__tests__/lib/validations.test.ts` - Validation schema tests
 - `__tests__/lib/plan-limits.test.ts` - Plan limit tests
+- `__tests__/lib/email-templates.test.ts` - Email template tests
+- `__tests__/lib/api-auth.test.ts` - API authentication logic tests
+- `__tests__/lib/rate-limit.test.ts` - Rate limiting tests
+- `__tests__/lib/analytics-data.test.ts` - Analytics data processing tests
 - `__tests__/api/responses.test.ts` - API logic tests
+- `__tests__/api/stripe-webhook.test.ts` - Stripe webhook handler tests
+- `__tests__/api/export.test.ts` - Export functionality tests
+- `__tests__/api/gdpr.test.ts` - GDPR endpoint logic tests
+- `__tests__/sdk/device.test.ts` - SDK device utility tests
+- `__tests__/sdk/anonymous.test.ts` - SDK anonymous ID tests
+- `__tests__/sdk/retry-logic.test.ts` - SDK retry logic tests
+- `__tests__/sdk/constants.test.ts` - SDK constants tests
+- `__tests__/dashboard/project.test.ts` - Dashboard project logic tests
+- `__tests__/dashboard/api-key.test.ts` - Dashboard API key logic tests
 - `e2e/auth.spec.ts` - Authentication E2E tests
 - `e2e/marketing.spec.ts` - Marketing pages E2E tests
 - `e2e/api.spec.ts` - API endpoint E2E tests
+- `e2e/pro-features.spec.ts` - Pro features E2E tests
 
 **Updated `.gitignore`:**
 - Added `test-results/`, `playwright-report/`, `coverage/` to prevent test artifacts from being committed
