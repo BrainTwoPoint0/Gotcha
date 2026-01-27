@@ -144,9 +144,27 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
   };
 }
 
-// Helper to create error responses
+// CORS headers for API responses
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key',
+};
+
+// Helper to create error responses with CORS headers
 export function apiError(code: string, message: string, status: number) {
-  return Response.json({ error: { code, message, status } }, { status });
+  return Response.json(
+    { error: { code, message, status } },
+    { status, headers: corsHeaders }
+  );
+}
+
+// Helper to create success responses with CORS headers
+export function apiSuccess<T>(data: T, status: number = 200, extraHeaders?: Record<string, string>) {
+  return Response.json(data, {
+    status,
+    headers: { ...corsHeaders, ...extraHeaders },
+  });
 }
 
 // Generate a new API key

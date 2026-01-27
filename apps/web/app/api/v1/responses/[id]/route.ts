@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { validateApiKey, apiError } from '@/lib/api-auth';
+import { validateApiKey, apiError, corsHeaders } from '@/lib/api-auth';
 import { z } from 'zod';
 
 type VoteType = 'UP' | 'DOWN';
@@ -99,18 +99,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       AB: 'ab',
     };
 
-    return Response.json({
-      id: updatedResponse.id,
-      status: 'updated' as const,
-      mode: modeMap[updatedResponse.mode] || updatedResponse.mode.toLowerCase(),
-      content: updatedResponse.content,
-      title: updatedResponse.title,
-      rating: updatedResponse.rating,
-      vote: updatedResponse.vote?.toLowerCase() || null,
-      pollOptions: updatedResponse.pollOptions,
-      pollSelected: updatedResponse.pollSelected,
-      createdAt: updatedResponse.createdAt.toISOString(),
-    });
+    return Response.json(
+      {
+        id: updatedResponse.id,
+        status: 'updated' as const,
+        mode: modeMap[updatedResponse.mode] || updatedResponse.mode.toLowerCase(),
+        content: updatedResponse.content,
+        title: updatedResponse.title,
+        rating: updatedResponse.rating,
+        vote: updatedResponse.vote?.toLowerCase() || null,
+        pollOptions: updatedResponse.pollOptions,
+        pollSelected: updatedResponse.pollSelected,
+        createdAt: updatedResponse.createdAt.toISOString(),
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('PATCH /api/v1/responses/[id] error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -162,21 +165,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       AB: 'ab',
     };
 
-    return Response.json({
-      id: response.id,
-      elementId: response.elementIdRaw,
-      mode: modeMap[response.mode] || response.mode.toLowerCase(),
-      content: response.content,
-      title: response.title,
-      rating: response.rating,
-      vote: response.vote?.toLowerCase() || null,
-      pollOptions: response.pollOptions,
-      pollSelected: response.pollSelected,
-      user: response.endUserId
-        ? { id: response.endUserId, ...(response.endUserMeta as Record<string, unknown>) }
-        : response.endUserMeta,
-      createdAt: response.createdAt.toISOString(),
-    });
+    return Response.json(
+      {
+        id: response.id,
+        elementId: response.elementIdRaw,
+        mode: modeMap[response.mode] || response.mode.toLowerCase(),
+        content: response.content,
+        title: response.title,
+        rating: response.rating,
+        vote: response.vote?.toLowerCase() || null,
+        pollOptions: response.pollOptions,
+        pollSelected: response.pollSelected,
+        user: response.endUserId
+          ? { id: response.endUserId, ...(response.endUserMeta as Record<string, unknown>) }
+          : response.endUserMeta,
+        createdAt: response.createdAt.toISOString(),
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('GET /api/v1/responses/[id] error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -187,10 +193,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+    headers: corsHeaders,
   });
 }

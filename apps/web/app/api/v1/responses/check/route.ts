@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { validateApiKey, apiError } from '@/lib/api-auth';
+import { validateApiKey, apiError, corsHeaders } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!existingResponse) {
-      return Response.json({ exists: false });
+      return Response.json({ exists: false }, { headers: corsHeaders });
     }
 
     // Map mode back to SDK format
@@ -59,20 +59,23 @@ export async function GET(request: NextRequest) {
       AB: 'ab',
     };
 
-    return Response.json({
-      exists: true,
-      response: {
-        id: existingResponse.id,
-        mode: modeMap[existingResponse.mode] || existingResponse.mode.toLowerCase(),
-        content: existingResponse.content,
-        title: existingResponse.title,
-        rating: existingResponse.rating,
-        vote: existingResponse.vote?.toLowerCase() || null,
-        pollOptions: existingResponse.pollOptions,
-        pollSelected: existingResponse.pollSelected,
-        createdAt: existingResponse.createdAt.toISOString(),
+    return Response.json(
+      {
+        exists: true,
+        response: {
+          id: existingResponse.id,
+          mode: modeMap[existingResponse.mode] || existingResponse.mode.toLowerCase(),
+          content: existingResponse.content,
+          title: existingResponse.title,
+          rating: existingResponse.rating,
+          vote: existingResponse.vote?.toLowerCase() || null,
+          pollOptions: existingResponse.pollOptions,
+          pollSelected: existingResponse.pollSelected,
+          createdAt: existingResponse.createdAt.toISOString(),
+        },
       },
-    });
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('GET /api/v1/responses/check error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -83,10 +86,6 @@ export async function GET(request: NextRequest) {
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+    headers: corsHeaders,
   });
 }

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { validateApiKey, apiError } from '@/lib/api-auth';
+import { validateApiKey, apiError, apiSuccess, corsHeaders } from '@/lib/api-auth';
 import {
   checkRateLimit,
   checkIdempotency,
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           { ...cached, status: 'duplicate' },
           {
             status: 201,
-            headers: rateLimit.headers,
+            headers: { ...corsHeaders, ...rateLimit.headers },
           }
         );
       }
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json(result, {
       status: 201,
-      headers: rateLimit.headers,
+      headers: { ...corsHeaders, ...rateLimit.headers },
     });
   } catch (error) {
     console.error('POST /api/v1/responses error:', error);
@@ -304,15 +304,18 @@ export async function GET(request: NextRequest) {
       createdAt: r.createdAt.toISOString(),
     }));
 
-    return Response.json({
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        hasMore: page * limit < total,
+    return Response.json(
+      {
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          hasMore: page * limit < total,
+        },
       },
-    });
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('GET /api/v1/responses error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -323,10 +326,6 @@ export async function GET(request: NextRequest) {
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key',
-    },
+    headers: corsHeaders,
   });
 }
