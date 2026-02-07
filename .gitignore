@@ -44,6 +44,9 @@ apps/web/app/generated/prisma
 .eslintcache
 *.tsbuildinfo
 
+# Local dev pages
+apps/web/app/dev
+
 # Misc
 *.local
 

@@ -124,11 +124,11 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
     };
   }
 
-  // Update last used timestamp (awaited to ensure it completes)
-  await prisma.apiKey.update({
+  // Update last used timestamp (fire-and-forget to avoid blocking the response)
+  prisma.apiKey.update({
     where: { id: apiKey.id },
     data: { lastUsedAt: new Date() },
-  });
+  }).catch(() => {});
 
   const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
 

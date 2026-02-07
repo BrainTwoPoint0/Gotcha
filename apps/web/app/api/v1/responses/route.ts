@@ -39,15 +39,30 @@ export async function POST(request: NextRequest) {
 
     const { apiKey } = authResult;
 
-    // Check rate limit
+    // Parse body and check rate limit + idempotency in parallel
+    const idempotencyKey = request.headers.get('idempotency-key');
     const planKey = apiKey.plan.toLowerCase() as PlanType;
-    const rateLimit = await checkRateLimit(apiKey.id, planKey);
+
+    const [body, rateLimit, idempotencyResult] = await Promise.all([
+      request.json(),
+      checkRateLimit(apiKey.id, planKey),
+      idempotencyKey ? checkIdempotency(idempotencyKey) : Promise.resolve(null),
+    ]);
+
     if (!rateLimit.success) {
       return apiError('RATE_LIMITED', 'Too many requests', 429);
     }
 
-    // Parse request body
-    const body = await request.json();
+    if (idempotencyResult?.isDuplicate && idempotencyResult.cachedResponse) {
+      const cached = JSON.parse(idempotencyResult.cachedResponse);
+      return Response.json(
+        { ...cached, status: 'duplicate' },
+        {
+          status: 201,
+          headers: { ...corsHeaders, ...rateLimit.headers },
+        }
+      );
+    }
 
     // Validate request body
     const validation = submitResponseSchema.safeParse(body);
@@ -57,22 +72,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-
-    // Check idempotency
-    const idempotencyKey = request.headers.get('idempotency-key');
-    if (idempotencyKey) {
-      const idempotencyResult = await checkIdempotency(idempotencyKey);
-      if (idempotencyResult.isDuplicate && idempotencyResult.cachedResponse) {
-        const cached = JSON.parse(idempotencyResult.cachedResponse);
-        return Response.json(
-          { ...cached, status: 'duplicate' },
-          {
-            status: 201,
-            headers: { ...corsHeaders, ...rateLimit.headers },
-          }
-        );
-      }
-    }
 
     // Get or create element
     let elementDbId: string | null = null;
@@ -190,9 +189,9 @@ export async function POST(request: NextRequest) {
       (result as Record<string, unknown>).results = results;
     }
 
-    // Cache response for idempotency
+    // Cache response for idempotency (fire-and-forget)
     if (idempotencyKey) {
-      await cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result));
+      cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result)).catch(() => {});
     }
 
     return Response.json(result, {
