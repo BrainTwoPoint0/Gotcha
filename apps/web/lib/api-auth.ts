@@ -125,10 +125,12 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
   }
 
   // Update last used timestamp (fire-and-forget to avoid blocking the response)
-  prisma.apiKey.update({
-    where: { id: apiKey.id },
-    data: { lastUsedAt: new Date() },
-  }).catch(() => {});
+  prisma.apiKey
+    .update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch(() => {});
 
   const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
 
@@ -153,14 +155,15 @@ export const corsHeaders = {
 
 // Helper to create error responses with CORS headers
 export function apiError(code: string, message: string, status: number) {
-  return Response.json(
-    { error: { code, message, status } },
-    { status, headers: corsHeaders }
-  );
+  return Response.json({ error: { code, message, status } }, { status, headers: corsHeaders });
 }
 
 // Helper to create success responses with CORS headers
-export function apiSuccess<T>(data: T, status: number = 200, extraHeaders?: Record<string, string>) {
+export function apiSuccess<T>(
+  data: T,
+  status: number = 200,
+  extraHeaders?: Record<string, string>
+) {
   return Response.json(data, {
     status,
     headers: { ...corsHeaders, ...extraHeaders },
