@@ -149,13 +149,9 @@ export function Gotcha({
     pollOptions: options,
     user,
     onSuccess: (response) => {
-      setIsSubmitted(true);
+      // Optimistic: success state is already shown to the user.
+      // Forward the real server response to the consumer callback.
       onSubmit?.(response);
-      // Auto-close after 2.5 seconds
-      setTimeout(() => {
-        closeModal();
-        setIsSubmitted(false);
-      }, 2500);
     },
     onError: (err) => {
       onError?.(err as unknown as GotchaError);
@@ -178,9 +174,19 @@ export function Gotcha({
 
   const handleSubmit = useCallback(
     (data: { content?: string; rating?: number; vote?: 'up' | 'down' }) => {
+      // Optimistic: show success immediately, don't wait for server
+      setIsSubmitted(true);
+
+      // Auto-close after 1.5s (no loading delay to wait for)
+      setTimeout(() => {
+        closeModal();
+        setIsSubmitted(false);
+      }, 1500);
+
+      // Fire API call in background
       submit(data);
     },
-    [submit]
+    [submit, closeModal]
   );
 
   // Don't render if disabled or not visible
