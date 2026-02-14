@@ -73,126 +73,98 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    // Get or create element
-    let elementDbId: string | null = null;
-    const existingElement = await prisma.element.findUnique({
-      where: {
-        projectId_elementId: {
-          projectId: apiKey.projectId,
-          elementId: data.elementId,
-        },
-      },
-    });
+    // Generate response ID and timestamp up front so we can respond immediately
+    const responseId = crypto.randomUUID();
+    const createdAt = new Date();
 
-    if (existingElement) {
-      elementDbId = existingElement.id;
-    } else {
-      // Auto-create element on first feedback
-      const newElement = await prisma.element.create({
-        data: {
-          projectId: apiKey.projectId,
-          elementId: data.elementId,
-        },
-      });
-      elementDbId = newElement.id;
+    const result = {
+      id: responseId,
+      status: 'created' as const,
+      createdAt: createdAt.toISOString(),
+    };
+
+    // Cache idempotency response early (fire-and-forget)
+    if (idempotencyKey) {
+      cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result)).catch(() => {});
     }
 
-    // Create response
-    const response = await prisma.response.create({
-      data: {
-        projectId: apiKey.projectId,
-        elementId: elementDbId,
-        elementIdRaw: data.elementId,
-        mode: modeMap[data.mode],
-        content: data.content,
-        title: data.title,
-        rating: data.rating,
-        vote: data.vote ? voteMap[data.vote] : null,
-        pollOptions: data.pollOptions,
-        pollSelected: data.pollSelected,
-        experimentId: data.experimentId,
-        variant: data.variant,
-        endUserId: data.user?.id,
-        endUserMeta: (data.user || {}) as object,
-        url: data.context?.url,
-        userAgent: data.context?.userAgent,
-        idempotencyKey: idempotencyKey,
-      },
-    });
+    // --- Respond immediately after validation ---
+    // DB writes (element lookup, response creation, usage tracking) happen async.
+    const asyncWrite = async () => {
+      try {
+        // Get or create element
+        let elementDbId: string | null = null;
+        const existingElement = await prisma.element.findUnique({
+          where: {
+            projectId_elementId: {
+              projectId: apiKey.projectId,
+              elementId: data.elementId,
+            },
+          },
+        });
 
-    // Increment usage counter and check for warnings
-    prisma.subscription
-      .updateMany({
-        where: { organizationId: apiKey.organizationId },
-        data: { responsesThisMonth: { increment: 1 } },
-      })
-      .then(async () => {
-        // Check if we should send usage warning email (only for FREE plan)
-        if (apiKey.plan === 'FREE') {
+        if (existingElement) {
+          elementDbId = existingElement.id;
+        } else {
+          const newElement = await prisma.element.create({
+            data: {
+              projectId: apiKey.projectId,
+              elementId: data.elementId,
+            },
+          });
+          elementDbId = newElement.id;
+        }
+
+        // Create response
+        await prisma.response.create({
+          data: {
+            id: responseId,
+            projectId: apiKey.projectId,
+            elementId: elementDbId,
+            elementIdRaw: data.elementId,
+            mode: modeMap[data.mode],
+            content: data.content,
+            title: data.title,
+            rating: data.rating,
+            vote: data.vote ? voteMap[data.vote] : null,
+            pollOptions: data.pollOptions,
+            pollSelected: data.pollSelected,
+            experimentId: data.experimentId,
+            variant: data.variant,
+            endUserId: data.user?.id,
+            endUserMeta: (data.user || {}) as object,
+            url: data.context?.url,
+            userAgent: data.context?.userAgent,
+            idempotencyKey: idempotencyKey,
+            createdAt: createdAt,
+          },
+        });
+
+        // Increment usage counter and check for warnings
+        const updateResult = await prisma.subscription.updateMany({
+          where: { organizationId: apiKey.organizationId },
+          data: { responsesThisMonth: { increment: 1 } },
+        });
+
+        if (updateResult && apiKey.plan === 'FREE') {
           const subscription = await prisma.subscription.findUnique({
             where: { organizationId: apiKey.organizationId },
           });
 
           if (subscription && shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
-            // Only send at specific thresholds to avoid spam (400, 450, 500)
             const threshold = subscription.responsesThisMonth;
             if (threshold === 400 || threshold === 450 || threshold === 500) {
               sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
             }
           }
         }
-      })
-      .catch(() => {
-        // Ignore errors - this is non-critical
-      });
-
-    // Note: Response alert emails are not sent automatically.
-    // This could be a Pro feature with notification preferences in the future.
-
-    // Prepare response
-    const result = {
-      id: response.id,
-      status: 'created' as const,
-      createdAt: response.createdAt.toISOString(),
+      } catch (err) {
+        console.error('Async DB write failed for response:', responseId, err);
+      }
     };
 
-    // For poll mode, include results if requested
-    if (data.mode === 'poll' && data.pollOptions) {
-      const pollResponses = await prisma.response.findMany({
-        where: {
-          projectId: apiKey.projectId,
-          elementIdRaw: data.elementId,
-          mode: 'POLL',
-        },
-        select: {
-          pollSelected: true,
-        },
-      });
-
-      // Count votes per option
-      const results: Record<string, number> = {};
-      data.pollOptions.forEach((opt) => {
-        results[opt] = 0;
-      });
-
-      pollResponses.forEach((r: { pollSelected: unknown }) => {
-        const selected = r.pollSelected as string[] | null;
-        if (selected) {
-          selected.forEach((s) => {
-            if (results[s] !== undefined) {
-              results[s]++;
-            }
-          });
-        }
-      });
-
-      (result as Record<string, unknown>).results = results;
-    }
-
-    // Cache response for idempotency (fire-and-forget)
-    if (idempotencyKey) {
-      cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result)).catch(() => {});
-    }
+    // Fire DB writes without awaiting — they complete in the background
+    asyncWrite();
 
     return Response.json(result, {
       status: 201,

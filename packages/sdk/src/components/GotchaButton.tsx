@@ -104,18 +104,8 @@ export function GotchaButton({
     WebkitBackdropFilter: 'blur(16px) saturate(170%)',
     color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.75)',
     boxShadow: isDark
-      ? [
-          '0 4px 14px rgba(0,0,0,0.45)',
-          '0 1px 3px rgba(0,0,0,0.35)',
-          'inset 0 1px 2px rgba(255,255,255,0.1)',
-          'inset 0 -1px 2px rgba(0,0,0,0.08)',
-        ].join(', ')
-      : [
-          '0 3px 12px rgba(0,0,0,0.12)',
-          '0 0 1px rgba(0,0,0,0.2)',
-          'inset 0 4px 8px rgba(255,255,255,0.95)',
-          'inset 0 -4px 8px rgba(0,0,0,0.08)',
-        ].join(', '),
+      ? '0 4px 14px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.35)'
+      : '0 3px 12px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.2)',
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
     opacity: shouldShow ? 1 : 0,
     transform: shouldShow ? 'scale(1)' : 'scale(0.6)',
