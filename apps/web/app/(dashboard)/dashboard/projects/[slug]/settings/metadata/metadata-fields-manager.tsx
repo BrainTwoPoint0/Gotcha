@@ -132,7 +132,16 @@ export function MetadataFieldsManager({
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </div>
-                    <Select label="Field Type" value={editValues.fieldType} onChange={(e) => setEditValues({ ...editValues, fieldType: (e.target as HTMLSelectElement).value })}>
+                    <Select
+                      label="Field Type"
+                      value={editValues.fieldType}
+                      onChange={(e) =>
+                        setEditValues({
+                          ...editValues,
+                          fieldType: (e.target as HTMLSelectElement).value,
+                        })
+                      }
+                    >
                       <option value="string">String</option>
                       <option value="number">Number</option>
                       <option value="boolean">Boolean</option>

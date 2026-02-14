@@ -51,7 +51,12 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         <div className="mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-            <DashboardFeedback elementId="analytics-page" promptText="What analytics would you like to see?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+            <DashboardFeedback
+              elementId="analytics-page"
+              promptText="What analytics would you like to see?"
+              userEmail={dbUser?.email}
+              userName={dbUser?.name ?? undefined}
+            />
           </div>
           <p className="text-gray-600">Insights into your feedback data</p>
         </div>
@@ -84,7 +89,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             Upgrade to Pro
           </Link>
         </div>
-
       </div>
     );
   }
@@ -243,7 +247,12 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-          <DashboardFeedback elementId="analytics-page" promptText="What analytics would you like to see?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+          <DashboardFeedback
+            elementId="analytics-page"
+            promptText="What analytics would you like to see?"
+            userEmail={dbUser?.email}
+            userName={dbUser?.name ?? undefined}
+          />
         </div>
         <p className="text-gray-600">
           {selectedProject ? selectedProject.name : 'All projects'}
@@ -272,7 +281,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         sentimentData={sentimentData}
         avgRatingData={avgRatingData}
       />
-
     </div>
   );
 }

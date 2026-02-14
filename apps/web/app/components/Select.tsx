@@ -14,7 +14,13 @@ export function Select({ label, className = '', children, ...props }: SelectProp
         {children}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg
+          className="h-4 w-4 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </div>

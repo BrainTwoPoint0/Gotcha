@@ -9,7 +9,12 @@ interface DashboardFeedbackProps {
   userName?: string;
 }
 
-export function DashboardFeedback({ elementId, promptText, userEmail, userName }: DashboardFeedbackProps) {
+export function DashboardFeedback({
+  elementId,
+  promptText,
+  userEmail,
+  userName,
+}: DashboardFeedbackProps) {
   return (
     <Gotcha
       elementId={elementId}

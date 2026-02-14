@@ -52,7 +52,11 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-        <Select label="Project" value={projectId} onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}>
+        <Select
+          label="Project"
+          value={projectId}
+          onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}
+        >
           <option value="">All Projects</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
@@ -61,7 +65,11 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
           ))}
         </Select>
 
-        <Select label="Element" value={elementId} onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}>
+        <Select
+          label="Element"
+          value={elementId}
+          onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}
+        >
           <option value="">All Elements</option>
           {elements.map((el) => (
             <option key={el.elementIdRaw} value={el.elementIdRaw}>

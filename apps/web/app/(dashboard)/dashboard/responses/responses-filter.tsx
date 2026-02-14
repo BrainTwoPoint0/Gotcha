@@ -41,7 +41,11 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
-      <Select label="Element" value={elementId} onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}>
+      <Select
+        label="Element"
+        value={elementId}
+        onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}
+      >
         <option value="">All Elements</option>
         {elements.map((el) => (
           <option key={el.elementIdRaw} value={el.elementIdRaw}>

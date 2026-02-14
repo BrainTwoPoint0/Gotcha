@@ -45,7 +45,12 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         <div className="mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
-            <DashboardFeedback elementId="segments-page" promptText="How can we improve segmentation?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+            <DashboardFeedback
+              elementId="segments-page"
+              promptText="How can we improve segmentation?"
+              userEmail={dbUser?.email}
+              userName={dbUser?.name ?? undefined}
+            />
           </div>
           <p className="text-gray-600">Analyze responses by user attributes</p>
         </div>
@@ -257,7 +262,12 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
-          <DashboardFeedback elementId="segments-page" promptText="How can we improve segmentation?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+          <DashboardFeedback
+            elementId="segments-page"
+            promptText="How can we improve segmentation?"
+            userEmail={dbUser?.email}
+            userName={dbUser?.name ?? undefined}
+          />
         </div>
         <p className="text-gray-600">
           {selectedProject ? `${selectedProject.name}` : 'All projects'}

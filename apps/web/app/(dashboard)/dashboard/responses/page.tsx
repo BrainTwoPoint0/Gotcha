@@ -135,7 +135,12 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
-            <DashboardFeedback elementId="responses-page" promptText="How can we improve the responses view?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+            <DashboardFeedback
+              elementId="responses-page"
+              promptText="How can we improve the responses view?"
+              userEmail={dbUser?.email}
+              userName={dbUser?.name ?? undefined}
+            />
           </div>
           <p className="text-gray-600">View feedback from all your projects</p>
         </div>
@@ -247,7 +252,6 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           <Pagination currentPage={page} totalPages={totalPages} total={total} />
         </div>
       )}
-
     </div>
   );
 }

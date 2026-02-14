@@ -205,7 +205,15 @@ export function AnalyticsCharts({
         <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Average Rating Over Time</h3>
-            <Gotcha elementId="analytics-avg-rating" mode="vote" position="inline" theme="light" showOnHover={false} size="sm" promptText="Is this chart insightful?" />
+            <Gotcha
+              elementId="analytics-avg-rating"
+              mode="vote"
+              position="inline"
+              theme="light"
+              showOnHover={false}
+              size="sm"
+              promptText="Is this chart insightful?"
+            />
           </div>
           <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>

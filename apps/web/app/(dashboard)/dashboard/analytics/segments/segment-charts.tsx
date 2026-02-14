@@ -106,7 +106,11 @@ export function SegmentCharts({
       {/* Filters */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-          <Select label="Project" value={projectId} onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}>
+          <Select
+            label="Project"
+            value={projectId}
+            onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}
+          >
             <option value="">All Projects</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -115,7 +119,11 @@ export function SegmentCharts({
             ))}
           </Select>
 
-          <Select label="Element" value={elementId} onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}>
+          <Select
+            label="Element"
+            value={elementId}
+            onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}
+          >
             <option value="">All Elements</option>
             {elements.map((el) => (
               <option key={el.elementIdRaw} value={el.elementIdRaw}>
@@ -124,7 +132,11 @@ export function SegmentCharts({
             ))}
           </Select>
 
-          <Select label="Group By" value={groupBy} onChange={(e) => setGroupBy((e.target as HTMLSelectElement).value)}>
+          <Select
+            label="Group By"
+            value={groupBy}
+            onChange={(e) => setGroupBy((e.target as HTMLSelectElement).value)}
+          >
             <option value="">Select a field</option>
             {availableFields.map((field) => (
               <option key={field.key} value={field.key}>
@@ -180,7 +192,15 @@ export function SegmentCharts({
           <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Response Volume by Segment</h3>
-              <Gotcha elementId="segments-volume-chart" mode="vote" position="inline" theme="light" showOnHover={false} size="sm" promptText="Is this chart useful?" />
+              <Gotcha
+                elementId="segments-volume-chart"
+                mode="vote"
+                position="inline"
+                theme="light"
+                showOnHover={false}
+                size="sm"
+                promptText="Is this chart useful?"
+              />
             </div>
             <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
@@ -211,7 +231,15 @@ export function SegmentCharts({
               <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Avg Rating by Segment</h3>
-                  <Gotcha elementId="segments-rating-chart" mode="vote" position="inline" theme="light" showOnHover={false} size="sm" promptText="Is this chart useful?" />
+                  <Gotcha
+                    elementId="segments-rating-chart"
+                    mode="vote"
+                    position="inline"
+                    theme="light"
+                    showOnHover={false}
+                    size="sm"
+                    promptText="Is this chart useful?"
+                  />
                 </div>
                 <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
@@ -239,7 +267,15 @@ export function SegmentCharts({
               <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Positive Rate by Segment</h3>
-                  <Gotcha elementId="segments-sentiment-chart" mode="vote" position="inline" theme="light" showOnHover={false} size="sm" promptText="Is this chart useful?" />
+                  <Gotcha
+                    elementId="segments-sentiment-chart"
+                    mode="vote"
+                    position="inline"
+                    theme="light"
+                    showOnHover={false}
+                    size="sm"
+                    promptText="Is this chart useful?"
+                  />
                 </div>
                 <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
@@ -268,7 +304,15 @@ export function SegmentCharts({
             <div className="p-4 sm:p-6 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-gray-900">Segment Comparison</h3>
-                <Gotcha elementId="segments-comparison-table" mode="vote" position="inline" theme="light" showOnHover={false} size="sm" promptText="Is this table useful?" />
+                <Gotcha
+                  elementId="segments-comparison-table"
+                  mode="vote"
+                  position="inline"
+                  theme="light"
+                  showOnHover={false}
+                  size="sm"
+                  promptText="Is this table useful?"
+                />
               </div>
             </div>
             <div className="overflow-x-auto">
