@@ -123,6 +123,10 @@ export function GotchaModal({
   // Responsive sizing - on mobile, use fixed positioning centered on screen
   const modalPadding = isMobile ? 20 : 16;
 
+  const layeredShadow = isDark
+    ? '0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.2)'
+    : '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.06)';
+
   const modalStyles: React.CSSProperties = isMobile
     ? {
         // Mobile: fixed position, centered on screen
@@ -135,14 +139,14 @@ export function GotchaModal({
         borderRadius: 12,
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
         color: isDark ? '#f9fafb' : '#111827',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-        border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+        boxShadow: layeredShadow,
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         zIndex: 9999,
-        transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+        transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: isVisible ? 1 : 0,
         transform: isVisible
           ? 'translate(-50%, -50%) scale(1)'
-          : 'translate(-50%, -50%) scale(0.95)',
+          : 'translate(-50%, -50%) scale(0.96)',
         ...customStyles?.modal,
       }
     : {
@@ -151,20 +155,20 @@ export function GotchaModal({
         left: '50%',
         width: 320,
         padding: modalPadding,
-        borderRadius: 8,
+        borderRadius: 10,
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
         color: isDark ? '#f9fafb' : '#111827',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-        border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+        boxShadow: layeredShadow,
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         zIndex: 9999,
         ...(showAbove
           ? { bottom: '100%', marginBottom: 8 }
           : { top: '100%', marginTop: 8 }),
-        transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+        transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: isVisible ? 1 : 0,
         transform: isVisible
           ? 'translateX(-50%) scale(1) translateY(0)'
-          : `translateX(-50%) scale(0.95) translateY(${showAbove ? '10px' : '-10px'})`,
+          : `translateX(-50%) scale(0.96) translateY(${showAbove ? '6px' : '-6px'})`,
         ...customStyles?.modal,
       };
 
@@ -187,23 +191,32 @@ export function GotchaModal({
           position: 'absolute',
           top: isMobile ? 12 : 8,
           right: isMobile ? 12 : 8,
-          width: isMobile ? 36 : 24,
-          height: isMobile ? 36 : 24,
+          width: isMobile ? 36 : 28,
+          height: isMobile ? 36 : 28,
           border: 'none',
-          background: 'none',
+          background: 'transparent',
           cursor: 'pointer',
-          color: isDark ? '#9ca3af' : '#6b7280',
+          color: isDark ? '#6b7280' : '#9ca3af',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 4,
+          borderRadius: 6,
+          transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+          e.currentTarget.style.color = isDark ? '#9ca3af' : '#6b7280';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = isDark ? '#6b7280' : '#9ca3af';
         }}
       >
-        <svg width={isMobile ? 18 : 14} height={isMobile ? 18 : 14} viewBox="0 0 14 14" fill="none">
+        <svg width={isMobile ? 16 : 12} height={isMobile ? 16 : 12} viewBox="0 0 14 14" fill="none">
           <path
             d="M1 1L13 13M1 13L13 1"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeLinecap="round"
           />
         </svg>
@@ -213,10 +226,12 @@ export function GotchaModal({
       <h2
         id="gotcha-modal-title"
         style={{
-          margin: '0 0 12px 0',
+          margin: '0 0 16px 0',
           fontSize: isMobile ? 16 : 14,
-          fontWeight: 500,
-          paddingRight: isMobile ? 40 : 24,
+          fontWeight: 600,
+          paddingRight: isMobile ? 40 : 32,
+          letterSpacing: '-0.01em',
+          lineHeight: 1.4,
         }}
       >
         {promptText || defaultPrompt}
@@ -227,26 +242,40 @@ export function GotchaModal({
         <div
           style={{
             textAlign: 'center',
-            padding: '20px 0',
+            padding: '24px 0',
             color: isDark ? '#10b981' : '#059669',
           }}
         >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{ margin: '0 auto 8px' }}
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              backgroundColor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(5,150,105,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px',
+            }}
           >
-            <path
-              d="M20 6L9 17L4 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <p style={{ margin: 0, fontSize: 14 }}>{thankYouMessage}</p>
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M20 6L9 17L4 12"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: isDark ? '#d1d5db' : '#374151' }}>
+            {thankYouMessage}
+          </p>
         </div>
       )}
 
@@ -254,12 +283,14 @@ export function GotchaModal({
       {error && !isSubmitted && (
         <div
           style={{
-            padding: 8,
+            padding: '8px 10px',
             marginBottom: 12,
-            borderRadius: 4,
-            backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
+            borderRadius: 8,
+            backgroundColor: isDark ? 'rgba(127,29,29,0.3)' : '#fef2f2',
+            border: `1px solid ${isDark ? 'rgba(254,202,202,0.1)' : 'rgba(220,38,38,0.1)'}`,
             color: isDark ? '#fecaca' : '#dc2626',
             fontSize: 13,
+            lineHeight: 1.4,
           }}
         >
           {error}

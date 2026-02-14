@@ -121,7 +121,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 text-center text-sm">
-          <p>&copy; 2025 Gotcha. All rights reserved.</p>
+          <p>&copy; Gotcha. All rights reserved.</p>
         </div>
       </div>
     </footer>

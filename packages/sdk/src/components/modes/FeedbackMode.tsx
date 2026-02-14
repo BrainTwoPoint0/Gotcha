@@ -56,14 +56,17 @@ export function FeedbackMode({
   const inputStyles: React.CSSProperties = {
     width: '100%',
     padding: isTouch ? '12px 14px' : '10px 12px',
-    border: `1px solid ${isDark ? '#374151' : '#d1d5db'}`,
-    borderRadius: isTouch ? 8 : 6,
-    backgroundColor: isDark ? '#374151' : '#ffffff',
+    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+    borderRadius: 8,
+    backgroundColor: isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc',
     color: isDark ? '#f9fafb' : '#111827',
     fontSize: isTouch ? 16 : 14, // 16px prevents iOS zoom on focus
     resize: 'vertical',
     minHeight: isTouch ? 100 : 80,
     fontFamily: 'inherit',
+    outline: 'none',
+    transition: 'border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    lineHeight: 1.5,
     ...customStyles?.input,
   };
 
@@ -71,13 +74,14 @@ export function FeedbackMode({
     width: '100%',
     padding: isTouch ? '14px 16px' : '10px 16px',
     border: 'none',
-    borderRadius: isTouch ? 8 : 6,
-    backgroundColor: isLoading ? (isDark ? '#4b5563' : '#9ca3af') : '#6366f1',
-    color: '#ffffff',
+    borderRadius: 8,
+    backgroundColor: isDark ? '#e2e8f0' : '#1e293b',
+    color: isDark ? '#1e293b' : '#ffffff',
     fontSize: isTouch ? 16 : 14,
     fontWeight: 500,
     cursor: isLoading ? 'not-allowed' : 'pointer',
-    transition: 'background-color 150ms ease',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    letterSpacing: '0.01em',
     ...customStyles?.submitButton,
   };
 
@@ -96,6 +100,16 @@ export function FeedbackMode({
         style={inputStyles}
         disabled={isLoading}
         aria-label="Your feedback"
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = '#1e293b';
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30,41,59,0.15)';
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.7)' : '#ffffff';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
+        }}
       />
 
       {/* Submit button */}
@@ -105,14 +119,30 @@ export function FeedbackMode({
         style={{
           ...buttonStyles,
           marginTop: 12,
-          opacity: (!content.trim() && rating === null) ? 0.5 : 1,
+          opacity: isLoading ? 0.8 : 1,
+          backgroundColor: (!content.trim() && rating === null)
+            ? (isDark ? '#374151' : '#e2e8f0')
+            : (isDark ? '#e2e8f0' : '#1e293b'),
+          color: (!content.trim() && rating === null)
+            ? (isDark ? '#6b7280' : '#94a3b8')
+            : (isDark ? '#1e293b' : '#ffffff'),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
         }}
+        onMouseEnter={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = isDark ? '#cbd5e1' : '#334155';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = isDark ? '#e2e8f0' : '#1e293b';
+          }
+        }}
       >
-        {isLoading && <Spinner size={isTouch ? 18 : 16} color="#ffffff" />}
+        {isLoading && <Spinner size={isTouch ? 18 : 16} color={isDark ? '#1e293b' : '#ffffff'} />}
         {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : submitText)}
       </button>
     </form>
@@ -128,14 +158,14 @@ interface StarRatingProps {
 
 function StarRating({ value, onChange, isDark, isTouch }: StarRatingProps) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const starSize = isTouch ? 32 : 20;
-  const buttonPadding = isTouch ? 6 : 2;
+  const starSize = isTouch ? 28 : 18;
+  const buttonPadding = isTouch ? 6 : 3;
 
   return (
     <div
       style={{
         display: 'flex',
-        gap: isTouch ? 8 : 4,
+        gap: isTouch ? 6 : 2,
       }}
       role="group"
       aria-label="Rating"
@@ -156,8 +186,9 @@ function StarRating({ value, onChange, isDark, isTouch }: StarRatingProps) {
               border: 'none',
               cursor: 'pointer',
               padding: buttonPadding,
-              color: isFilled ? '#f59e0b' : (isDark ? '#4b5563' : '#d1d5db'),
-              transition: 'color 150ms ease',
+              color: isFilled ? '#f59e0b' : (isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'),
+              transition: 'color 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: (hovered !== null && hovered >= star) ? 'scale(1.1)' : 'scale(1)',
             }}
           >
             <svg width={starSize} height={starSize} viewBox="0 0 24 24" fill="currentColor">
