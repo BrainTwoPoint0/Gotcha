@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { SegmentCharts } from './segment-charts';
+import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,10 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     return (
       <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+            <DashboardFeedback elementId="segments-page" promptText="How can we improve segmentation?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+          </div>
           <p className="text-gray-600">Analyze responses by user attributes</p>
         </div>
 
@@ -251,7 +255,10 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+          <DashboardFeedback elementId="segments-page" promptText="How can we improve segmentation?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+        </div>
         <p className="text-gray-600">
           {selectedProject ? `${selectedProject.name}` : 'All projects'}
           {selectedElement ? ` / ${selectedElement}` : ''}

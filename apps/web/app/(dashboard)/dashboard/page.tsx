@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
+import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 
 export const dynamic = 'force-dynamic';
 
@@ -143,7 +144,10 @@ export default async function DashboardPage() {
     return (
       <div>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <DashboardFeedback elementId="dashboard-overview" promptText="How can we improve the dashboard?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+          </div>
           <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
         </div>
 

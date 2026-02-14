@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Select } from '@/app/components/Select';
 
 interface ConfiguredField {
   id: string;
@@ -131,22 +132,11 @@ export function MetadataFieldsManager({
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Field Type
-                      </label>
-                      <select
-                        value={editValues.fieldType}
-                        onChange={(e) =>
-                          setEditValues({ ...editValues, fieldType: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="string">String</option>
-                        <option value="number">Number</option>
-                        <option value="boolean">Boolean</option>
-                      </select>
-                    </div>
+                    <Select label="Field Type" value={editValues.fieldType} onChange={(e) => setEditValues({ ...editValues, fieldType: (e.target as HTMLSelectElement).value })}>
+                      <option value="string">String</option>
+                      <option value="number">Number</option>
+                      <option value="boolean">Boolean</option>
+                    </Select>
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateField(field.id, editValues)}

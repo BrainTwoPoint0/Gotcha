@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { Select } from '@/app/components/Select';
 
 interface Project {
   id: string;
@@ -51,37 +52,23 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-        <div className="w-full sm:w-auto">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-          <select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            className="block w-full sm:w-auto rounded-md border border-gray-300 bg-white px-3 py-[9px] text-sm text-gray-900 focus:border-slate-500 focus:ring-slate-500"
-          >
-            <option value="">All Projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select label="Project" value={projectId} onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}>
+          <option value="">All Projects</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </Select>
 
-        <div className="w-full sm:w-auto">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Element</label>
-          <select
-            value={elementId}
-            onChange={(e) => setElementId(e.target.value)}
-            className="block w-full sm:w-auto rounded-md border border-gray-300 bg-white px-3 py-[9px] text-sm text-gray-900 focus:border-slate-500 focus:ring-slate-500"
-          >
-            <option value="">All Elements</option>
-            {elements.map((el) => (
-              <option key={el.elementIdRaw} value={el.elementIdRaw}>
-                {el.elementIdRaw} ({el.count})
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select label="Element" value={elementId} onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}>
+          <option value="">All Elements</option>
+          {elements.map((el) => (
+            <option key={el.elementIdRaw} value={el.elementIdRaw}>
+              {el.elementIdRaw} ({el.count})
+            </option>
+          ))}
+        </Select>
 
         <div className="w-full sm:w-auto">
           <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>

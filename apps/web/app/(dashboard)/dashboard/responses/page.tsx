@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ResponsesFilter } from './responses-filter';
 import { Pagination } from './pagination';
 import { ExportButton } from './export-button';
+import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,7 +133,10 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
+            <DashboardFeedback elementId="responses-page" promptText="How can we improve the responses view?" userEmail={dbUser?.email} userName={dbUser?.name ?? undefined} />
+          </div>
           <p className="text-gray-600">View feedback from all your projects</p>
         </div>
         <ExportButton isPro={isPro} />
@@ -243,6 +247,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           <Pagination currentPage={page} totalPages={totalPages} total={total} />
         </div>
       )}
+
     </div>
   );
 }

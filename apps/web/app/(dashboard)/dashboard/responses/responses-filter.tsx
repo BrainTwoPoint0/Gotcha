@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { Select } from '@/app/components/Select';
 
 interface Element {
   elementIdRaw: string;
@@ -40,21 +41,14 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
-      <div className="w-full sm:w-auto">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Element</label>
-        <select
-          value={elementId}
-          onChange={(e) => setElementId(e.target.value)}
-          className="w-full sm:w-auto sm:min-w-[140px] h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-        >
-          <option value="">All Elements</option>
-          {elements.map((el) => (
-            <option key={el.elementIdRaw} value={el.elementIdRaw}>
-              {el.elementIdRaw} ({el.count})
-            </option>
-          ))}
-        </select>
-      </div>
+      <Select label="Element" value={elementId} onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}>
+        <option value="">All Elements</option>
+        {elements.map((el) => (
+          <option key={el.elementIdRaw} value={el.elementIdRaw}>
+            {el.elementIdRaw} ({el.count})
+          </option>
+        ))}
+      </Select>
       <div className="w-full sm:w-auto">
         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
         <input
