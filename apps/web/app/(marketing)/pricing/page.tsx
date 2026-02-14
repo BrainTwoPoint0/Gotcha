@@ -22,6 +22,8 @@ const tiers = [
       'Unlimited responses',
       'Unlimited projects',
       'Full analytics dashboard',
+      'Poll results & element performance',
+      'User segmentation',
       'Unlimited data retention',
       'Export to CSV',
     ],
@@ -365,7 +367,7 @@ function App() {
               <h3 className="font-semibold text-gray-900 mb-2">What counts as a response?</h3>
               <p className="text-gray-600">
                 A response is any feedback submission from your users - whether it&apos;s a star
-                rating, thumbs up/down vote, or written feedback. Each unique submission counts as
+                rating, thumbs up/down vote, poll selection, or written feedback. Each unique submission counts as
                 one response.
               </p>
             </div>

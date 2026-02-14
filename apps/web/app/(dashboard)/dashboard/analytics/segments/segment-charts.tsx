@@ -194,12 +194,13 @@ export function SegmentCharts({
               <h3 className="text-lg font-semibold text-gray-900">Response Volume by Segment</h3>
               <Gotcha
                 elementId="segments-volume-chart"
-                mode="vote"
+                mode="poll"
+                options={['Keep', 'Remove']}
                 position="inline"
                 theme="light"
                 showOnHover={false}
                 size="sm"
-                promptText="Is this chart useful?"
+                promptText="Should we keep this chart?"
               />
             </div>
             <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
@@ -233,12 +234,13 @@ export function SegmentCharts({
                   <h3 className="text-lg font-semibold text-gray-900">Avg Rating by Segment</h3>
                   <Gotcha
                     elementId="segments-rating-chart"
-                    mode="vote"
+                    mode="poll"
+                    options={['Keep', 'Remove']}
                     position="inline"
                     theme="light"
                     showOnHover={false}
                     size="sm"
-                    promptText="Is this chart useful?"
+                    promptText="Should we keep this chart?"
                   />
                 </div>
                 <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
@@ -269,12 +271,13 @@ export function SegmentCharts({
                   <h3 className="text-lg font-semibold text-gray-900">Positive Rate by Segment</h3>
                   <Gotcha
                     elementId="segments-sentiment-chart"
-                    mode="vote"
+                    mode="poll"
+                    options={['Keep', 'Remove']}
                     position="inline"
                     theme="light"
                     showOnHover={false}
                     size="sm"
-                    promptText="Is this chart useful?"
+                    promptText="Should we keep this chart?"
                   />
                 </div>
                 <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
@@ -306,12 +309,13 @@ export function SegmentCharts({
                 <h3 className="text-lg font-semibold text-gray-900">Segment Comparison</h3>
                 <Gotcha
                   elementId="segments-comparison-table"
-                  mode="vote"
+                  mode="poll"
+                  options={['Keep', 'Remove']}
                   position="inline"
                   theme="light"
                   showOnHover={false}
                   size="sm"
-                  promptText="Is this table useful?"
+                  promptText="Should we keep this table?"
                 />
               </div>
             </div>

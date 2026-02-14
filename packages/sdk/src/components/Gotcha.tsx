@@ -33,6 +33,10 @@ export interface GotchaProps {
   /** Current A/B variant shown to user */
   variant?: string;
 
+  // Vote mode specific
+  /** Custom labels for vote buttons (default: Like/Dislike) */
+  voteLabels?: { up: string; down: string };
+
   // Poll mode specific (Phase 2)
   /** Required if mode is 'poll' (2-6 options) */
   options?: string[];
@@ -84,6 +88,7 @@ export function Gotcha({
   mode = 'feedback',
   experimentId,
   variant,
+  voteLabels,
   options,
   allowMultiple = false,
   showResults = true,
@@ -178,7 +183,7 @@ export function Gotcha({
   }, [closeModal, onClose]);
 
   const handleSubmit = useCallback(
-    (data: { content?: string; rating?: number; vote?: 'up' | 'down' }) => {
+    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[] }) => {
       submit(data);
     },
     [submit]
@@ -231,6 +236,9 @@ export function Gotcha({
           error={error}
           existingResponse={existingResponse}
           isEditing={isEditing}
+          voteLabels={voteLabels}
+          options={options}
+          allowMultiple={allowMultiple}
           onSubmit={handleSubmit}
           onClose={handleClose}
           anchorRect={anchorRect || undefined}
@@ -263,6 +271,9 @@ export function Gotcha({
               error={error}
               existingResponse={existingResponse}
               isEditing={isEditing}
+              voteLabels={voteLabels}
+              options={options}
+              allowMultiple={allowMultiple}
               onSubmit={handleSubmit}
               onClose={handleClose}
               anchorRect={anchorRect || undefined}

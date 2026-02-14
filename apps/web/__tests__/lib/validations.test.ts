@@ -134,6 +134,48 @@ describe('Validation Schemas', () => {
           })
         ).toThrow('Poll mode requires pollOptions');
       });
+
+      it('should accept poll with max 6 options', () => {
+        const result = submitResponseSchema.parse({
+          elementId: 'poll-1',
+          mode: 'poll',
+          pollOptions: ['A', 'B', 'C', 'D', 'E', 'F'],
+          pollSelected: ['A'],
+        });
+        expect(result.pollOptions).toHaveLength(6);
+      });
+
+      it('should reject poll with more than 6 options', () => {
+        expect(() =>
+          submitResponseSchema.parse({
+            elementId: 'poll-1',
+            mode: 'poll',
+            pollOptions: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+            pollSelected: ['A'],
+          })
+        ).toThrow();
+      });
+
+      it('should reject poll with empty pollSelected array', () => {
+        expect(() =>
+          submitResponseSchema.parse({
+            elementId: 'poll-1',
+            mode: 'poll',
+            pollOptions: ['A', 'B'],
+            pollSelected: [],
+          })
+        ).toThrow('Poll mode requires pollOptions');
+      });
+
+      it('should accept poll with multiple selections', () => {
+        const result = submitResponseSchema.parse({
+          elementId: 'poll-1',
+          mode: 'poll',
+          pollOptions: ['A', 'B', 'C'],
+          pollSelected: ['A', 'C'],
+        });
+        expect(result.pollSelected).toEqual(['A', 'C']);
+      });
     });
 
     describe('ab mode', () => {

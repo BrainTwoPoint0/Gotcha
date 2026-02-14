@@ -154,6 +154,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       mode: true,
       rating: true,
       vote: true,
+      elementIdRaw: true,
+      pollOptions: true,
+      pollSelected: true,
     },
   });
 
@@ -200,6 +203,50 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       ratings.push({ date: dateKey, rating: r.rating });
     }
   });
+
+  // Poll aggregation
+  const pollMap: Record<string, { elementId: string; optionCounts: Record<string, number> }> = {};
+  responses.forEach((r) => {
+    if (r.mode !== 'POLL' || !Array.isArray(r.pollSelected) || r.pollSelected.length === 0) return;
+    if (!pollMap[r.elementIdRaw]) {
+      const allOptions = Array.isArray(r.pollOptions) ? (r.pollOptions as string[]) : [];
+      const optionCounts: Record<string, number> = {};
+      allOptions.forEach((opt) => (optionCounts[opt] = 0));
+      pollMap[r.elementIdRaw] = { elementId: r.elementIdRaw, optionCounts };
+    }
+    (r.pollSelected as string[]).forEach((sel) => {
+      pollMap[r.elementIdRaw].optionCounts[sel] = (pollMap[r.elementIdRaw].optionCounts[sel] || 0) + 1;
+    });
+  });
+  const pollData = Object.values(pollMap).map((p) => ({
+    elementId: p.elementId,
+    options: Object.entries(p.optionCounts).map(([name, count]) => ({ name, count })),
+  }));
+
+  // Element performance aggregation
+  const elementMap: Record<
+    string,
+    { total: number; ratingSum: number; ratingCount: number; upVotes: number; downVotes: number }
+  > = {};
+  responses.forEach((r) => {
+    if (!elementMap[r.elementIdRaw]) {
+      elementMap[r.elementIdRaw] = { total: 0, ratingSum: 0, ratingCount: 0, upVotes: 0, downVotes: 0 };
+    }
+    const e = elementMap[r.elementIdRaw];
+    e.total++;
+    if (r.rating) { e.ratingSum += r.rating; e.ratingCount++; }
+    if (r.vote === 'UP') e.upVotes++;
+    if (r.vote === 'DOWN') e.downVotes++;
+  });
+  const elementPerformance = Object.entries(elementMap)
+    .map(([elementId, e]) => ({
+      elementId,
+      total: e.total,
+      avgRating: e.ratingCount > 0 ? Number((e.ratingSum / e.ratingCount).toFixed(1)) : null,
+      positiveRate: e.upVotes + e.downVotes > 0 ? Math.round((e.upVotes / (e.upVotes + e.downVotes)) * 100) : null,
+    }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
 
   // Format data for charts
   const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
@@ -280,6 +327,8 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         modeData={modeData}
         sentimentData={sentimentData}
         avgRatingData={avgRatingData}
+        pollData={pollData}
+        elementPerformance={elementPerformance}
       />
     </div>
   );

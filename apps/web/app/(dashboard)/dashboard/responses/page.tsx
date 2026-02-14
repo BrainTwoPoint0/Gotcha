@@ -16,6 +16,7 @@ interface ResponseItem {
   title: string | null;
   rating: number | null;
   vote: string | null;
+  pollSelected: unknown[] | null;
   elementIdRaw: string;
   createdAt: Date;
   project: { name: string; slug: string };
@@ -223,9 +224,16 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                             {response.vote === 'UP' ? '👍' : '👎'}
                           </span>
                         )}
-                        <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
-                          {response.content || response.title || '-'}
-                        </span>
+                        {response.pollSelected && response.pollSelected.length > 0 && (
+                          <span className="text-xs sm:text-sm text-purple-700">
+                            {response.pollSelected.join(', ')}
+                          </span>
+                        )}
+                        {!response.pollSelected?.length && (
+                          <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
+                            {response.content || response.title || '-'}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">

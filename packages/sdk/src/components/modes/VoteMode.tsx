@@ -8,9 +8,10 @@ interface VoteModeProps {
   onSubmit: (data: { vote: 'up' | 'down' }) => void;
   initialVote?: 'up' | 'down' | null;
   isEditing?: boolean;
+  labels?: { up: string; down: string };
 }
 
-export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = false }: VoteModeProps) {
+export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = false, labels }: VoteModeProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(initialVote || null);
   const [previousVote, setPreviousVote] = useState<'up' | 'down' | null>(initialVote || null);
@@ -113,7 +114,7 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
           <>
             <ThumbsUpIcon size={iconSize} />
             <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
-              {previousVote === 'up' ? 'Liked' : 'Like'}
+              {labels?.up || (previousVote === 'up' ? 'Liked' : 'Like')}
             </span>
           </>
         )}
@@ -148,7 +149,7 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
           <>
             <ThumbsDownIcon size={iconSize} />
             <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
-              {previousVote === 'down' ? 'Disliked' : 'Dislike'}
+              {labels?.down || (previousVote === 'down' ? 'Disliked' : 'Dislike')}
             </span>
           </>
         )}

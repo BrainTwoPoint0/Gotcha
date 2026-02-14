@@ -3,6 +3,7 @@ import { Theme, GotchaStyles, ResponseMode, ExistingResponse } from '../types';
 import { cn } from '../utils/cn';
 import { FeedbackMode } from './modes/FeedbackMode';
 import { VoteMode } from './modes/VoteMode';
+import { PollMode } from './modes/PollMode';
 
 export interface GotchaModalProps {
   mode: ResponseMode;
@@ -19,8 +20,13 @@ export interface GotchaModalProps {
   // Edit mode
   existingResponse?: ExistingResponse | null;
   isEditing?: boolean;
+  // Vote mode
+  voteLabels?: { up: string; down: string };
+  // Poll mode
+  options?: string[];
+  allowMultiple?: boolean;
   // Handlers
-  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down' }) => void;
+  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[] }) => void;
   onClose: () => void;
   // Position info from parent
   anchorRect?: DOMRect;
@@ -39,6 +45,9 @@ export function GotchaModal({
   error,
   existingResponse,
   isEditing = false,
+  voteLabels,
+  options,
+  allowMultiple = false,
   onSubmit,
   onClose,
   anchorRect,
@@ -118,6 +127,8 @@ export function GotchaModal({
 
   const defaultPrompt = mode === 'vote'
     ? 'What do you think?'
+    : mode === 'poll'
+    ? 'Cast your vote'
     : 'What do you think of this feature?';
 
   // Responsive sizing - on mobile, use fixed positioning centered on screen
@@ -321,6 +332,18 @@ export function GotchaModal({
               isLoading={isLoading}
               onSubmit={onSubmit}
               initialVote={existingResponse?.vote || undefined}
+              isEditing={isEditing}
+              labels={voteLabels}
+            />
+          )}
+          {mode === 'poll' && options && options.length > 0 && (
+            <PollMode
+              theme={resolvedTheme}
+              options={options}
+              allowMultiple={allowMultiple}
+              isLoading={isLoading}
+              onSubmit={onSubmit}
+              initialSelected={existingResponse?.pollSelected || undefined}
               isEditing={isEditing}
             />
           )}

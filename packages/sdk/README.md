@@ -39,7 +39,8 @@ function FeatureCard() {
 ## Features
 
 - **Feedback Mode** - Star rating + text input
-- **Vote Mode** - Thumbs up/down
+- **Vote Mode** - Thumbs up/down with customizable labels
+- **Poll Mode** - Custom options (single or multi-select)
 - **User Segmentation** - Analyze feedback by custom user attributes
 - **Edit Support** - Users can update their previous submissions
 - **Customizable** - Themes, sizes, positions
@@ -64,12 +65,15 @@ function FeatureCard() {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `elementId` | `string` | Required | Unique identifier for this element |
-| `mode` | `'feedback' \| 'vote'` | `'feedback'` | Feedback mode |
+| `mode` | `'feedback' \| 'vote' \| 'poll'` | `'feedback'` | Feedback mode |
 | `position` | `'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline'` | `'top-right'` | Button position |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | Color theme |
 | `showOnHover` | `boolean` | `true` | Only show on hover |
 | `promptText` | `string` | Mode-specific | Custom prompt text |
+| `voteLabels` | `{ up: string, down: string }` | `{ up: 'Like', down: 'Dislike' }` | Custom vote button labels |
+| `options` | `string[]` | - | Poll options (2-6 items, required for poll mode) |
+| `allowMultiple` | `boolean` | `false` | Allow selecting multiple poll options |
 | `user` | `object` | - | User metadata for segmentation |
 | `onSubmit` | `function` | - | Callback after submission |
 | `onOpen` | `function` | - | Callback when modal opens |
@@ -93,6 +97,40 @@ function FeatureCard() {
   elementId="pricing-feedback"
   mode="vote"
   promptText="Is this pricing fair?"
+/>
+```
+
+### Vote Mode with Custom Labels
+
+```tsx
+<Gotcha
+  elementId="ship-feature"
+  mode="vote"
+  voteLabels={{ up: "Yes", down: "No" }}
+  promptText="Should we ship this feature?"
+/>
+```
+
+### Poll Mode
+
+```tsx
+<Gotcha
+  elementId="priority-poll"
+  mode="poll"
+  options={["Yes", "No", "Maybe"]}
+  promptText="Should we ship this feature?"
+/>
+```
+
+### Poll Mode (Multi-Select)
+
+```tsx
+<Gotcha
+  elementId="feature-priority"
+  mode="poll"
+  options={["Analytics", "Segments", "Exports", "API"]}
+  allowMultiple
+  promptText="Which features matter most?"
 />
 ```
 

@@ -13,6 +13,7 @@ interface ResponseItem {
   title: string | null;
   rating: number | null;
   vote: string | null;
+  pollSelected: string[] | null;
   createdAt: Date;
   project: { name: string; slug: string };
 }
@@ -276,9 +277,11 @@ export default async function DashboardPage() {
                     <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900 truncate">
-                        {response.content ||
-                          response.title ||
-                          `${response.mode.toLowerCase()} response`}
+                        {response.pollSelected?.length
+                          ? response.pollSelected.join(', ')
+                          : response.content ||
+                            response.title ||
+                            `${response.mode.toLowerCase()} response`}
                       </p>
                       <p className="text-xs text-gray-500">
                         {response.project.name} · {formatTimeAgo(response.createdAt)}

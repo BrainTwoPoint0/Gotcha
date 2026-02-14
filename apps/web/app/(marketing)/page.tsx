@@ -34,7 +34,7 @@ const features = [
   {
     title: 'Multiple Modes',
     description:
-      'Star ratings, thumbs up/down, or detailed feedback. Choose what works for each feature.',
+      'Star ratings, thumbs up/down, polls, or detailed feedback. Choose what works for each feature.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -62,7 +62,7 @@ const features = [
   },
   {
     title: 'Analytics Dashboard',
-    description: 'See feedback trends, sentiment analysis, and user insights all in one place.',
+    description: 'See feedback trends, sentiment analysis, poll results, and element performance all in one place.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path

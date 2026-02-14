@@ -47,6 +47,37 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Thumbs up / down</p>
               </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Poll Mode
+                  <Gotcha
+                    elementId="mode-test-poll"
+                    mode="poll"
+                    options={['Yes', 'No']}
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Should we ship this feature?"
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Custom options (e.g. Yes / No)</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Poll Mode (Multi)
+                  <Gotcha
+                    elementId="mode-test-poll-multi"
+                    mode="poll"
+                    options={['Analytics', 'Segments', 'Exports', 'API']}
+                    allowMultiple
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Which features matter most?"
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Multiple selections allowed</p>
+              </div>
             </div>
           </section>
 
@@ -93,7 +124,7 @@ export default function DemoPage() {
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Themes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-4">
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 p-6 rounded-lg shadow-md border border-white/60">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Light
                   <Gotcha
@@ -106,7 +137,7 @@ export default function DemoPage() {
                   />
                 </h3>
               </div>
-              <div className="bg-gray-900 p-6 rounded-lg shadow-md border border-gray-700">
+              <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 p-6 rounded-lg shadow-md border border-gray-700">
                 <h3 className="font-medium mb-2 text-white flex items-center gap-2">
                   Dark
                   <Gotcha
@@ -119,7 +150,7 @@ export default function DemoPage() {
                   />
                 </h3>
               </div>
-              <div className="bg-gray-200 p-6 rounded-lg shadow-md border">
+              <div className="bg-gradient-to-br from-amber-100 via-rose-100 to-violet-100 p-6 rounded-lg shadow-md border border-white/60">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Auto
                   <Gotcha
