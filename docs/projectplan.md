@@ -1277,3 +1277,40 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **SDK Version:** `gotcha-feedback@1.0.10`
 
+---
+
+### SDK v1.0.12 — Performance & Error Handling
+
+**Published:** February 2026
+
+**Overview:** Reduced perceived submission latency from ~4 seconds to ~500ms and added default error handling.
+
+**Changes:**
+
+1. **Async API Response (Server):**
+   - API endpoint (`POST /api/v1/responses`) now responds immediately after validation
+   - Validates API key, rate limit, and request body (blocking ~500ms)
+   - Returns 201 with generated response ID before DB writes
+   - Element lookup/creation, response storage, and usage tracking happen asynchronously in the background
+   - Errors in async DB writes are logged server-side (`console.error`)
+
+2. **Thank You Duration:**
+   - Auto-close timer set to 3 seconds after success
+
+3. **Default Error Handling:**
+   - Added `console.warn('[Gotcha] Submission failed: ...')` that always fires on error
+   - Works even without an explicit `onError` prop, so developers see errors in console
+   - Modal still shows inline red error box for user-facing feedback
+   - `onError` callback remains available for custom handling (toasts, Sentry, etc.)
+
+4. **Button Styling:**
+   - Removed all inset box-shadows from GotchaButton (caused straight-line artifacts at circle edges)
+   - Glass depth now comes purely from gradient + outer drop shadows + backdrop blur
+
+**Files Modified:**
+- `apps/web/app/api/v1/responses/route.ts` — Async DB writes, immediate response
+- `packages/sdk/src/components/Gotcha.tsx` — 3s auto-close, default console.warn on error
+- `packages/sdk/src/components/GotchaButton.tsx` — Removed inset shadows
+
+**SDK Version:** `gotcha-feedback@1.0.12`
+
