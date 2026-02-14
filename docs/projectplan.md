@@ -1226,3 +1226,54 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **Test Results:** All 739 tests pass
 
+---
+
+### SDK v1.0.10 — UI Redesign
+
+**Published:** February 2026
+
+**Overview:** Major visual overhaul of the G button and mode components to achieve a premium glassmorphism aesthetic.
+
+**Changes:**
+
+1. **G Button — Glassmorphism Styling:**
+   - Replaced flat background with glass-bubble/dome effect
+   - Light mode: blue-gray tinted gradient (`rgba(200,210,230,0.4)`) with `backdrop-filter: blur(16px) saturate(170%)`
+   - Dark mode: subtle white-to-transparent gradient with `1px solid rgba(255,255,255,0.15)` border
+   - 4-layer box-shadows for 3D depth (outer grounding, tight edge, inset top refraction, inset bottom depth)
+   - No border in light mode (white border created visible seam on small circles)
+
+2. **G Icon — Carter One Font:**
+   - Replaced SVG-based G with text-based `<span>G</span>` using Google Fonts "Carter One"
+   - Dynamic font loading via `<link>` tag injection (deduped by element ID)
+   - Icon size: `buttonSize * 0.65` with small marginTop/marginRight nudges for centering
+
+3. **Auto Theme Fix:**
+   - Added `getInitialSystemTheme()` that reads `window.matchMedia('(prefers-color-scheme: dark)')` synchronously
+   - Used as useState initializer to prevent flash on first render
+   - Added `MediaQueryListEvent` listener to keep theme in sync when OS preference changes
+
+4. **Submit Button Colors (FeedbackMode):**
+   - Changed from indigo (`#6366f1`) to dark slate (`#1e293b`) for light mode
+   - Inverted for dark mode: light gray background (`#e2e8f0`) with dark text (`#1e293b`)
+   - Updated hover, disabled, and spinner colors accordingly
+
+5. **Vote Mode Button Fix:**
+   - Fixed button expansion during submission by scoping `transition` from `'all'` to specific properties (`background-color, border-color, color, transform, box-shadow`)
+   - Added `minWidth: 0` and `overflow: 'hidden'` to prevent content-driven width changes
+
+6. **Dev Demo Page:**
+   - Updated theme section backgrounds to colorful gradients so glassmorphism is visible
+   - Light: `from-sky-100 via-indigo-100 to-purple-100`
+   - Dark: `from-gray-800 via-gray-900 to-slate-900`
+   - Auto: `from-amber-100 via-rose-100 to-violet-100`
+
+**Files Modified:**
+- `packages/sdk/src/components/GotchaButton.tsx` — Glassmorphism, Carter One font, auto theme
+- `packages/sdk/src/components/modes/FeedbackMode.tsx` — Submit button colors
+- `packages/sdk/src/components/modes/VoteMode.tsx` — Transition and flex fixes
+- `apps/web/app/dev/page.tsx` — Gradient backgrounds for theme demos
+- `packages/sdk/package.json` — Version bump to 1.0.10
+
+**SDK Version:** `gotcha-feedback@1.0.10`
+

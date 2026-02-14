@@ -1,7 +1,7 @@
 # Gotcha — Product Specification Document
 
-> **Version:** 1.0.5
-> **Last Updated:** January 22, 2026
+> **Version:** 1.0.10
+> **Last Updated:** February 14, 2026
 > **Author:** Karim
 > **Purpose:** Complete technical and product specification for building Gotcha using Claude Code
 
@@ -911,8 +911,7 @@ Key query patterns and their indexes:
 
 ### 9.1 Base URL
 
-- **Production:** `https://api.gotcha.cx/v1`
-- **Staging:** `https://api.staging.gotcha.cx/v1`
+- **Production:** `https://gotcha.cx/api/v1`
 
 ### 9.2 Authentication
 
@@ -1554,7 +1553,7 @@ export interface GotchaProviderProps {
 export function GotchaProvider({
   apiKey,
   children,
-  baseUrl = "https://api.gotcha.cx/v1",
+  baseUrl = "https://gotcha.cx/api/v1",
   debug = false,
   disabled = false,
   defaultUser = {},
@@ -2654,14 +2653,20 @@ For sensitive keys (SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY), use Netlify's
 
 ```css
 :root {
-  /* Colors - G Button */
-  --gotcha-button-bg: #c7d2dc; /* Light blue-grey */
-  --gotcha-button-hover: #b0bec9; /* Slightly darker on hover */
-  --gotcha-button-icon: #4b5563; /* Dark grey "G" icon */
+  /* Colors - G Button (Glassmorphism) */
+  /* Light mode: blue-gray tinted glass gradient */
+  --gotcha-button-bg-light: linear-gradient(160deg, rgba(255,255,255,0.7) 0%, rgba(200,210,230,0.4) 40%, rgba(180,192,220,0.5) 100%);
+  /* Dark mode: subtle white-to-transparent gradient */
+  --gotcha-button-bg-dark: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.05) 100%);
+  --gotcha-button-icon-light: rgba(0,0,0,0.75);
+  --gotcha-button-icon-dark: rgba(255,255,255,0.88);
+  --gotcha-button-font: 'Carter One', cursive; /* Google Fonts */
 
   /* Colors - Modal/UI */
-  --gotcha-primary: #6366f1; /* Indigo-500 (submit buttons, accents) */
-  --gotcha-primary-hover: #4f46e5; /* Indigo-600 */
+  --gotcha-primary: #1e293b; /* Dark slate (submit buttons, light mode) */
+  --gotcha-primary-hover: #334155; /* Slate-700 */
+  --gotcha-primary-dark: #e2e8f0; /* Light gray (submit buttons, dark mode) */
+  --gotcha-primary-dark-hover: #cbd5e1; /* Slate-300 */
   --gotcha-bg-light: #ffffff;
   --gotcha-bg-dark: #1f2937;
   --gotcha-text-light: #111827;
@@ -2677,21 +2682,21 @@ For sensitive keys (SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY), use Netlify's
   --gotcha-border-radius: 8px;
 
   /* Animation */
-  --gotcha-transition: 150ms ease;
+  --gotcha-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Glassmorphism */
+  --gotcha-backdrop: blur(16px) saturate(170%);
 }
 ```
 
 **G Button visual:**
 
-```
-┌─────────────────────────────────┐
-│                                 │
-│   [ G ]  ← Light blue-grey      │
-│    ↑       (#C7D2DC)            │
-│    Dark grey icon (#4B5563)     │
-│                                 │
-└─────────────────────────────────┘
-```
+The G button uses a glassmorphism (glass-bubble/dome) aesthetic:
+- **Icon:** "G" rendered in Carter One font (loaded from Google Fonts)
+- **Light mode:** Blue-gray tinted glass with no border, 4-layer box-shadow for depth
+- **Dark mode:** Subtle white gradient with `1px solid rgba(255,255,255,0.15)` border
+- **Both modes:** `backdrop-filter: blur(16px) saturate(170%)` for glass effect
+- **Transitions:** Scale from 0.6 to 1.0 with opacity fade for show/hide
 
 ---
 
