@@ -624,48 +624,55 @@ describe('Feature Name', () => {
 
 ---
 
-### User Onboarding + Insights Tab
+### User Onboarding, Insights & Landing Page Rebrand
 
 **Implemented:** February 2026
 
-**Overview:** Added user profile collection (onboarding) and an Insights dashboard page with aggregate pie charts.
+**Overview:** Collect user profile data via onboarding + settings, build an internal-only Insights page, enrich dashboard Gotcha widgets with profile metadata, and rebrand the landing page around "communication layer" messaging.
 
 **Changes:**
 
 1. **Prisma Schema** — Added 5 nullable fields to `User`: `companySize`, `role`, `industry`, `useCase`, `onboardedAt`. Applied via `prisma db push`.
 
-2. **Validation (TDD)** — Added `updateProfileSchema` with Zod enums for each field (8 new tests, all passing).
+2. **Validation (TDD)** — Added `updateProfileSchema` with Zod enums for each field (8 new tests, all passing). Industry options expanded to 10 values (added fintech, analytics, media, devtools).
 
 3. **API Endpoint** (`/api/user/profile`):
    - Extended `PATCH` to accept all profile fields + set `onboardedAt` timestamp
    - Added `GET` handler with `prisma.user.groupBy()` for aggregate insights data
 
-4. **Onboarding Banner** — New `'use client'` component shown at top of dashboard when `onboardedAt` is null. Has 4 select dropdowns, "Save & Continue" and "Skip" buttons. Calls `PATCH` then `router.refresh()`.
+4. **Onboarding Banner** — Shown at top of dashboard when `onboardedAt` is null. Slate-accented card (`bg-slate-50`, left border), 4 select dropdowns, "Save & Continue" button. Constrained to `max-w-2xl`.
 
 5. **Settings Integration** — Extended `ProfileForm` with 4 dropdown selects for the profile fields, pre-filled with saved values.
 
-6. **Insights Page** — New `/dashboard/insights` route with server component running 4 `groupBy` queries + total count, passed to `InsightsCharts` client component.
+6. **Insights Page (internal only)** — `/dashboard/insights` with 4 recharts donut pie charts (2x2 grid). Gitignored and removed from sidebar nav — accessible locally only via direct URL.
 
-7. **Insights Charts** — 4 recharts donut pie charts in a 2x2 grid. Each field has its own color palette (blues, greens, purples, oranges). Shows empty state when no data.
+7. **Dashboard Gotcha Enrichment** — `DashboardFeedback` component now accepts `userProfile` prop. All 5 instances across 4 dashboard pages pass `companySize`, `role`, `industry`, `useCase` as user metadata so feedback submissions include profile context.
 
-8. **Sidebar Nav** — Added "Insights" link with users/people icon between Segments and Settings. Updated mobile nav to `grid-cols-6`.
+8. **Landing Page Rebrand** — Updated hero, features, build-vs-buy, and CTA copy to focus on "communication layer between users and builders" instead of "feedback collection tool."
+
+9. **Type Fixes** — Fixed `pollSelected` type mismatch (`JsonValue` vs `string[]`) in dashboard and responses pages by using `unknown` + `Array.isArray()` guards.
 
 **Files Created (3):**
 - `app/(dashboard)/dashboard/onboarding-banner.tsx`
-- `app/(dashboard)/dashboard/insights/page.tsx`
-- `app/(dashboard)/dashboard/insights/insights-charts.tsx`
+- `app/(dashboard)/dashboard/insights/page.tsx` (gitignored)
+- `app/(dashboard)/dashboard/insights/insights-charts.tsx` (gitignored)
 
-**Files Modified (8):**
+**Files Modified (12):**
 - `prisma/schema.prisma` — Added profile fields to User model
 - `__tests__/lib/validations.test.ts` — Added 8 updateProfileSchema tests
-- `lib/validations.ts` — Added enums + updateProfileSchema
+- `lib/validations.ts` — Added enums + updateProfileSchema (10 industry values)
 - `app/api/user/profile/route.ts` — Extended PATCH, added GET
-- `app/(dashboard)/dashboard/page.tsx` — Added OnboardingBanner
+- `app/(dashboard)/dashboard/page.tsx` — OnboardingBanner, userProfile on Gotcha, pollSelected fix
 - `app/(dashboard)/dashboard/settings/page.tsx` — Passing profile props
 - `app/(dashboard)/dashboard/settings/settings-forms.tsx` — Added 4 selects to ProfileForm
-- `app/(dashboard)/layout.tsx` — Added Insights nav + InsightsIcon
+- `app/(dashboard)/dashboard/responses/page.tsx` — userProfile on Gotcha, pollSelected fix
+- `app/(dashboard)/dashboard/analytics/page.tsx` — userProfile on Gotcha
+- `app/(dashboard)/dashboard/analytics/segments/page.tsx` — userProfile on Gotcha
+- `app/components/DashboardFeedback.tsx` — Added userProfile prop
+- `app/(marketing)/page.tsx` — Rebranded copy
+- `.gitignore` — Added insights directory
 
-**Test Results:** 30 suites, 751 tests passing
+**Test Results:** 30 suites, 751 tests passing. Production build clean.
 
 ---
 
