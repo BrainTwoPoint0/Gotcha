@@ -96,3 +96,38 @@ export const listResponsesSchema = z.object({
 });
 
 export type ListResponsesInput = z.infer<typeof listResponsesSchema>;
+
+// Profile update schema
+export const companySizeEnum = z.enum(['solo', '2-10', '11-50', '50+']);
+export const roleEnum = z.enum(['founder', 'engineer', 'pm', 'designer', 'other']);
+export const industryEnum = z.enum([
+  'saas',
+  'ecommerce',
+  'education',
+  'healthcare',
+  'agency',
+  'fintech',
+  'analytics',
+  'media',
+  'devtools',
+  'other',
+]);
+export const useCaseEnum = z.enum([
+  'user-feedback',
+  'feature-validation',
+  'bug-reports',
+  'nps',
+  'polls',
+  'other',
+]);
+
+export const updateProfileSchema = z.object({
+  name: z.string().optional(),
+  companySize: companySizeEnum.optional(),
+  role: roleEnum.optional(),
+  industry: industryEnum.optional(),
+  useCase: useCaseEnum.optional(),
+  onboardedAt: z.boolean().optional(),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

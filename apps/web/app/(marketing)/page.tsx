@@ -2,9 +2,9 @@ import Link from 'next/link';
 
 const features = [
   {
-    title: 'Contextual Feedback',
+    title: 'Contextual Conversations',
     description:
-      'Collect feedback right where users experience your features. No more generic surveys.',
+      'Let users speak up right where they experience your features. Feedback tied to context, not lost in a generic survey.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -62,7 +62,8 @@ const features = [
   },
   {
     title: 'Analytics Dashboard',
-    description: 'See feedback trends, sentiment analysis, poll results, and element performance all in one place.',
+    description:
+      'See feedback trends, sentiment analysis, poll results, and element performance all in one place.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -98,11 +99,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Feedback on every feature, <span className="text-slate-600">not just your app</span>
+              A direct line between <span className="text-slate-600">your users</span> and{' '}
+              <span className="text-slate-600">your team</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Add contextual feedback buttons to any React component in minutes. Know exactly what
-              users think about each feature you ship.
+              Gotcha adds a communication layer right inside your product. Your users tell you what
+              they think — on every feature, in real time. No surveys. No guessing.
             </p>
             <div className="inline-flex items-center gap-3 bg-gray-900 text-gray-100 px-5 py-3 rounded-lg font-mono text-sm mb-8">
               <span className="text-green-400">$</span>
@@ -169,10 +171,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything you need to collect better feedback
+              Everything you need to hear your users
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Built by developers, for developers. No bloat, no complexity.
+              A communication layer that lives inside your product, not outside it.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -196,10 +198,10 @@ export default function HomePage() {
       <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Stop building feedback systems
-            </h2>
-            <p className="text-xl text-gray-600">Building it yourself costs more than you think.</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Stop guessing what users want</h2>
+            <p className="text-xl text-gray-600">
+              Building your own feedback system costs more than you think.
+            </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-red-50 border border-red-200 rounded-2xl p-8">
@@ -239,10 +241,10 @@ export default function HomePage() {
       <section className="py-20 bg-slate-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Start collecting feedback today
+            Your users have something to say
           </h2>
           <p className="text-xl text-slate-200 mb-8">
-            Join developers who ship better products with Gotcha.
+            Open the conversation. Ship what your users actually want.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

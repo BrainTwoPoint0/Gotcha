@@ -61,6 +61,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Profile fields (onboarding)
+  companySize String?   // "solo" | "2-10" | "11-50" | "50+"
+  role        String?   // "founder" | "engineer" | "pm" | "designer" | "other"
+  industry    String?   // "saas" | "ecommerce" | "education" | "healthcare" | "agency" | "other"
+  useCase     String?   // "user-feedback" | "feature-validation" | "bug-reports" | "nps" | "polls" | "other"
+  onboardedAt DateTime? // Set when user completes or skips onboarding
+
   // Relations
   memberships OrganizationMember[]
 

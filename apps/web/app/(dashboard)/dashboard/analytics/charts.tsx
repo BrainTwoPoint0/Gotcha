@@ -221,19 +221,17 @@ export function AnalyticsCharts({
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Poll Results</h3>
           {pollData.map((poll) => (
-            <div key={poll.elementId} className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div
+              key={poll.elementId}
+              className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6"
+            >
               <p className="text-sm font-medium text-gray-500 mb-3">{poll.elementId}</p>
               <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                   <BarChart data={poll.options} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fontSize: 12 }}
-                      width={120}
-                    />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',

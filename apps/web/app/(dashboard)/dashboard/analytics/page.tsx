@@ -56,6 +56,12 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
               promptText="What analytics would you like to see?"
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
+              userProfile={{
+                companySize: dbUser?.companySize ?? undefined,
+                role: dbUser?.role ?? undefined,
+                industry: dbUser?.industry ?? undefined,
+                useCase: dbUser?.useCase ?? undefined,
+              }}
             />
           </div>
           <p className="text-gray-600">Insights into your feedback data</p>
@@ -215,7 +221,8 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       pollMap[r.elementIdRaw] = { elementId: r.elementIdRaw, optionCounts };
     }
     (r.pollSelected as string[]).forEach((sel) => {
-      pollMap[r.elementIdRaw].optionCounts[sel] = (pollMap[r.elementIdRaw].optionCounts[sel] || 0) + 1;
+      pollMap[r.elementIdRaw].optionCounts[sel] =
+        (pollMap[r.elementIdRaw].optionCounts[sel] || 0) + 1;
     });
   });
   const pollData = Object.values(pollMap).map((p) => ({
@@ -230,11 +237,20 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   > = {};
   responses.forEach((r) => {
     if (!elementMap[r.elementIdRaw]) {
-      elementMap[r.elementIdRaw] = { total: 0, ratingSum: 0, ratingCount: 0, upVotes: 0, downVotes: 0 };
+      elementMap[r.elementIdRaw] = {
+        total: 0,
+        ratingSum: 0,
+        ratingCount: 0,
+        upVotes: 0,
+        downVotes: 0,
+      };
     }
     const e = elementMap[r.elementIdRaw];
     e.total++;
-    if (r.rating) { e.ratingSum += r.rating; e.ratingCount++; }
+    if (r.rating) {
+      e.ratingSum += r.rating;
+      e.ratingCount++;
+    }
     if (r.vote === 'UP') e.upVotes++;
     if (r.vote === 'DOWN') e.downVotes++;
   });
@@ -243,7 +259,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       elementId,
       total: e.total,
       avgRating: e.ratingCount > 0 ? Number((e.ratingSum / e.ratingCount).toFixed(1)) : null,
-      positiveRate: e.upVotes + e.downVotes > 0 ? Math.round((e.upVotes / (e.upVotes + e.downVotes)) * 100) : null,
+      positiveRate:
+        e.upVotes + e.downVotes > 0
+          ? Math.round((e.upVotes / (e.upVotes + e.downVotes)) * 100)
+          : null,
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);

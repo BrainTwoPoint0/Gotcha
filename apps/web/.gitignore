@@ -42,6 +42,9 @@ playwright/.cache
 .DS_Store
 Thumbs.db
 
+# Internal-only pages (not deployed)
+app/(dashboard)/dashboard/insights
+
 # Misc
 *.log
 *.tmp

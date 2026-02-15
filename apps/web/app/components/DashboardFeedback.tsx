@@ -7,6 +7,12 @@ interface DashboardFeedbackProps {
   promptText: string;
   userEmail?: string;
   userName?: string;
+  userProfile?: {
+    companySize?: string;
+    role?: string;
+    industry?: string;
+    useCase?: string;
+  };
 }
 
 export function DashboardFeedback({
@@ -14,6 +20,7 @@ export function DashboardFeedback({
   promptText,
   userEmail,
   userName,
+  userProfile,
 }: DashboardFeedbackProps) {
   return (
     <Gotcha
@@ -24,7 +31,15 @@ export function DashboardFeedback({
       showOnHover={false}
       size="sm"
       promptText={promptText}
-      user={userEmail ? { id: userEmail, name: userName ?? undefined } : undefined}
+      user={
+        userEmail
+          ? {
+              id: userEmail,
+              name: userName ?? undefined,
+              ...userProfile,
+            }
+          : undefined
+      }
     />
   );
 }

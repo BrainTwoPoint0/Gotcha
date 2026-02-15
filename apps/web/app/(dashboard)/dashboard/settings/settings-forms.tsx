@@ -4,13 +4,65 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/app/components/Button';
 
+const COMPANY_SIZES = [
+  { value: 'solo', label: 'Solo / Freelancer' },
+  { value: '2-10', label: '2–10 employees' },
+  { value: '11-50', label: '11–50 employees' },
+  { value: '50+', label: '50+ employees' },
+];
+
+const ROLES = [
+  { value: 'founder', label: 'Founder / CEO' },
+  { value: 'engineer', label: 'Engineer' },
+  { value: 'pm', label: 'Product Manager' },
+  { value: 'designer', label: 'Designer' },
+  { value: 'other', label: 'Other' },
+];
+
+const INDUSTRIES = [
+  { value: 'saas', label: 'SaaS' },
+  { value: 'ecommerce', label: 'E-commerce' },
+  { value: 'education', label: 'Education' },
+  { value: 'healthcare', label: 'Healthcare' },
+  { value: 'agency', label: 'Agency' },
+  { value: 'fintech', label: 'Fintech / VC' },
+  { value: 'analytics', label: 'Analytics / Data' },
+  { value: 'media', label: 'Media / Content' },
+  { value: 'devtools', label: 'Developer Tools' },
+  { value: 'other', label: 'Other' },
+];
+
+const USE_CASES = [
+  { value: 'user-feedback', label: 'User Feedback' },
+  { value: 'feature-validation', label: 'Feature Validation' },
+  { value: 'bug-reports', label: 'Bug Reports' },
+  { value: 'nps', label: 'NPS / Satisfaction' },
+  { value: 'polls', label: 'Polls' },
+  { value: 'other', label: 'Other' },
+];
+
 interface ProfileFormProps {
   name: string | null;
   email: string;
+  companySize: string | null;
+  role: string | null;
+  industry: string | null;
+  useCase: string | null;
 }
 
-export function ProfileForm({ name, email }: ProfileFormProps) {
+export function ProfileForm({
+  name,
+  email,
+  companySize,
+  role,
+  industry,
+  useCase,
+}: ProfileFormProps) {
   const [formName, setFormName] = useState(name || '');
+  const [formCompanySize, setFormCompanySize] = useState(companySize || '');
+  const [formRole, setFormRole] = useState(role || '');
+  const [formIndustry, setFormIndustry] = useState(industry || '');
+  const [formUseCase, setFormUseCase] = useState(useCase || '');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +75,16 @@ export function ProfileForm({ name, email }: ProfileFormProps) {
     setSuccess(false);
 
     try {
+      const body: Record<string, unknown> = { name: formName };
+      if (formCompanySize) body.companySize = formCompanySize;
+      if (formRole) body.role = formRole;
+      if (formIndustry) body.industry = formIndustry;
+      if (formUseCase) body.useCase = formUseCase;
+
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: formName }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -72,6 +130,84 @@ export function ProfileForm({ name, email }: ProfileFormProps) {
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-slate-500 focus:border-slate-500 sm:text-sm"
           placeholder="Your name"
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="settings-company" className="block text-sm font-medium text-gray-700">
+            Company Size
+          </label>
+          <select
+            id="settings-company"
+            value={formCompanySize}
+            onChange={(e) => setFormCompanySize(e.target.value)}
+            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          >
+            <option value="">Not set</option>
+            {COMPANY_SIZES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="settings-role" className="block text-sm font-medium text-gray-700">
+            Role
+          </label>
+          <select
+            id="settings-role"
+            value={formRole}
+            onChange={(e) => setFormRole(e.target.value)}
+            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          >
+            <option value="">Not set</option>
+            {ROLES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="settings-industry" className="block text-sm font-medium text-gray-700">
+            Industry
+          </label>
+          <select
+            id="settings-industry"
+            value={formIndustry}
+            onChange={(e) => setFormIndustry(e.target.value)}
+            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          >
+            <option value="">Not set</option>
+            {INDUSTRIES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="settings-usecase" className="block text-sm font-medium text-gray-700">
+            Primary Use Case
+          </label>
+          <select
+            id="settings-usecase"
+            value={formUseCase}
+            onChange={(e) => setFormUseCase(e.target.value)}
+            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
+          >
+            <option value="">Not set</option>
+            {USE_CASES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

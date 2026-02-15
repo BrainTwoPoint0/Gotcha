@@ -624,6 +624,51 @@ describe('Feature Name', () => {
 
 ---
 
+### User Onboarding + Insights Tab
+
+**Implemented:** February 2026
+
+**Overview:** Added user profile collection (onboarding) and an Insights dashboard page with aggregate pie charts.
+
+**Changes:**
+
+1. **Prisma Schema** — Added 5 nullable fields to `User`: `companySize`, `role`, `industry`, `useCase`, `onboardedAt`. Applied via `prisma db push`.
+
+2. **Validation (TDD)** — Added `updateProfileSchema` with Zod enums for each field (8 new tests, all passing).
+
+3. **API Endpoint** (`/api/user/profile`):
+   - Extended `PATCH` to accept all profile fields + set `onboardedAt` timestamp
+   - Added `GET` handler with `prisma.user.groupBy()` for aggregate insights data
+
+4. **Onboarding Banner** — New `'use client'` component shown at top of dashboard when `onboardedAt` is null. Has 4 select dropdowns, "Save & Continue" and "Skip" buttons. Calls `PATCH` then `router.refresh()`.
+
+5. **Settings Integration** — Extended `ProfileForm` with 4 dropdown selects for the profile fields, pre-filled with saved values.
+
+6. **Insights Page** — New `/dashboard/insights` route with server component running 4 `groupBy` queries + total count, passed to `InsightsCharts` client component.
+
+7. **Insights Charts** — 4 recharts donut pie charts in a 2x2 grid. Each field has its own color palette (blues, greens, purples, oranges). Shows empty state when no data.
+
+8. **Sidebar Nav** — Added "Insights" link with users/people icon between Segments and Settings. Updated mobile nav to `grid-cols-6`.
+
+**Files Created (3):**
+- `app/(dashboard)/dashboard/onboarding-banner.tsx`
+- `app/(dashboard)/dashboard/insights/page.tsx`
+- `app/(dashboard)/dashboard/insights/insights-charts.tsx`
+
+**Files Modified (8):**
+- `prisma/schema.prisma` — Added profile fields to User model
+- `__tests__/lib/validations.test.ts` — Added 8 updateProfileSchema tests
+- `lib/validations.ts` — Added enums + updateProfileSchema
+- `app/api/user/profile/route.ts` — Extended PATCH, added GET
+- `app/(dashboard)/dashboard/page.tsx` — Added OnboardingBanner
+- `app/(dashboard)/dashboard/settings/page.tsx` — Passing profile props
+- `app/(dashboard)/dashboard/settings/settings-forms.tsx` — Added 4 selects to ProfileForm
+- `app/(dashboard)/layout.tsx` — Added Insights nav + InsightsIcon
+
+**Test Results:** 30 suites, 751 tests passing
+
+---
+
 ### Recent Fixes & Updates
 
 **GitHub OAuth Fix:**

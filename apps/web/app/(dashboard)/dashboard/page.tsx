@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { OnboardingBanner } from './onboarding-banner';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ interface ResponseItem {
   title: string | null;
   rating: number | null;
   vote: string | null;
-  pollSelected: string[] | null;
+  pollSelected: unknown;
   createdAt: Date;
   project: { name: string; slug: string };
 }
@@ -144,6 +145,8 @@ export default async function DashboardPage() {
 
     return (
       <div>
+        {!dbUser?.onboardedAt && <OnboardingBanner userName={dbUser?.name ?? undefined} />}
+
         <div className="mb-8">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -152,6 +155,12 @@ export default async function DashboardPage() {
               promptText="How can we improve the dashboard?"
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
+              userProfile={{
+                companySize: dbUser?.companySize ?? undefined,
+                role: dbUser?.role ?? undefined,
+                industry: dbUser?.industry ?? undefined,
+                useCase: dbUser?.useCase ?? undefined,
+              }}
             />
           </div>
           <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
@@ -277,7 +286,7 @@ export default async function DashboardPage() {
                     <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900 truncate">
-                        {response.pollSelected?.length
+                        {Array.isArray(response.pollSelected) && response.pollSelected.length
                           ? response.pollSelected.join(', ')
                           : response.content ||
                             response.title ||

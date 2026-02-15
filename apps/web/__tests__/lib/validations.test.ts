@@ -3,6 +3,7 @@ import {
   listResponsesSchema,
   responseModeSchema,
   voteTypeSchema,
+  updateProfileSchema,
 } from '@/lib/validations';
 
 describe('Validation Schemas', () => {
@@ -276,6 +277,56 @@ describe('Validation Schemas', () => {
           })
         ).toThrow();
       });
+    });
+  });
+
+  describe('updateProfileSchema', () => {
+    it('should accept a full valid profile', () => {
+      const result = updateProfileSchema.parse({
+        name: 'John',
+        companySize: '2-10',
+        role: 'founder',
+        industry: 'saas',
+        useCase: 'user-feedback',
+        onboardedAt: true,
+      });
+      expect(result.companySize).toBe('2-10');
+      expect(result.role).toBe('founder');
+      expect(result.industry).toBe('saas');
+      expect(result.useCase).toBe('user-feedback');
+      expect(result.onboardedAt).toBe(true);
+    });
+
+    it('should accept a partial profile (just name)', () => {
+      const result = updateProfileSchema.parse({ name: 'Alice' });
+      expect(result.name).toBe('Alice');
+      expect(result.companySize).toBeUndefined();
+    });
+
+    it('should accept an empty object', () => {
+      const result = updateProfileSchema.parse({});
+      expect(result).toEqual({});
+    });
+
+    it('should accept just onboardedAt (skip onboarding)', () => {
+      const result = updateProfileSchema.parse({ onboardedAt: true });
+      expect(result.onboardedAt).toBe(true);
+    });
+
+    it('should reject invalid companySize', () => {
+      expect(() => updateProfileSchema.parse({ companySize: 'massive' })).toThrow();
+    });
+
+    it('should reject invalid role', () => {
+      expect(() => updateProfileSchema.parse({ role: 'ceo' })).toThrow();
+    });
+
+    it('should reject invalid industry', () => {
+      expect(() => updateProfileSchema.parse({ industry: 'farming' })).toThrow();
+    });
+
+    it('should reject invalid useCase', () => {
+      expect(() => updateProfileSchema.parse({ useCase: 'not-a-use-case' })).toThrow();
     });
   });
 

@@ -50,6 +50,12 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
               promptText="How can we improve segmentation?"
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
+              userProfile={{
+                companySize: dbUser?.companySize ?? undefined,
+                role: dbUser?.role ?? undefined,
+                industry: dbUser?.industry ?? undefined,
+                useCase: dbUser?.useCase ?? undefined,
+              }}
             />
           </div>
           <p className="text-gray-600">Analyze responses by user attributes</p>

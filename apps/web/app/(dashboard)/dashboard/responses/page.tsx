@@ -16,7 +16,7 @@ interface ResponseItem {
   title: string | null;
   rating: number | null;
   vote: string | null;
-  pollSelected: unknown[] | null;
+  pollSelected: unknown;
   elementIdRaw: string;
   createdAt: Date;
   project: { name: string; slug: string };
@@ -141,6 +141,12 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               promptText="How can we improve the responses view?"
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
+              userProfile={{
+                companySize: dbUser?.companySize ?? undefined,
+                role: dbUser?.role ?? undefined,
+                industry: dbUser?.industry ?? undefined,
+                useCase: dbUser?.useCase ?? undefined,
+              }}
             />
           </div>
           <p className="text-gray-600">View feedback from all your projects</p>
@@ -224,12 +230,13 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                             {response.vote === 'UP' ? '👍' : '👎'}
                           </span>
                         )}
-                        {response.pollSelected && response.pollSelected.length > 0 && (
-                          <span className="text-xs sm:text-sm text-purple-700">
-                            {response.pollSelected.join(', ')}
-                          </span>
-                        )}
-                        {!response.pollSelected?.length && (
+                        {Array.isArray(response.pollSelected) &&
+                          response.pollSelected.length > 0 && (
+                            <span className="text-xs sm:text-sm text-purple-700">
+                              {response.pollSelected.join(', ')}
+                            </span>
+                          )}
+                        {!Array.isArray(response.pollSelected) && (
                           <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
                             {response.content || response.title || '-'}
                           </span>

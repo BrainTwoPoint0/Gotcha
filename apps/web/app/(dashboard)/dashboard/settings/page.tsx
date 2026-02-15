@@ -69,7 +69,14 @@ export default async function SettingsPage() {
         {/* Profile Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
-          <ProfileForm name={dbUser?.name || null} email={user?.email || ''} />
+          <ProfileForm
+            name={dbUser?.name || null}
+            email={user?.email || ''}
+            companySize={dbUser?.companySize || null}
+            role={dbUser?.role || null}
+            industry={dbUser?.industry || null}
+            useCase={dbUser?.useCase || null}
+          />
         </div>
 
         {/* Organization Section */}
