@@ -18,6 +18,7 @@ interface ResponseItem {
   vote: string | null;
   pollSelected: unknown;
   elementIdRaw: string;
+  gated: boolean;
   createdAt: Date;
   project: { name: string; slug: string };
 }
@@ -56,7 +57,8 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     : null;
 
   const organization = dbUser?.memberships[0]?.organization;
-  const isPro = organization?.subscription?.plan === 'PRO';
+  const subscription = organization?.subscription;
+  const isPro = subscription?.plan === 'PRO';
 
   // Parse pagination
   const page = Math.max(1, parseInt(params.page || '1', 10));
@@ -115,6 +117,11 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const total = organization ? await prisma.response.count({ where }) : 0;
   const totalPages = Math.ceil(total / LIMIT);
 
+  // Count gated responses in the current view
+  const gatedCount = !isPro
+    ? await prisma.response.count({ where: { ...where, gated: true } })
+    : 0;
+
   // Get paginated responses
   const responses: ResponseItem[] = organization
     ? await prisma.response.findMany({
@@ -129,6 +136,23 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         },
       })
     : [];
+
+  // Redact gated responses server-side so real data never reaches the client
+  const safeResponses = responses.map((r) => {
+    if (!isPro && r.gated) {
+      return {
+        ...r,
+        content: 'Upgrade to view',
+        title: null,
+        rating: null,
+        vote: null,
+        pollSelected: null,
+        elementIdRaw: '••••••',
+        project: { name: '••••••', slug: r.project.slug },
+      };
+    }
+    return r;
+  });
 
   return (
     <div>
@@ -156,7 +180,19 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
 
       <ResponsesFilter elements={elementOptions} />
 
-      {!isPro && (
+      {gatedCount > 0 && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-red-700">
+            {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free limit.{' '}
+            <a href="/dashboard/settings" className="font-medium text-red-800 hover:underline">
+              Upgrade to Pro
+            </a>{' '}
+            to unlock all your data.
+          </p>
+        </div>
+      )}
+
+      {!isPro && gatedCount === 0 && (
         <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
           <p className="text-sm text-slate-600">
             Showing responses from the last 30 days.{' '}
@@ -168,7 +204,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      {responses.length === 0 ? (
+      {safeResponses.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -214,53 +250,64 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {responses.map((response) => (
-                  <tr key={response.id} className="hover:bg-gray-50">
-                    <td className="px-4 sm:px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {response.rating && (
-                          <span className="text-yellow-500 text-sm">
-                            {'★'.repeat(response.rating)}
-                          </span>
-                        )}
-                        {response.vote && (
-                          <span
-                            className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}
-                          >
-                            {response.vote === 'UP' ? '👍' : '👎'}
-                          </span>
-                        )}
-                        {Array.isArray(response.pollSelected) &&
-                          response.pollSelected.length > 0 && (
-                            <span className="text-xs sm:text-sm text-purple-700">
-                              {response.pollSelected.join(', ')}
+                {safeResponses.map((response) => {
+                  const isGated = !isPro && response.gated;
+
+                  return (
+                    <tr key={response.id} className={`${isGated ? '' : 'hover:bg-gray-50'} relative`}>
+                      <td className="px-4 sm:px-6 py-4">
+                        <div className={`flex items-center gap-2 ${isGated ? 'blur-sm select-none' : ''}`}>
+                          {response.rating && (
+                            <span className="text-yellow-500 text-sm">
+                              {'★'.repeat(response.rating)}
                             </span>
                           )}
-                        {!Array.isArray(response.pollSelected) && (
-                          <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
-                            {response.content || response.title || '-'}
+                          {response.vote && (
+                            <span
+                              className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}
+                            >
+                              {response.vote === 'UP' ? '👍' : '👎'}
+                            </span>
+                          )}
+                          {Array.isArray(response.pollSelected) &&
+                            response.pollSelected.length > 0 && (
+                              <span className="text-xs sm:text-sm text-purple-700">
+                                {response.pollSelected.join(', ')}
+                              </span>
+                            )}
+                          {!Array.isArray(response.pollSelected) && (
+                            <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
+                              {response.content || response.title || '-'}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}>
+                        {response.project.name}
+                      </td>
+                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
+                        >
+                          {response.mode.toLowerCase()}
+                        </span>
+                      </td>
+                      <td className={`hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono ${isGated ? 'blur-sm select-none' : ''}`}>
+                        {response.elementIdRaw}
+                      </td>
+                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}>
+                        {new Date(response.createdAt).toLocaleString()}
+                      </td>
+                      {isGated && (
+                        <td className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-xs text-gray-400 bg-white/80 px-2 py-0.5 rounded">
+                            Upgrade to view
                           </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                      {response.project.name}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
-                      >
-                        {response.mode.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono">
-                      {response.elementIdRaw}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                      {new Date(response.createdAt).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

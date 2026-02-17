@@ -9,7 +9,7 @@ import {
 } from '@/lib/rate-limit';
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 import { sendUsageWarningEmail } from '@/lib/emails/send';
-import { shouldShowUpgradeWarning } from '@/lib/plan-limits';
+import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
 
 // Define types locally instead of importing Prisma enums
 type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
@@ -115,7 +115,32 @@ export async function POST(request: NextRequest) {
           elementDbId = newElement.id;
         }
 
-        // Create response
+        // Increment usage counter first so we know if this response is over the limit
+        await prisma.subscription.updateMany({
+          where: { organizationId: apiKey.organizationId },
+          data: { responsesThisMonth: { increment: 1 } },
+        });
+
+        // Check if this response exceeds the free limit
+        let gated = false;
+        if (apiKey.plan === 'FREE') {
+          const subscription = await prisma.subscription.findUnique({
+            where: { organizationId: apiKey.organizationId },
+          });
+
+          if (subscription) {
+            gated = isOverLimit('FREE', subscription.responsesThisMonth);
+
+            if (shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
+              const threshold = subscription.responsesThisMonth;
+              if (threshold === 400 || threshold === 450 || threshold === 500) {
+                sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
+              }
+            }
+          }
+        }
+
+        // Create response (marked as gated if over limit)
         await prisma.response.create({
           data: {
             id: responseId,
@@ -137,27 +162,9 @@ export async function POST(request: NextRequest) {
             userAgent: data.context?.userAgent,
             idempotencyKey: idempotencyKey,
             createdAt: createdAt,
+            gated,
           },
         });
-
-        // Increment usage counter and check for warnings
-        const updateResult = await prisma.subscription.updateMany({
-          where: { organizationId: apiKey.organizationId },
-          data: { responsesThisMonth: { increment: 1 } },
-        });
-
-        if (updateResult && apiKey.plan === 'FREE') {
-          const subscription = await prisma.subscription.findUnique({
-            where: { organizationId: apiKey.organizationId },
-          });
-
-          if (subscription && shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
-            const threshold = subscription.responsesThisMonth;
-            if (threshold === 400 || threshold === 450 || threshold === 500) {
-              sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
-            }
-          }
-        }
       } catch (err) {
         console.error('Async DB write failed for response:', responseId, err);
       }

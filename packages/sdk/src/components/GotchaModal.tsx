@@ -159,6 +159,7 @@ export function GotchaModal({
           ? 'translate(-50%, -50%) scale(1)'
           : 'translate(-50%, -50%) scale(0.96)',
         ...customStyles?.modal,
+        textAlign: 'left',
       }
     : {
         // Desktop: absolute position relative to button
@@ -181,6 +182,7 @@ export function GotchaModal({
           ? 'translateX(-50%) scale(1) translateY(0)'
           : `translateX(-50%) scale(0.96) translateY(${showAbove ? '6px' : '-6px'})`,
         ...customStyles?.modal,
+        textAlign: 'left',
       };
 
   return (
@@ -243,6 +245,7 @@ export function GotchaModal({
           paddingRight: isMobile ? 40 : 32,
           letterSpacing: '-0.01em',
           lineHeight: 1.4,
+          textAlign: 'left',
         }}
       >
         {promptText || defaultPrompt}

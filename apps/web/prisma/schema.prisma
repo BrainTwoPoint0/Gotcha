@@ -173,6 +173,9 @@ model Response {
   // Idempotency
   idempotencyKey String?
 
+  // Plan gating — true when response was collected beyond the monthly free limit
+  gated Boolean @default(false)
+
   // Timestamps
   createdAt DateTime @default(now())
 

@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { HomepageDemo } from '../components/HomepageDemo';
 
 const features = [
   {
-    title: 'Contextual Conversations',
+    title: 'Feedback Where It Matters',
     description:
-      'Let users speak up right where they experience your features. Feedback tied to context, not lost in a generic survey.',
+      'Users speak up right where they experience features — not in a separate survey buried in email.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -17,9 +18,9 @@ const features = [
     ),
   },
   {
-    title: '5 Minute Integration',
+    title: '5 Minutes to First Feedback',
     description:
-      "npm install, wrap your app, add one component. That's it. Start collecting feedback today.",
+      'npm install, wrap your app, add one component. Start hearing from users today.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -32,9 +33,9 @@ const features = [
     ),
   },
   {
-    title: 'Multiple Modes',
+    title: 'Ratings, Votes, and Polls',
     description:
-      'Star ratings, thumbs up/down, polls, or detailed feedback. Choose what works for each feature.',
+      'Star ratings, thumbs up/down, or custom polls. Pick what works for each feature.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -47,8 +48,8 @@ const features = [
     ),
   },
   {
-    title: 'Lightweight',
-    description: 'Only ~15KB minified. No impact on your bundle size or page load times.',
+    title: 'Zero Performance Impact',
+    description: '~15KB minified. No impact on your bundle size or page load times.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -61,9 +62,9 @@ const features = [
     ),
   },
   {
-    title: 'Analytics Dashboard',
+    title: 'See What Users Really Think',
     description:
-      'See feedback trends, sentiment analysis, poll results, and element performance all in one place.',
+      'Feedback trends, sentiment analysis, poll results, and element performance — all in one dashboard.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -76,8 +77,8 @@ const features = [
     ),
   },
   {
-    title: 'Developer First',
-    description: 'TypeScript support, React hooks, customizable themes, and full API access.',
+    title: 'Built for How You Already Work',
+    description: 'TypeScript, React hooks, customizable themes, and full API access. Feels native.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -103,19 +104,29 @@ export default function HomePage() {
               <span className="text-slate-600">your team</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Gotcha adds a communication layer right inside your product. Your users tell you what
-              they think — on every feature, in real time. No surveys. No guessing.
+              Attach feedback to any component. Your users rate, vote, and respond — right where
+              they experience your features. No surveys. No guessing.
             </p>
-            <div className="inline-flex items-center gap-3 bg-gray-900 text-gray-100 px-5 py-3 rounded-lg font-mono text-sm mb-8">
+            <div className="inline-flex items-center gap-3 bg-gray-900 text-gray-100 px-5 py-3 rounded-lg font-mono text-sm mb-4">
               <span className="text-green-400">$</span>
               <code>npm install gotcha-feedback</code>
             </div>
+            <p className="text-sm text-gray-500 mb-8">
+              <a
+                href="https://www.npmjs.com/package/gotcha-feedback"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-600 hover:text-slate-800 underline"
+              >
+                View on npm
+              </a>
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/signup"
                 className="bg-slate-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-800 transition"
               >
-                Start for Free
+                Add Feedback in 5 Minutes
               </Link>
               <Link
                 href="/demo"
@@ -165,6 +176,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Live Demo */}
+      <HomepageDemo />
 
       {/* Features */}
       <section className="py-20 bg-white">

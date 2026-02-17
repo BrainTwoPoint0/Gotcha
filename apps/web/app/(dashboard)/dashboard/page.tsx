@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { OnboardingBanner } from './onboarding-banner';
+import { OnboardingChecklist } from './onboarding-checklist';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,8 +125,11 @@ export default async function DashboardPage() {
     const projects: ProjectItem[] = organization?.projects ?? [];
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
+    const overLimit = subscription
+      ? isOverLimit(subscription.plan, subscription.responsesThisMonth)
+      : false;
 
-    // Get recent responses
+    // Get recent responses (always show — first 500 are accessible)
     const recentResponses: ResponseItem[] = organization
       ? await prisma.response.findMany({
           where: {
@@ -167,7 +171,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Plan Limit Warnings */}
-        {subscription && isOverLimit(subscription.plan, subscription.responsesThisMonth) && (
+        {subscription && overLimit && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <svg
@@ -186,8 +190,8 @@ export default async function DashboardPage() {
               <div>
                 <h3 className="font-medium text-red-800">Response limit exceeded</h3>
                 <p className="text-sm text-red-700 mt-1">
-                  You've exceeded the 500 response limit for the Free plan. New responses will not
-                  be recorded until you upgrade.
+                  You've exceeded the 500 response limit for the Free plan. Your responses are
+                  still being collected, but you need to upgrade to Pro to view new data.
                 </p>
                 <a
                   href="/dashboard/settings"
@@ -201,7 +205,7 @@ export default async function DashboardPage() {
         )}
 
         {subscription &&
-          !isOverLimit(subscription.plan, subscription.responsesThisMonth) &&
+          !overLimit &&
           shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth) && (
             <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -364,42 +368,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Start Guide */}
-        {projects.length === 0 && (
-          <div className="mt-8 bg-slate-50 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Start Guide</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  1
-                </div>
-                <div>
-                  <h3 className="font-medium text-slate-900">Create a project</h3>
-                  <p className="text-sm text-slate-700">
-                    Set up your first project to get an API key.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  2
-                </div>
-                <div>
-                  <h3 className="font-medium text-slate-900">Install the SDK</h3>
-                  <p className="text-sm text-slate-700">npm install gotcha-feedback</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  3
-                </div>
-                <div>
-                  <h3 className="font-medium text-slate-900">Add the G button</h3>
-                  <p className="text-sm text-slate-700">Wrap your app and add Gotcha components.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Onboarding Checklist */}
+        {totalResponses === 0 && (
+          <OnboardingChecklist
+            hasProjects={projects.length > 0}
+            hasResponses={totalResponses > 0}
+            projectSlug={projects[0]?.slug}
+            apiKey={undefined}
+          />
         )}
       </div>
     );

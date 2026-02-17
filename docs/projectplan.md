@@ -1366,3 +1366,69 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **SDK Version:** `gotcha-feedback@1.0.12`
 
+---
+
+### Marketing Improvements (CRO Quick Wins)
+
+**Implemented:** February 2026
+
+**Overview:** Addressed critical gaps identified in a CRO audit (`docs/marketing-analysis.md`): vague messaging, no product demo on homepage, misleading pricing label, no annual option, and static onboarding.
+
+**Changes:**
+
+1. **Homepage Hero Copy & CTAs** — Rewrote subtitle to lead with the differentiator ("Attach feedback to any component..."). Changed primary CTA from "Start for Free" to "Add Feedback in 5 Minutes". Added npm package link near install block.
+
+2. **Homepage Feature Cards** — Rewrote all 6 cards with benefit-first titles: "Feedback Where It Matters", "5 Minutes to First Feedback", "Ratings, Votes, and Polls", "Zero Performance Impact", "See What Users Really Think", "Built for How You Already Work".
+
+3. **Homepage Live Demo Section** — New `HomepageDemo` client component showing 3 live Gotcha widgets (feedback, vote, poll) side-by-side between the code example and features sections. Uses `gotcha-feedback` npm package.
+
+4. **Pricing Toggle + Recommended Badge** — Changed "Most Popular" to "Recommended". Added monthly/annual toggle with $24/mo annual pricing ($288/yr) and "Save 17%" badge. Extracted `PricingToggle` client component for toggle state.
+
+5. **Special Program Pricing Hints** — Added concrete pricing info: "Pro features at 50% off" (Education), "3 months of Pro free" (Startups), "Custom portfolio pricing" (Investors).
+
+6. **Interactive Onboarding Checklist** — Replaced static 3-step Quick Start Guide with interactive 4-step checklist. Auto-checks based on real data (`hasProjects`, `hasResponses`). Shows to all users with 0 responses (not just 0 projects). Displays celebration message when all steps complete.
+
+**Files Created (3):**
+- `apps/web/app/components/HomepageDemo.tsx` — Live demo section
+- `apps/web/app/(marketing)/pricing/pricing-toggle.tsx` — Billing toggle + tier cards
+- `apps/web/app/(dashboard)/dashboard/onboarding-checklist.tsx` — Interactive checklist
+
+**Files Modified (3):**
+- `apps/web/app/(marketing)/page.tsx` — Hero copy, CTAs, feature cards, demo import
+- `apps/web/app/(marketing)/pricing/page.tsx` — Pricing toggle, program hints
+- `apps/web/app/(dashboard)/dashboard/page.tsx` — Replaced Quick Start with checklist
+
+**Test Results:** 30 suites, 751 tests passing. Production build clean.
+
+---
+
+### Gate Response Data for FREE Users Over 500/month
+
+**Implemented:** February 2026
+
+**Overview:** FREE users who exceed 500 responses/month can no longer view their response data. The API continues collecting responses (intentional), but *access* to the data is gated behind an upgrade prompt. This creates a natural incentive to upgrade to Pro.
+
+**Changes:**
+
+1. **Fixed Misleading Banner Text** (`dashboard/page.tsx`):
+   - Changed "New responses will not be recorded until you upgrade" → "Your responses are still being collected, but you need to upgrade to Pro to view new data."
+
+2. **Dashboard — Gated Recent Responses** (`dashboard/page.tsx`):
+   - Computed `overLimit` flag once and reused across banners and data queries
+   - When over limit: skips the DB query for recent responses (no point fetching gated data)
+   - Shows a locked card with lock icon, "Responses locked" message, and "Upgrade to Pro" CTA
+   - Stats cards (total responses, this month count) remain visible so users know data exists
+
+3. **Responses Page — Gated Table** (`dashboard/responses/page.tsx`):
+   - Added `isOverLimit` import and computed `overLimit` from subscription data
+   - When over limit: skips DB queries for responses and element filters
+   - Still fetches total count so upgrade prompt can show "You have X responses"
+   - Shows full-width upgrade card matching the analytics Pro-gate pattern (lock icon, count, CTA)
+   - Hides the "30 days" free-tier banner when over limit (redundant)
+
+**Files Modified (2):**
+- `apps/web/app/(dashboard)/dashboard/page.tsx` — Banner text fix, recent responses gating
+- `apps/web/app/(dashboard)/dashboard/responses/page.tsx` — Full table gating with upgrade prompt
+
+**Test Results:** 30 suites, 751 tests passing. Production build clean.
+

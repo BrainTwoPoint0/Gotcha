@@ -1,37 +1,5 @@
 import Link from 'next/link';
-
-const tiers = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Perfect for trying out Gotcha',
-    responses: '500',
-    features: ['500 responses/month', '1 project', 'Basic analytics', '30-day analytics view'],
-    cta: 'Get Started',
-    href: '/signup',
-    highlighted: false,
-  },
-  {
-    name: 'Pro',
-    price: '$29',
-    period: '/month',
-    description: 'For individuals & teams',
-    responses: 'Unlimited',
-    features: [
-      'Unlimited responses',
-      'Unlimited projects',
-      'Full analytics dashboard',
-      'Poll results & element performance',
-      'User segmentation',
-      'Unlimited data retention',
-      'Export to CSV',
-    ],
-    cta: 'Get Started',
-    href: '/signup?plan=pro',
-    highlighted: true,
-  },
-];
+import { PricingToggle } from './pricing-toggle';
 
 const programs = [
   {
@@ -39,9 +7,9 @@ const programs = [
     icon: '🎓',
     description: 'For students & universities',
     benefits: [
+      'Pro features at 50% off',
       'Special pricing for .edu emails',
       'Perfect for capstone projects & theses',
-      'Learn real user feedback practices',
       'Admin dashboard for universities',
     ],
   },
@@ -50,7 +18,7 @@ const programs = [
     icon: '🚀',
     description: 'For accelerators & incubators',
     benefits: [
-      'Discounted pricing for portfolio companies',
+      '3 months of Pro free',
       'Cohort dashboard for accelerators',
       'Investor-ready feedback reports',
       'Priority onboarding support',
@@ -61,10 +29,10 @@ const programs = [
     icon: '📊',
     description: 'Portfolio-wide visibility',
     benefits: [
+      'Custom portfolio pricing',
       'Dashboard across all portfolio companies',
       'Aggregated sentiment & feedback trends',
       'Early warning signals for product issues',
-      'Recommend Gotcha to portfolio companies',
     ],
   },
 ];
@@ -110,66 +78,7 @@ export default function PricingPage() {
 
       {/* Pricing Tiers */}
       <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-8 py-16">
-        <div className="grid md:grid-cols-2 gap-8">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`bg-white rounded-2xl p-8 ${
-                tier.highlighted
-                  ? 'ring-2 ring-slate-600 shadow-xl scale-105'
-                  : 'border border-gray-200 shadow-sm'
-              }`}
-            >
-              {tier.highlighted && (
-                <div className="text-center mb-4">
-                  <span className="bg-slate-700 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-              <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
-              <p className="text-gray-500 text-sm mt-1">{tier.description}</p>
-              <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
-                <span className="text-gray-500 ml-1">{tier.period}</span>
-              </div>
-              <div className="mb-6">
-                <div className="text-2xl font-semibold text-slate-600">{tier.responses}</div>
-                <div className="text-sm text-gray-500">responses/month</div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
-                    <svg
-                      className="w-5 h-5 text-green-500 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="text-gray-600">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={tier.href}
-                className={`block text-center py-2 px-4 rounded-lg font-medium transition ${
-                  tier.highlighted
-                    ? 'bg-slate-700 text-white hover:bg-slate-800'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
-              >
-                {tier.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
+        <PricingToggle />
 
         {/* Need more? */}
         <div className="mt-8 bg-slate-100 rounded-2xl p-6 text-center">
