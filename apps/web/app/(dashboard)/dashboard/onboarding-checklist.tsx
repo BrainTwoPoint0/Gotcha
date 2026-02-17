@@ -15,9 +15,7 @@ const CheckIcon = () => (
   </svg>
 );
 
-const CircleIcon = () => (
-  <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-);
+const CircleIcon = () => <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
 
 export function OnboardingChecklist({
   hasProjects,
@@ -67,9 +65,7 @@ export function OnboardingChecklist({
       label: 'Receive your first response',
       checked: hasResponses,
       detail: !hasResponses ? (
-        <span className="text-sm text-gray-500">
-          Waiting for your first user response...
-        </span>
+        <span className="text-sm text-gray-500">Waiting for your first user response...</span>
       ) : null,
     },
   ];

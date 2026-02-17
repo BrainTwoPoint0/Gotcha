@@ -19,8 +19,7 @@ const features = [
   },
   {
     title: '5 Minutes to First Feedback',
-    description:
-      'npm install, wrap your app, add one component. Start hearing from users today.',
+    description: 'npm install, wrap your app, add one component. Start hearing from users today.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -34,8 +33,7 @@ const features = [
   },
   {
     title: 'Ratings, Votes, and Polls',
-    description:
-      'Star ratings, thumbs up/down, or custom polls. Pick what works for each feature.',
+    description: 'Star ratings, thumbs up/down, or custom polls. Pick what works for each feature.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path

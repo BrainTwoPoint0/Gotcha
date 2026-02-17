@@ -118,9 +118,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / LIMIT);
 
   // Count gated responses in the current view
-  const gatedCount = !isPro
-    ? await prisma.response.count({ where: { ...where, gated: true } })
-    : 0;
+  const gatedCount = !isPro ? await prisma.response.count({ where: { ...where, gated: true } }) : 0;
 
   // Get paginated responses
   const responses: ResponseItem[] = organization
@@ -183,7 +181,8 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       {gatedCount > 0 && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
           <p className="text-sm text-red-700">
-            {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free limit.{' '}
+            {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free
+            limit.{' '}
             <a href="/dashboard/settings" className="font-medium text-red-800 hover:underline">
               Upgrade to Pro
             </a>{' '}
@@ -254,9 +253,14 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                   const isGated = !isPro && response.gated;
 
                   return (
-                    <tr key={response.id} className={`${isGated ? '' : 'hover:bg-gray-50'} relative`}>
+                    <tr
+                      key={response.id}
+                      className={`${isGated ? '' : 'hover:bg-gray-50'} relative`}
+                    >
                       <td className="px-4 sm:px-6 py-4">
-                        <div className={`flex items-center gap-2 ${isGated ? 'blur-sm select-none' : ''}`}>
+                        <div
+                          className={`flex items-center gap-2 ${isGated ? 'blur-sm select-none' : ''}`}
+                        >
                           {response.rating && (
                             <span className="text-yellow-500 text-sm">
                               {'★'.repeat(response.rating)}
@@ -282,20 +286,28 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                           )}
                         </div>
                       </td>
-                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}>
+                      <td
+                        className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
+                      >
                         {response.project.name}
                       </td>
-                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}>
+                      <td
+                        className={`px-4 sm:px-6 py-4 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
+                      >
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
                         >
                           {response.mode.toLowerCase()}
                         </span>
                       </td>
-                      <td className={`hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono ${isGated ? 'blur-sm select-none' : ''}`}>
+                      <td
+                        className={`hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono ${isGated ? 'blur-sm select-none' : ''}`}
+                      >
                         {response.elementIdRaw}
                       </td>
-                      <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}>
+                      <td
+                        className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
+                      >
                         {new Date(response.createdAt).toLocaleString()}
                       </td>
                       {isGated && (

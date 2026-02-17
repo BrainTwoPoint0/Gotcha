@@ -190,8 +190,8 @@ export default async function DashboardPage() {
               <div>
                 <h3 className="font-medium text-red-800">Response limit exceeded</h3>
                 <p className="text-sm text-red-700 mt-1">
-                  You've exceeded the 500 response limit for the Free plan. Your responses are
-                  still being collected, but you need to upgrade to Pro to view new data.
+                  You've exceeded the 500 response limit for the Free plan. Your responses are still
+                  being collected, but you need to upgrade to Pro to view new data.
                 </p>
                 <a
                   href="/dashboard/settings"

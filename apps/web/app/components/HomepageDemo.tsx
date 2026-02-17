@@ -31,12 +31,8 @@ export function HomepageDemo() {
     <section className="py-16 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            See it in action
-          </h2>
-          <p className="text-gray-600">
-            Click any G button below — these are live Gotcha widgets.
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">See it in action</h2>
+          <p className="text-gray-600">Click any G button below — these are live Gotcha widgets.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {demos.map((demo) => (
