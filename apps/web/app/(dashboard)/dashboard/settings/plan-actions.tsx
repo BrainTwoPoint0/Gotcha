@@ -10,12 +10,17 @@ interface PlanActionsProps {
 export function PlanActions({ currentPlan }: PlanActionsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
 
   const handleUpgrade = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' });
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billing }),
+      });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -63,9 +68,41 @@ export function PlanActions({ currentPlan }: PlanActionsProps) {
           Manage Subscription
         </Button>
       ) : (
-        <Button onClick={handleUpgrade} loading={loading} loadingText="Loading...">
-          Upgrade to Pro - $29/month
-        </Button>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span
+              className={`text-sm font-medium ${billing === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}
+            >
+              Monthly
+            </span>
+            <button
+              type="button"
+              onClick={() => setBilling(billing === 'monthly' ? 'annual' : 'monthly')}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                billing === 'annual' ? 'bg-slate-700' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${billing === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}
+            >
+              Annual
+            </span>
+            {billing === 'annual' && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                Save 17%
+              </span>
+            )}
+          </div>
+          <Button onClick={handleUpgrade} loading={loading} loadingText="Loading...">
+            Upgrade to Pro - {billing === 'annual' ? '$24/mo (billed annually)' : '$29/month'}
+          </Button>
+        </div>
       )}
     </div>
   );

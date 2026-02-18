@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
-import { stripe, STRIPE_PRO_PRICE_ID } from '@/lib/stripe';
-import { NextResponse } from 'next/server';
+import { stripe, STRIPE_PRO_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID } from '@/lib/stripe';
+import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -56,6 +56,19 @@ export async function POST() {
       });
     }
 
+    // Parse billing preference from request body
+    let billing = 'monthly';
+    try {
+      const body = await request.json();
+      if (body.billing === 'annual') billing = 'annual';
+    } catch {
+      // No body or invalid JSON — default to monthly
+    }
+
+    const priceId = billing === 'annual' && STRIPE_PRO_ANNUAL_PRICE_ID
+      ? STRIPE_PRO_ANNUAL_PRICE_ID
+      : STRIPE_PRO_PRICE_ID;
+
     // Get the host for redirect URLs
     const headersList = await headers();
     const host = headersList.get('host') || 'gotcha.cx';
@@ -66,7 +79,7 @@ export async function POST() {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
-      line_items: [{ price: STRIPE_PRO_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard/settings?success=true`,
       cancel_url: `${baseUrl}/dashboard/settings?canceled=true`,
       metadata: { organizationId: organization.id },
