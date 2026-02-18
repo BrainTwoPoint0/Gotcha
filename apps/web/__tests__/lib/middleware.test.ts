@@ -92,7 +92,6 @@ describe('Middleware Logic', () => {
         '/api/v1/demo',
         '/api/v1/users',
         '/api/stripe/webhook',
-        '/api/debug',
       ];
 
       if (!pathname.startsWith('/api/')) return false;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { submitResponseSchema } from '@/lib/validations';
+import { createHash } from 'crypto';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -25,6 +26,16 @@ const voteMap: Record<string, VoteType> = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Only allow requests from the same origin (our own website)
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
+        { status: 403 }
+      );
+    }
+
     // Get API key from server-side env (not exposed to browser)
     const apiKeyString = process.env.GOTCHA_SDK_API;
     if (!apiKeyString) {
@@ -35,9 +46,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate the API key exists in database
-    const apiKey = await prisma.apiKey.findUnique({
-      where: { key: apiKeyString },
+    // Validate the API key exists in database (lookup by hash, not plaintext)
+    const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
+    const apiKey = await prisma.apiKey.findFirst({
+      where: { keyHash, revokedAt: null },
       include: { project: true },
     });
 

@@ -1464,3 +1464,17 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **Build:** Clean, no errors.
 
+---
+
+## Pre-Launch Security Fixes
+
+> **Goal:** Harden the public repo before launch
+
+### Todo
+
+- [x] **1. Delete debug API routes** — Remove `apps/web/app/api/debug/` entirely (6 routes that leak env info with zero auth)
+- [x] **2. Fix API key generation** — Replace `Math.random()` with `crypto.randomBytes()` in `lib/api-auth.ts`
+- [x] **3. Switch to hash-based API key lookup** — All 3 internal routes now use `keyHash` instead of plaintext `key` for DB lookup (full column removal deferred — dashboard still shows keys to users)
+- [x] **4. Scope CORS wildcard** — Change `netlify.toml` to only apply `Access-Control-Allow-Origin: *` to `/api/v1/*`
+- [x] **5. Add origin check to internal responses endpoint** — Restrict `/api/v1/internal/responses` to same-origin requests only
+

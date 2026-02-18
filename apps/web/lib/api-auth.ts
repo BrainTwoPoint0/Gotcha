@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from './prisma';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import type { Plan } from '@prisma/client';
 
 export interface ApiKeyData {
@@ -172,13 +172,9 @@ export function apiSuccess<T>(
 
 // Generate a new API key
 export function generateApiKey(type: 'live' | 'test' = 'live'): { key: string; hash: string } {
-  const randomPart = Array.from(
-    { length: 32 },
-    () =>
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[
-        Math.floor(Math.random() * 62)
-      ]
-  ).join('');
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = randomBytes(32);
+  const randomPart = Array.from(bytes, (b) => chars[b % chars.length]).join('');
 
   const key = `gtch_${type}_${randomPart}`;
   const hash = hashApiKey(key);

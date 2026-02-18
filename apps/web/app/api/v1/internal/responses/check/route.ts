@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createHash } from 'crypto';
 
 /**
  * Internal check route for the Gotcha website's own SDK usage.
@@ -7,6 +8,16 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Only allow requests from the same origin (our own website)
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
+        { status: 403 }
+      );
+    }
+
     const apiKeyString = process.env.GOTCHA_SDK_API;
     if (!apiKeyString) {
       return NextResponse.json(
@@ -15,8 +26,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const apiKey = await prisma.apiKey.findUnique({
-      where: { key: apiKeyString },
+    const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
+    const apiKey = await prisma.apiKey.findFirst({
+      where: { keyHash, revokedAt: null },
     });
 
     if (!apiKey || apiKey.revokedAt) {
