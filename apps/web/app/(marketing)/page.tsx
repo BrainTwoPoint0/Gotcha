@@ -109,17 +109,7 @@ export default function HomePage() {
               <span className="text-green-400">$</span>
               <code>npm install gotcha-feedback</code>
             </div>
-            <p className="text-sm text-gray-500 mb-8">
-              <a
-                href="https://www.npmjs.com/package/gotcha-feedback"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-600 hover:text-slate-800 underline"
-              >
-                View on npm
-              </a>
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
               <Link
                 href="/signup"
                 className="bg-slate-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-slate-800 transition"
@@ -135,6 +125,16 @@ export default function HomePage() {
             </div>
             <p className="text-sm text-gray-500 mt-4">
               No credit card required. Free tier available.
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              <a
+                href="https://www.npmjs.com/package/gotcha-feedback"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-600 hover:text-slate-800 underline"
+              >
+                View on npm
+              </a>
             </p>
           </div>
         </div>
