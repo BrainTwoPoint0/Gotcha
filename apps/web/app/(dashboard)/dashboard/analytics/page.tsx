@@ -350,6 +350,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
       <AnalyticsFilter projects={projects} elements={elements} />
 
+      <Link
+        href="/dashboard/analytics/segments"
+        className="md:hidden flex items-center justify-between mb-6 px-4 py-3 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700"
+      >
+        User Segments
+        <span className="text-gray-400">→</span>
+      </Link>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Responses" value={totalResponses.toString()} />
