@@ -13,6 +13,10 @@ interface DashboardFeedbackProps {
     industry?: string;
     useCase?: string;
   };
+  mode?: 'feedback' | 'vote' | 'poll';
+  voteLabels?: { up: string; down: string };
+  options?: string[];
+  allowMultiple?: boolean;
 }
 
 export function DashboardFeedback({
@@ -21,16 +25,23 @@ export function DashboardFeedback({
   userEmail,
   userName,
   userProfile,
+  mode = 'feedback',
+  voteLabels,
+  options,
+  allowMultiple,
 }: DashboardFeedbackProps) {
   return (
     <Gotcha
       elementId={elementId}
-      mode="feedback"
+      mode={mode}
       position="inline"
       theme="light"
       showOnHover={false}
       size="sm"
       promptText={promptText}
+      voteLabels={voteLabels}
+      options={options}
+      allowMultiple={allowMultiple}
       user={
         userEmail
           ? {

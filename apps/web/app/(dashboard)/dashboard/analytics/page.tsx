@@ -53,7 +53,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
             <DashboardFeedback
               elementId="analytics-page"
-              promptText="What analytics would you like to see?"
+              mode="poll"
+              promptText="What analytics matter most to you?"
+              options={[
+                'Sentiment trends',
+                'Response heatmaps',
+                'User segments',
+                'Comparison reports',
+              ]}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{
@@ -315,9 +322,22 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <DashboardFeedback
             elementId="analytics-page"
-            promptText="What analytics would you like to see?"
+            mode="poll"
+            promptText="What analytics matter most to you?"
+            options={[
+              'Sentiment trends',
+              'Response heatmaps',
+              'User segments',
+              'Comparison reports',
+            ]}
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
+            userProfile={{
+              companySize: dbUser?.companySize ?? undefined,
+              role: dbUser?.role ?? undefined,
+              industry: dbUser?.industry ?? undefined,
+              useCase: dbUser?.useCase ?? undefined,
+            }}
           />
         </div>
         <p className="text-gray-600">

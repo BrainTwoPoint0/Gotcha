@@ -160,7 +160,9 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
             <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
             <DashboardFeedback
               elementId="responses-page"
-              promptText="How can we improve the responses view?"
+              mode="poll"
+              promptText="What would make this page more useful?"
+              options={['Better filtering', 'Response tagging', 'Bulk actions', 'Search responses']}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{

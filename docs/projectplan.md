@@ -1432,3 +1432,35 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **Test Results:** 30 suites, 751 tests passing. Production build clean.
 
+---
+
+### Optimize Dashboard Gotcha Placements
+
+**Implemented:** February 2026
+
+**Overview:** Changed dashboard Gotcha widgets from all-feedback to mode-appropriate placements for higher response rates and more actionable signal.
+
+**Changes:**
+
+1. **`DashboardFeedback` component** — Added optional `mode`, `voteLabels`, `options`, `allowMultiple` props. All pass through to `<Gotcha>`. Default mode stays `"feedback"` for backwards compatibility.
+
+2. **Dashboard Overview** → Changed to `mode="vote"` with prompt "Is this dashboard useful?"
+
+3. **Responses Page** → Changed to `mode="poll"` with prompt "What would make this page more useful?" and 4 options (Better filtering, Export to CSV, Response tagging, Bulk actions).
+
+4. **Analytics Page** → Changed both gated and PRO instances to `mode="poll"` with prompt "What analytics matter most to you?" and 4 options (Sentiment trends, Response heatmaps, User segments, Comparison reports). Fixed missing `userProfile` on the PRO instance.
+
+5. **Segments Page** → Kept as feedback (newer feature, open-ended is appropriate). Fixed missing `userProfile` on the PRO instance.
+
+6. **Settings Page** → Added new `DashboardFeedback` with `mode="vote"` and prompt "Is the setup process clear?"
+
+**Files Modified (6):**
+- `apps/web/app/components/DashboardFeedback.tsx` — Added mode/poll/vote props
+- `apps/web/app/(dashboard)/dashboard/page.tsx` — Vote mode
+- `apps/web/app/(dashboard)/dashboard/responses/page.tsx` — Poll mode
+- `apps/web/app/(dashboard)/dashboard/analytics/page.tsx` — Poll mode + userProfile fix
+- `apps/web/app/(dashboard)/dashboard/analytics/segments/page.tsx` — userProfile fix
+- `apps/web/app/(dashboard)/dashboard/settings/page.tsx` — Added vote widget
+
+**Build:** Clean, no errors.
+

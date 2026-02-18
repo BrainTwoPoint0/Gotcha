@@ -156,7 +156,9 @@ export default async function DashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <DashboardFeedback
               elementId="dashboard-overview"
-              promptText="How can we improve the dashboard?"
+              mode="vote"
+              promptText="Is this dashboard useful?"
+              voteLabels={{ up: 'Yes', down: 'No' }}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{

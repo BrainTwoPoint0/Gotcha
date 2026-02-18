@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileForm, OrganizationForm } from './settings-forms';
 import { PlanActions } from './plan-actions';
+import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,23 @@ export default async function SettingsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <DashboardFeedback
+            elementId="settings-page"
+            mode="vote"
+            promptText="Is the setup process clear?"
+            voteLabels={{ up: 'Yes', down: 'No' }}
+            userEmail={dbUser?.email}
+            userName={dbUser?.name ?? undefined}
+            userProfile={{
+              companySize: dbUser?.companySize ?? undefined,
+              role: dbUser?.role ?? undefined,
+              industry: dbUser?.industry ?? undefined,
+              useCase: dbUser?.useCase ?? undefined,
+            }}
+          />
+        </div>
         <p className="text-gray-600">Manage your account and organization</p>
       </div>
 
