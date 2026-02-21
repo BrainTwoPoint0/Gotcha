@@ -15,6 +15,10 @@ interface FeedbackModeProps {
     rating?: number | null;
   };
   isEditing?: boolean;
+  /** Show the text input (default: true) */
+  showText?: boolean;
+  /** Show the star rating (default: true) */
+  showRating?: boolean;
 }
 
 export function FeedbackMode({
@@ -26,6 +30,8 @@ export function FeedbackMode({
   customStyles,
   initialValues,
   isEditing = false,
+  showText = true,
+  showRating = true,
 }: FeedbackModeProps) {
   const [content, setContent] = useState(initialValues?.content || '');
   const [rating, setRating] = useState<number | null>(initialValues?.rating ?? null);
@@ -47,10 +53,20 @@ export function FeedbackMode({
 
   const isDark = theme === 'dark';
 
+  const canSubmit = (() => {
+    if (showText && showRating) return content.trim().length > 0 || rating !== null;
+    if (showText) return content.trim().length > 0;
+    if (showRating) return rating !== null;
+    return false;
+  })();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && rating === null) return;
-    onSubmit({ content: content.trim() || undefined, rating: rating ?? undefined });
+    if (!canSubmit) return;
+    onSubmit({
+      content: showText && content.trim() ? content.trim() : undefined,
+      rating: showRating && rating !== null ? rating : undefined,
+    });
   };
 
   const inputStyles: React.CSSProperties = {
@@ -87,43 +103,50 @@ export function FeedbackMode({
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* Rating (optional) */}
-      <div style={{ marginBottom: isTouch ? 16 : 12 }}>
-        <StarRating value={rating} onChange={setRating} isDark={isDark} isTouch={isTouch} />
-      </div>
+      {/* Rating */}
+      {showRating && (
+        <div style={{
+          marginBottom: showText ? (isTouch ? 16 : 12) : 0,
+          ...(!showText ? { display: 'flex', justifyContent: 'center', padding: '8px 0' } : {}),
+        }}>
+          <StarRating value={rating} onChange={setRating} isDark={isDark} isTouch={isTouch} large={!showText} />
+        </div>
+      )}
 
       {/* Text input */}
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={placeholder || 'Share your thoughts...'}
-        style={inputStyles}
-        disabled={isLoading}
-        aria-label="Your feedback"
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#1e293b';
-          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30,41,59,0.15)';
-          e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.7)' : '#ffffff';
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
-          e.currentTarget.style.boxShadow = 'none';
-          e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
-        }}
-      />
+      {showText && (
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={placeholder || 'Share your thoughts...'}
+          style={inputStyles}
+          disabled={isLoading}
+          aria-label="Your feedback"
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = '#1e293b';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30,41,59,0.15)';
+            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.7)' : '#ffffff';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
+          }}
+        />
+      )}
 
       {/* Submit button */}
       <button
         type="submit"
-        disabled={isLoading || (!content.trim() && rating === null)}
+        disabled={isLoading || !canSubmit}
         style={{
           ...buttonStyles,
           marginTop: 12,
           opacity: isLoading ? 0.8 : 1,
-          backgroundColor: (!content.trim() && rating === null)
+          backgroundColor: !canSubmit
             ? (isDark ? '#374151' : '#e2e8f0')
             : (isDark ? '#e2e8f0' : '#1e293b'),
-          color: (!content.trim() && rating === null)
+          color: !canSubmit
             ? (isDark ? '#6b7280' : '#94a3b8')
             : (isDark ? '#1e293b' : '#ffffff'),
           display: 'flex',
@@ -154,18 +177,19 @@ interface StarRatingProps {
   onChange: (rating: number) => void;
   isDark: boolean;
   isTouch: boolean;
+  large?: boolean;
 }
 
-function StarRating({ value, onChange, isDark, isTouch }: StarRatingProps) {
+function StarRating({ value, onChange, isDark, isTouch, large = false }: StarRatingProps) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const starSize = isTouch ? 28 : 18;
-  const buttonPadding = isTouch ? 6 : 3;
+  const starSize = large ? (isTouch ? 36 : 28) : (isTouch ? 28 : 18);
+  const buttonPadding = large ? (isTouch ? 8 : 5) : (isTouch ? 6 : 3);
 
   return (
     <div
       style={{
         display: 'flex',
-        gap: isTouch ? 6 : 2,
+        gap: large ? (isTouch ? 8 : 6) : (isTouch ? 6 : 2),
       }}
       role="group"
       aria-label="Rating"

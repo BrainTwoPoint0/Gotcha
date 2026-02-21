@@ -33,6 +33,12 @@ export interface GotchaProps {
   /** Current A/B variant shown to user */
   variant?: string;
 
+  // Feedback mode field visibility
+  /** Show the text input in feedback mode (default: true) */
+  showText?: boolean;
+  /** Show the star rating in feedback mode (default: true) */
+  showRating?: boolean;
+
   // Vote mode specific
   /** Custom labels for vote buttons (default: Like/Dislike) */
   voteLabels?: { up: string; down: string };
@@ -86,6 +92,8 @@ export function Gotcha({
   elementId,
   user,
   mode = 'feedback',
+  showText = true,
+  showRating = true,
   experimentId,
   variant,
   voteLabels,
@@ -236,6 +244,8 @@ export function Gotcha({
           error={error}
           existingResponse={existingResponse}
           isEditing={isEditing}
+          showText={showText}
+          showRating={showRating}
           voteLabels={voteLabels}
           options={options}
           allowMultiple={allowMultiple}
@@ -271,6 +281,8 @@ export function Gotcha({
               error={error}
               existingResponse={existingResponse}
               isEditing={isEditing}
+              showText={showText}
+              showRating={showRating}
               voteLabels={voteLabels}
               options={options}
               allowMultiple={allowMultiple}

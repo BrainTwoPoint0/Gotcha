@@ -1478,3 +1478,33 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 - [x] **4. Scope CORS wildcard** — Change `netlify.toml` to only apply `Access-Control-Allow-Origin: *` to `/api/v1/*`
 - [x] **5. Add origin check to internal responses endpoint** — Restrict `/api/v1/internal/responses` to same-origin requests only
 
+---
+
+## Configurable Feedback Fields (showText / showRating)
+
+> **Goal:** Let developers choose whether FeedbackMode shows text input, star rating, or both.
+
+### Todo
+
+- [x] **1. Write unit tests** — Add tests for the new `showText`/`showRating` prop combinations (text-only, rating-only, both, neither guard)
+- [x] **2. Add props to `FeedbackMode`** — Add `showText?: boolean` (default `true`) and `showRating?: boolean` (default `true`) to `FeedbackModeProps`. Conditionally render each section. Update submit validation to match visible fields.
+- [x] **3. Thread props through `GotchaModal`** — Add `showText`/`showRating` to `GotchaModalProps` and pass them down to `FeedbackMode`.
+- [x] **4. Add props to `Gotcha`** — Add `showText`/`showRating` to `GotchaProps` and pass through to both desktop and mobile `GotchaModal` instances.
+- [x] **5. Update dev page** — Add examples to `apps/web/app/dev/page.tsx` showing text-only and rating-only variants.
+- [x] **6. Run tests & build** — Verify all tests pass and production build is clean.
+
+### Review
+
+**Summary:** Added `showText` and `showRating` boolean props to the SDK's feedback mode, allowing developers to show text-only, rating-only, or both (default).
+
+**Files Created (1):**
+- `apps/web/__tests__/sdk/feedback-fields.test.ts` — 22 tests covering field visibility, submit validation, payload construction, and prop defaults
+
+**Files Modified (4):**
+- `packages/sdk/src/components/modes/FeedbackMode.tsx` — Added `showText`/`showRating` props, conditional rendering, updated submit validation to use `canSubmit`
+- `packages/sdk/src/components/GotchaModal.tsx` — Added props to interface, destructured with defaults, passed to FeedbackMode
+- `packages/sdk/src/components/Gotcha.tsx` — Added props to GotchaProps interface, destructured, passed to both desktop and mobile modal instances
+- `apps/web/app/dev/page.tsx` — Added "Feedback Field Options" section with text-only, rating-only, and both variants
+
+**Test Results:** 32 suites, 794 tests passing. TypeScript clean.
+

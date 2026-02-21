@@ -22,6 +22,11 @@ export interface GotchaModalProps {
   isEditing?: boolean;
   // Vote mode
   voteLabels?: { up: string; down: string };
+  // Feedback mode field visibility
+  /** Show the text input in feedback mode (default: true) */
+  showText?: boolean;
+  /** Show the star rating in feedback mode (default: true) */
+  showRating?: boolean;
   // Poll mode
   options?: string[];
   allowMultiple?: boolean;
@@ -45,6 +50,8 @@ export function GotchaModal({
   error,
   existingResponse,
   isEditing = false,
+  showText = true,
+  showRating = true,
   voteLabels,
   options,
   allowMultiple = false,
@@ -327,6 +334,8 @@ export function GotchaModal({
                 rating: existingResponse.rating,
               } : undefined}
               isEditing={isEditing}
+              showText={showText}
+              showRating={showRating}
             />
           )}
           {mode === 'vote' && (
