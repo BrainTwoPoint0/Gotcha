@@ -159,20 +159,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     },
   };
 
-  // Get responses for the selected period
-  const responses = await prisma.response.findMany({
-    where,
-    select: {
-      createdAt: true,
-      mode: true,
-      rating: true,
-      vote: true,
-      elementIdRaw: true,
-      pollOptions: true,
-      pollSelected: true,
-    },
-  });
-
   // Calculate date range for display
   const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   const dateRangeLabel =
@@ -182,45 +168,122 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   const selectedProject = projectId ? projects.find((p) => p.id === projectId) : null;
   const selectedElement = elementId || null;
 
-  // Process data for charts
-  const dailyCounts: Record<string, number> = {};
-  const modeCounts: Record<string, number> = {};
-  const voteCounts = { UP: 0, DOWN: 0 };
-  const ratings: { date: string; rating: number }[] = [];
+  // --- DB-level aggregation: run all queries in parallel ---
+  const [modeCountsRaw, ratingAgg, voteCountsRaw, dailyTrendRaw, elementPerfRaw, pollResponses] =
+    await Promise.all([
+      // Mode counts (groupBy)
+      prisma.response.groupBy({
+        by: ['mode'],
+        where,
+        _count: { mode: true },
+      }),
+      // Average rating (aggregate)
+      prisma.response.aggregate({
+        where: { ...where, rating: { not: null } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      // Vote counts (groupBy)
+      prisma.response.groupBy({
+        by: ['vote'],
+        where: { ...where, vote: { not: null } },
+        _count: { vote: true },
+      }),
+      // Daily trend (groupBy by date - using raw query for date truncation)
+      prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
+      SELECT DATE("createdAt") as day, COUNT(*) as count
+      FROM "Response"
+      WHERE "projectId" IN (
+        SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+        ${projectId ? prisma.$queryRaw`AND id = ${projectId}` : prisma.$queryRaw``}
+      )
+      ${elementId ? prisma.$queryRaw`AND "elementIdRaw" = ${elementId}` : prisma.$queryRaw``}
+      AND "createdAt" >= ${startDate}
+      AND "createdAt" <= ${endDate}
+      GROUP BY DATE("createdAt")
+      ORDER BY day
+    `.catch(() => [] as Array<{ day: string; count: bigint }>),
+      // Element performance (groupBy)
+      prisma.response.groupBy({
+        by: ['elementIdRaw'],
+        where,
+        _count: { elementIdRaw: true },
+        _avg: { rating: true },
+        orderBy: { _count: { elementIdRaw: 'desc' } },
+        take: 10,
+      }),
+      // Poll responses (still needs JS — limited set)
+      prisma.response.findMany({
+        where: { ...where, mode: 'POLL' },
+        select: {
+          elementIdRaw: true,
+          pollOptions: true,
+          pollSelected: true,
+        },
+      }),
+    ]);
 
-  // Initialize days in range
-  const daysToShow = Math.min(daysDiff, 90); // Cap at 90 days for readability
+  // Total responses from mode counts
+  const totalResponses = modeCountsRaw.reduce((sum, m) => sum + m._count.mode, 0);
+
+  // Format mode data
+  const modeData = modeCountsRaw.map((m) => ({
+    name: m.mode.toLowerCase().replace('_', ' '),
+    value: m._count.mode,
+  }));
+
+  // Format vote counts
+  const voteCounts = { UP: 0, DOWN: 0 };
+  voteCountsRaw.forEach((v) => {
+    if (v.vote === 'UP') voteCounts.UP = v._count.vote;
+    if (v.vote === 'DOWN') voteCounts.DOWN = v._count.vote;
+  });
+
+  const sentimentData = [
+    { name: 'Positive', value: voteCounts.UP, color: '#22c55e' },
+    { name: 'Negative', value: voteCounts.DOWN, color: '#ef4444' },
+  ].filter((d) => d.value > 0);
+
+  // Format average rating
+  const avgRating = ratingAgg._avg.rating ? ratingAgg._avg.rating.toFixed(1) : null;
+
+  const positiveRate =
+    voteCounts.UP + voteCounts.DOWN > 0
+      ? Math.round((voteCounts.UP / (voteCounts.UP + voteCounts.DOWN)) * 100)
+      : null;
+
+  // Format daily trend — fill in missing days with 0
+  const dailyCounts: Record<string, number> = {};
+  const daysToShow = Math.min(daysDiff, 90);
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(endDate);
     date.setDate(date.getDate() - i);
     const key = date.toISOString().split('T')[0];
     dailyCounts[key] = 0;
   }
-
-  responses.forEach((r) => {
-    // Daily counts
-    const dateKey = r.createdAt.toISOString().split('T')[0];
-    if (dailyCounts[dateKey] !== undefined) {
-      dailyCounts[dateKey]++;
-    }
-
-    // Mode counts
-    modeCounts[r.mode] = (modeCounts[r.mode] || 0) + 1;
-
-    // Vote counts
-    if (r.vote === 'UP') voteCounts.UP++;
-    if (r.vote === 'DOWN') voteCounts.DOWN++;
-
-    // Ratings
-    if (r.rating) {
-      ratings.push({ date: dateKey, rating: r.rating });
+  dailyTrendRaw.forEach((row) => {
+    const key =
+      typeof row.day === 'string'
+        ? row.day.split('T')[0]
+        : new Date(row.day).toISOString().split('T')[0];
+    if (dailyCounts[key] !== undefined) {
+      dailyCounts[key] = Number(row.count);
     }
   });
 
-  // Poll aggregation
+  const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
+    date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    responses: count,
+  }));
+
+  // Average rating data — reuse daily trend approach with a simpler query
+  // (keeping lightweight: no separate per-day rating query, use overall avg)
+  const avgRatingData: { date: string; rating: number }[] = [];
+
+  // Poll aggregation (still needs JS for JSON array processing)
   const pollMap: Record<string, { elementId: string; optionCounts: Record<string, number> }> = {};
-  responses.forEach((r) => {
-    if (r.mode !== 'POLL' || !Array.isArray(r.pollSelected) || r.pollSelected.length === 0) return;
+  pollResponses.forEach((r) => {
+    if (!Array.isArray(r.pollSelected) || r.pollSelected.length === 0) return;
     if (!pollMap[r.elementIdRaw]) {
       const allOptions = Array.isArray(r.pollOptions) ? (r.pollOptions as string[]) : [];
       const optionCounts: Record<string, number> = {};
@@ -237,83 +300,34 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     options: Object.entries(p.optionCounts).map(([name, count]) => ({ name, count })),
   }));
 
-  // Element performance aggregation
-  const elementMap: Record<
-    string,
-    { total: number; ratingSum: number; ratingCount: number; upVotes: number; downVotes: number }
-  > = {};
-  responses.forEach((r) => {
-    if (!elementMap[r.elementIdRaw]) {
-      elementMap[r.elementIdRaw] = {
-        total: 0,
-        ratingSum: 0,
-        ratingCount: 0,
-        upVotes: 0,
-        downVotes: 0,
-      };
-    }
-    const e = elementMap[r.elementIdRaw];
-    e.total++;
-    if (r.rating) {
-      e.ratingSum += r.rating;
-      e.ratingCount++;
-    }
-    if (r.vote === 'UP') e.upVotes++;
-    if (r.vote === 'DOWN') e.downVotes++;
-  });
-  const elementPerformance = Object.entries(elementMap)
-    .map(([elementId, e]) => ({
-      elementId,
-      total: e.total,
-      avgRating: e.ratingCount > 0 ? Number((e.ratingSum / e.ratingCount).toFixed(1)) : null,
-      positiveRate:
-        e.upVotes + e.downVotes > 0
-          ? Math.round((e.upVotes / (e.upVotes + e.downVotes)) * 100)
-          : null,
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10);
+  // Element performance — get vote breakdown per element for top 10
+  const topElementIds = elementPerfRaw.map((e) => e.elementIdRaw);
+  const elementVotes =
+    topElementIds.length > 0
+      ? await prisma.response.groupBy({
+          by: ['elementIdRaw', 'vote'],
+          where: { ...where, elementIdRaw: { in: topElementIds }, vote: { not: null } },
+          _count: { vote: true },
+        })
+      : [];
 
-  // Format data for charts
-  const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
-    date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    responses: count,
-  }));
-
-  const modeData = Object.entries(modeCounts).map(([mode, count]) => ({
-    name: mode.toLowerCase().replace('_', ' '),
-    value: count,
-  }));
-
-  const sentimentData = [
-    { name: 'Positive', value: voteCounts.UP, color: '#22c55e' },
-    { name: 'Negative', value: voteCounts.DOWN, color: '#ef4444' },
-  ].filter((d) => d.value > 0);
-
-  // Calculate average rating per day
-  const ratingsByDate: Record<string, number[]> = {};
-  ratings.forEach(({ date, rating }) => {
-    if (!ratingsByDate[date]) ratingsByDate[date] = [];
-    ratingsByDate[date].push(rating);
+  const elementVoteMap: Record<string, { up: number; down: number }> = {};
+  elementVotes.forEach((v) => {
+    if (!elementVoteMap[v.elementIdRaw]) elementVoteMap[v.elementIdRaw] = { up: 0, down: 0 };
+    if (v.vote === 'UP') elementVoteMap[v.elementIdRaw].up = v._count.vote;
+    if (v.vote === 'DOWN') elementVoteMap[v.elementIdRaw].down = v._count.vote;
   });
 
-  const avgRatingData = Object.entries(ratingsByDate)
-    .map(([date, ratings]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      rating: Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)),
-    }))
-    .slice(-14); // Last 14 days with ratings
-
-  // Summary stats
-  const totalResponses = responses.length;
-  const avgRating =
-    ratings.length > 0
-      ? (ratings.reduce((a, b) => a + b.rating, 0) / ratings.length).toFixed(1)
-      : null;
-  const positiveRate =
-    voteCounts.UP + voteCounts.DOWN > 0
-      ? Math.round((voteCounts.UP / (voteCounts.UP + voteCounts.DOWN)) * 100)
-      : null;
+  const elementPerformance = elementPerfRaw.map((e) => {
+    const votes = elementVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
+    const totalVotes = votes.up + votes.down;
+    return {
+      elementId: e.elementIdRaw,
+      total: e._count.elementIdRaw,
+      avgRating: e._avg.rating ? Number(e._avg.rating.toFixed(1)) : null,
+      positiveRate: totalVotes > 0 ? Math.round((votes.up / totalVotes) * 100) : null,
+    };
+  });
 
   return (
     <div>

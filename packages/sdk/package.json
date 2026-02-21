@@ -44,6 +44,7 @@
     "user-feedback",
     "product-feedback"
   ],
+  "author": "Gotcha <info@braintwopoint0.com>",
   "license": "MIT",
   "repository": {
     "type": "git",

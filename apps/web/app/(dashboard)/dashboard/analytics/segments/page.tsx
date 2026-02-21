@@ -198,6 +198,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     avgRating: number | null;
     positiveRate: number | null;
   }> = [];
+  let segmentDataCapped = false;
 
   if (selectedGroupBy) {
     const responseWhere: Record<string, unknown> = {
@@ -208,6 +209,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
       ...(params.elementId && { elementIdRaw: params.elementId }),
     };
 
+    const SEGMENT_LIMIT = 10000;
     const responses = await prisma.response.findMany({
       where: responseWhere,
       select: {
@@ -215,6 +217,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         vote: true,
         endUserMeta: true,
       },
+      take: SEGMENT_LIMIT,
     });
 
     const segments: Record<string, { ratings: number[]; votes: { up: number; down: number } }> = {};
@@ -239,6 +242,8 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         segments[segment].votes.down++;
       }
     });
+
+    segmentDataCapped = responses.length >= SEGMENT_LIMIT;
 
     segmentData = Object.entries(segments)
       .map(([segment, data]) => {
@@ -287,6 +292,15 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
           {' - '}Grouped by {selectedGroupBy || 'none'}
         </p>
       </div>
+
+      {segmentDataCapped && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-yellow-700">
+            Showing analysis based on the most recent 10,000 responses. Results may not reflect the
+            full dataset.
+          </p>
+        </div>
+      )}
 
       <SegmentCharts
         projects={projects}

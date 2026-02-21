@@ -1508,3 +1508,155 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 
 **Test Results:** 32 suites, 794 tests passing. TypeScript clean.
 
+---
+
+## Launch Readiness: Security & Quality Fixes
+
+**Implemented:** February 2026
+
+**Overview:** Addressed 20 issues across 5 categories before public launch.
+
+### Group 1: Security (5 tasks)
+
+- [x] **S1. Fix open redirect in auth callback** — Created `lib/auth-redirect.ts` with `sanitizeRedirectPath()` that rejects protocol-relative URLs (`//evil.com`), absolute URLs, backslash tricks, and paths not starting with `/`. Applied to `app/auth/callback/route.ts`. Test: `__tests__/lib/auth-redirect.test.ts` (10 tests).
+
+- [x] **S2. Fix weak origin check on internal API** — Created `lib/origin-check.ts` with `isOriginAllowed()` that uses `new URL(origin).hostname === host.split(':')[0]` instead of `origin.includes(host)`. Prevents subdomain spoofing like `gotcha.cx.evil.com`. Test: `__tests__/api/internal-origin.test.ts` (7 tests).
+
+- [x] **S3. Remove error message leak in dashboard** — Replaced `<pre>{error.message}</pre>` in dashboard catch block with generic "Something went wrong" message. Error still logged via `console.error`.
+
+- [x] **S4. Prevent Stripe double-checkout** — Created `lib/stripe-guards.ts` with `shouldBlockCheckout()` that checks if subscription is already PRO + ACTIVE. Returns 400 if true. Applied to `/api/stripe/checkout`. Test: `__tests__/api/stripe-checkout.test.ts` (4 tests).
+
+- [x] **S5. Add HSTS security header** — Added `Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"` to `netlify.toml` security headers block.
+
+### Group 2: Infrastructure (3 tasks)
+
+- [x] **I1. Monthly usage counter reset** — Created `lib/usage-reset.ts` with `shouldResetCounter()` that checks if `responsesResetAt` is before start of current month. Applied to `/api/v1/responses` — resets counter to 1 and updates timestamp on first request of a new month. Test: `__tests__/api/usage-reset.test.ts` (5 tests).
+
+- [x] **I2. Add missing env vars to .env.example** — Added `GOTCHA_SDK_API` and `NEXT_PUBLIC_SITE_URL`.
+
+- [x] **I3. Add global error boundary** — Created `app/global-error.tsx` with generic error UI, "Try again" button, and structured JSON console logging.
+
+### Group 3: SEO & Legal (7 tasks)
+
+- [x] **L1. Create robots.txt** — Created `public/robots.txt` allowing `/`, disallowing `/dashboard` and `/api/`, referencing sitemap.
+
+- [x] **L2. Create dynamic sitemap** — Created `app/sitemap.ts` with 7 pages: `/`, `/pricing`, `/demo`, `/privacy`, `/terms`, `/login`, `/signup`.
+
+- [x] **L3. Create Privacy Policy page** — Created `app/(marketing)/privacy/page.tsx` covering data collected, third-party services, cookies, GDPR rights.
+
+- [x] **L4. Create Terms of Service page** — Created `app/(marketing)/terms/page.tsx` covering acceptable use, data ownership, plan limits, liability.
+
+- [x] **L5. Fix dead legal links** — Changed `href="#"` to `/privacy` and `/terms` in signup page. Added Legal column with Privacy/Terms links to Footer.
+
+- [x] **L6. Add OpenGraph meta tags** — Added `openGraph` and `twitter` metadata to root `app/layout.tsx`.
+
+- [x] **L7. Update JSON-LD version** — Changed `softwareVersion: '1.0.0'` to `'1.0.18'` in marketing layout.
+
+### Group 4: Performance (3 tasks)
+
+- [x] **P1. Analytics page — DB-level aggregation** — Replaced `findMany` + JS processing with `groupBy` for mode counts, `aggregate` for rating avg, `$queryRaw` for daily trend, `groupBy` by vote for sentiment. All run in `Promise.all()`.
+
+- [x] **P2. Segments page — safety limit** — Added `take: 10000` safety cap to response query. Shows yellow banner if data was capped.
+
+- [x] **P3. Responses page — parallelize queries** — Wrapped 4 sequential queries (elements groupBy, total count, gated count, findMany) in `Promise.all()`.
+
+### Group 5: Cleanup (2 tasks)
+
+- [x] **C1. Add author to SDK package.json** — Added `"author": "Gotcha <info@braintwopoint0.com>"`.
+
+- [x] **C2. Comment stale Plan enum** — Added comment explaining only FREE and PRO are used, others retained to avoid migration.
+
+### Bonus Fix
+
+- [x] **Pre-existing type error** — Fixed `experimentId`/`variant` type errors in both `/api/v1/responses/route.ts` and `/api/v1/internal/responses/route.ts` by extending the validated data type with optional A/B experiment fields. This was a pre-existing build failure.
+
+### Files Created (14)
+- `apps/web/lib/auth-redirect.ts`
+- `apps/web/lib/origin-check.ts`
+- `apps/web/lib/stripe-guards.ts`
+- `apps/web/lib/usage-reset.ts`
+- `apps/web/__tests__/lib/auth-redirect.test.ts`
+- `apps/web/__tests__/api/internal-origin.test.ts`
+- `apps/web/__tests__/api/stripe-checkout.test.ts`
+- `apps/web/__tests__/api/usage-reset.test.ts`
+- `apps/web/app/global-error.tsx`
+- `apps/web/app/sitemap.ts`
+- `apps/web/app/(marketing)/privacy/page.tsx`
+- `apps/web/app/(marketing)/terms/page.tsx`
+- `apps/web/public/robots.txt`
+
+### Files Modified (16)
+- `apps/web/app/auth/callback/route.ts` — Import sanitizeRedirectPath
+- `apps/web/app/api/v1/internal/responses/route.ts` — Strict origin check, type fix
+- `apps/web/app/api/v1/responses/route.ts` — Usage counter reset, type fix
+- `apps/web/app/api/stripe/checkout/route.ts` — Double-checkout guard
+- `apps/web/app/(dashboard)/dashboard/page.tsx` — Remove error message leak
+- `apps/web/app/(dashboard)/dashboard/responses/page.tsx` — Parallelize queries
+- `apps/web/app/(dashboard)/dashboard/analytics/page.tsx` — DB-level aggregation
+- `apps/web/app/(dashboard)/dashboard/analytics/segments/page.tsx` — Safety limit
+- `apps/web/app/(auth)/signup/page.tsx` — Fix dead legal links
+- `apps/web/app/components/Footer.tsx` — Add Legal column
+- `apps/web/app/layout.tsx` — OpenGraph meta tags
+- `apps/web/app/(marketing)/layout.tsx` — Update JSON-LD version
+- `apps/web/.env.example` — Add missing env vars
+- `apps/web/prisma/schema.prisma` — Comment stale Plan enum
+- `netlify.toml` — HSTS header
+- `packages/sdk/package.json` — Add author
+
+### Verification
+
+- **Unit tests:** 36 suites, 815 tests — all passing
+- **Production build:** Clean (0 errors)
+- **New pages:** `/privacy`, `/terms`, `/robots.txt`, `/sitemap.xml` all render correctly
+
+---
+
+## Launch Readiness Round 2: Post-Audit Security & Quality Fixes
+
+**Implemented:** February 2026
+
+**Overview:** Second security + production-readiness pass before launch. 8 tasks across security and hardening.
+
+### Group 1: Security (6 tasks)
+
+- [x] **S6. Fix weak origin check on 2 internal sub-routes** — Replaced `!origin.includes(host)` with `isOriginAllowed()` (from `lib/origin-check.ts`) in both `[id]/route.ts` and `check/route.ts`. Prevents subdomain spoofing.
+
+- [x] **S7. Fix open redirect via x-forwarded-host** — Removed all `forwardedHost` branches in `auth/callback/route.ts`. Both success and error redirects now always use `origin` (safe, derived from `new URL(request.url)`).
+
+- [x] **S8. Fix CSV injection in export** — Extracted `escapeCsvField()` to `lib/csv-escape.ts`. Added formula injection sanitization: prepends `'` when field starts with `=`, `+`, `-`, `@`, `\t`, or `\r`. Test: `__tests__/lib/csv-escape.test.ts` (12 tests).
+
+- [x] **S9. Add safety limit to export query** — Added `take: 50000` to the `findMany` in `api/export/responses/route.ts`. Prevents unbounded queries.
+
+- [x] **S10. Tighten input validation** — Added `content.max(10000)`, `title.max(500)`, `elementId.max(200)` to `submitResponseSchema`. Replaced `userSchema.passthrough()` with `.catchall(z.unknown())` + 4KB size refine.
+
+- [x] **S11. Fix usage counter race condition** — Created `lib/usage-atomic.ts` with `atomicIncrementUsage()` using single `$executeRaw` SQL that conditionally resets or increments in one atomic query. Replaced the TOCTOU read-then-update pattern in `api/v1/responses/route.ts`. Test: `__tests__/api/usage-atomic.test.ts` (5 tests).
+
+### Group 2: Hardening (2 tasks)
+
+- [x] **H1. Add OG image for social sharing** — Created `app/opengraph-image.tsx` using Next.js ImageResponse (dark gradient with "Gotcha" branding). Added `images` to openGraph metadata and `metadataBase` to fix build warnings.
+
+- [x] **H2. Add health check endpoint** — Created `app/api/health/route.ts` returning `{ status: 'ok', timestamp }`.
+
+### Files Created (5)
+- `apps/web/lib/csv-escape.ts`
+- `apps/web/lib/usage-atomic.ts`
+- `apps/web/__tests__/lib/csv-escape.test.ts`
+- `apps/web/__tests__/api/usage-atomic.test.ts`
+- `apps/web/app/opengraph-image.tsx`
+- `apps/web/app/api/health/route.ts`
+
+### Files Modified (7)
+- `apps/web/app/api/v1/internal/responses/[id]/route.ts` — Import + use `isOriginAllowed()`
+- `apps/web/app/api/v1/internal/responses/check/route.ts` — Import + use `isOriginAllowed()`
+- `apps/web/app/auth/callback/route.ts` — Removed x-forwarded-host branches
+- `apps/web/app/api/export/responses/route.ts` — CSV injection fix, take limit, shared import
+- `apps/web/lib/validations.ts` — Max lengths + userSchema size limit
+- `apps/web/app/api/v1/responses/route.ts` — Atomic usage increment
+- `apps/web/app/layout.tsx` — OG image, metadataBase
+
+### Verification
+
+- **Unit tests:** 38 suites, 832 tests — all passing
+- **Production build:** Clean (0 errors)
+- **New endpoint:** `/api/health` returns 200
+

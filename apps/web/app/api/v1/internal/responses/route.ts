@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { submitResponseSchema } from '@/lib/validations';
 import { createHash } from 'crypto';
+import { isOriginAllowed } from '@/lib/origin-check';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Only allow requests from the same origin (our own website)
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (origin && host && !origin.includes(host)) {
+    if (!isOriginAllowed(origin, host)) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
@@ -72,7 +73,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = validation.data;
+    const data = validation.data as typeof validation.data & {
+      experimentId?: string;
+      variant?: string;
+    };
 
     // Get or create element
     let elementDbId: string;

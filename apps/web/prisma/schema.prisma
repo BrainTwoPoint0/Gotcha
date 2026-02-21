@@ -286,6 +286,8 @@ model Subscription {
   @@index([stripeCustomerId])
 }
 
+// Only FREE and PRO are actively used. STARTER and ENTERPRISE are retained
+// to avoid a migration that would break existing rows referencing them.
 enum Plan {
   FREE
   STARTER

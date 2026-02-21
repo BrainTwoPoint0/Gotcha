@@ -88,52 +88,47 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       : {}),
   };
 
-  // Fetch unique elements for filter dropdown
-  const elements = organization
-    ? await prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where: {
-          project: {
-            organizationId: organization.id,
+  // Run all queries in parallel
+  const [elements, total, gatedCount, responses] = organization
+    ? await Promise.all([
+        prisma.response.groupBy({
+          by: ['elementIdRaw'],
+          where: {
+            project: {
+              organizationId: organization.id,
+            },
           },
-        },
-        _count: {
-          elementIdRaw: true,
-        },
-        orderBy: {
           _count: {
-            elementIdRaw: 'desc',
+            elementIdRaw: true,
           },
-        },
-      })
-    : [];
+          orderBy: {
+            _count: {
+              elementIdRaw: 'desc',
+            },
+          },
+        }),
+        prisma.response.count({ where }),
+        !isPro ? prisma.response.count({ where: { ...where, gated: true } }) : Promise.resolve(0),
+        prisma.response.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * LIMIT,
+          take: LIMIT,
+          include: {
+            project: {
+              select: { name: true, slug: true },
+            },
+          },
+        }) as Promise<ResponseItem[]>,
+      ])
+    : [[], 0, 0, [] as ResponseItem[]];
 
   const elementOptions = elements.map((e) => ({
     elementIdRaw: e.elementIdRaw,
     count: e._count.elementIdRaw,
   }));
 
-  // Get total count for pagination
-  const total = organization ? await prisma.response.count({ where }) : 0;
   const totalPages = Math.ceil(total / LIMIT);
-
-  // Count gated responses in the current view
-  const gatedCount = !isPro ? await prisma.response.count({ where: { ...where, gated: true } }) : 0;
-
-  // Get paginated responses
-  const responses: ResponseItem[] = organization
-    ? await prisma.response.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * LIMIT,
-        take: LIMIT,
-        include: {
-          project: {
-            select: { name: true, slug: true },
-          },
-        },
-      })
-    : [];
 
   // Redact gated responses server-side so real data never reaches the client
   const safeResponses = responses.map((r) => {

@@ -386,10 +386,9 @@ export default async function DashboardPage() {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Dashboard Error</h1>
-        <p className="text-gray-700 mb-2">Something went wrong loading the dashboard.</p>
-        <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </pre>
+        <p className="text-gray-700">
+          Something went wrong loading the dashboard. Please try refreshing the page.
+        </p>
       </div>
     );
   }

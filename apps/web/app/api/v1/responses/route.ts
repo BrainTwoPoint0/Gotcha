@@ -10,6 +10,7 @@ import {
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 import { sendUsageWarningEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
+import { atomicIncrementUsage } from '@/lib/usage-atomic';
 
 // Define types locally instead of importing Prisma enums
 type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
@@ -71,7 +72,10 @@ export async function POST(request: NextRequest) {
       return apiError('INVALID_REQUEST', firstError?.message || 'Invalid request body', 400);
     }
 
-    const data = validation.data;
+    const data = validation.data as typeof validation.data & {
+      experimentId?: string;
+      variant?: string;
+    };
 
     // Generate response ID and timestamp up front so we can respond immediately
     const responseId = crypto.randomUUID();
@@ -115,11 +119,8 @@ export async function POST(request: NextRequest) {
           elementDbId = newElement.id;
         }
 
-        // Increment usage counter first so we know if this response is over the limit
-        await prisma.subscription.updateMany({
-          where: { organizationId: apiKey.organizationId },
-          data: { responsesThisMonth: { increment: 1 } },
-        });
+        // Atomically reset (if new month) and increment usage counter
+        await atomicIncrementUsage(apiKey.organizationId);
 
         // Check if this response exceeds the free limit
         let gated = false;

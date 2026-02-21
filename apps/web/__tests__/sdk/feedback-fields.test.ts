@@ -4,10 +4,7 @@
 
 describe('Feedback Fields Configuration', () => {
   // Simulates the field visibility logic in FeedbackMode
-  const getVisibleFields = (
-    showText: boolean = true,
-    showRating: boolean = true
-  ) => ({
+  const getVisibleFields = (showText: boolean = true, showRating: boolean = true) => ({
     showText,
     showRating,
     hasTextarea: showText,

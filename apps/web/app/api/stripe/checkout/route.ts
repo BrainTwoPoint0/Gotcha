@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { stripe, STRIPE_PRO_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { shouldBlockCheckout } from '@/lib/stripe-guards';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,6 +32,11 @@ export async function POST(request: NextRequest) {
     const organization = dbUser?.memberships[0]?.organization;
     if (!organization) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Prevent double-checkout for users already on PRO
+    if (shouldBlockCheckout(organization.subscription)) {
+      return NextResponse.json({ error: 'Already subscribed to Pro' }, { status: 400 });
     }
 
     let customerId = organization.subscription?.stripeCustomerId;
@@ -65,9 +71,10 @@ export async function POST(request: NextRequest) {
       // No body or invalid JSON — default to monthly
     }
 
-    const priceId = billing === 'annual' && STRIPE_PRO_ANNUAL_PRICE_ID
-      ? STRIPE_PRO_ANNUAL_PRICE_ID
-      : STRIPE_PRO_PRICE_ID;
+    const priceId =
+      billing === 'annual' && STRIPE_PRO_ANNUAL_PRICE_ID
+        ? STRIPE_PRO_ANNUAL_PRICE_ID
+        : STRIPE_PRO_PRICE_ID;
 
     // Get the host for redirect URLs
     const headersList = await headers();

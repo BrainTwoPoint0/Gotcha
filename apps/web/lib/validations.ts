@@ -6,12 +6,15 @@ export const responseModeSchema = z.enum(['feedback', 'vote', 'poll']);
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);
 
-// User metadata (flexible)
+// User metadata (flexible but bounded)
 export const userSchema = z
   .object({
     id: z.string().optional(),
   })
-  .passthrough(); // Allow any additional properties
+  .catchall(z.unknown())
+  .refine((obj) => JSON.stringify(obj).length <= 4096, {
+    message: 'User metadata too large (max 4KB)',
+  });
 
 // Context
 export const contextSchema = z
@@ -24,12 +27,12 @@ export const contextSchema = z
 // Submit response payload
 export const submitResponseSchema = z
   .object({
-    elementId: z.string().min(1, 'elementId is required'),
+    elementId: z.string().min(1, 'elementId is required').max(200),
     mode: responseModeSchema,
 
     // Content fields
-    content: z.string().optional(),
-    title: z.string().optional(),
+    content: z.string().max(10000).optional(),
+    title: z.string().max(500).optional(),
     rating: z.number().int().min(1).max(10).optional(),
     vote: voteTypeSchema.optional(),
 

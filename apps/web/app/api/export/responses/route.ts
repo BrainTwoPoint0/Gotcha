@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { escapeCsvField } from '@/lib/csv-escape';
 
 export async function GET(request: Request) {
   try {
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
     const responses = await prisma.response.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 50000,
       include: {
         project: {
           select: { name: true, slug: true },
@@ -128,11 +130,4 @@ export async function GET(request: Request) {
     console.error('Export error:', error);
     return NextResponse.json({ error: 'Export failed' }, { status: 500 });
   }
-}
-
-function escapeCsvField(field: string): string {
-  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-    return `"${field.replace(/"/g, '""')}"`;
-  }
-  return field;
 }
