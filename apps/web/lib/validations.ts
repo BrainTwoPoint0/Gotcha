@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Response modes
-export const responseModeSchema = z.enum(['feedback', 'vote', 'poll', 'feature-request', 'ab']);
+export const responseModeSchema = z.enum(['feedback', 'vote', 'poll']);
 
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);
@@ -37,10 +37,6 @@ export const submitResponseSchema = z
     pollOptions: z.array(z.string()).min(2).max(6).optional(),
     pollSelected: z.array(z.string()).optional(),
 
-    // A/B specific
-    experimentId: z.string().optional(),
-    variant: z.string().optional(),
-
     // User data
     user: userSchema.optional(),
 
@@ -71,16 +67,6 @@ export const submitResponseSchema = z
       return true;
     },
     { message: 'Poll mode requires pollOptions (2-6) and pollSelected' }
-  )
-  .refine(
-    (data) => {
-      // A/B mode requires experimentId
-      if (data.mode === 'ab' && !data.experimentId) {
-        return false;
-      }
-      return true;
-    },
-    { message: 'A/B mode requires experimentId' }
   );
 
 export type SubmitResponseInput = z.infer<typeof submitResponseSchema>;

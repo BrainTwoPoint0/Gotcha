@@ -2,7 +2,7 @@
 // RESPONSE MODES
 // ============================================
 
-export type ResponseMode = 'feedback' | 'vote' | 'poll' | 'feature-request' | 'ab';
+export type ResponseMode = 'feedback' | 'vote' | 'poll';
 
 export type VoteType = 'up' | 'down';
 
@@ -47,8 +47,6 @@ export interface SubmitResponsePayload {
   vote?: VoteType;
   pollOptions?: string[];
   pollSelected?: string[];
-  experimentId?: string;
-  variant?: string;
   user?: GotchaUser;
   context?: {
     url?: string;

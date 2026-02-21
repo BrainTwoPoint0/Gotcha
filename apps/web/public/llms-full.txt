@@ -16,12 +16,13 @@ Email: info@braintwopoint0.com
 3. Core Concepts
 4. Components Reference
 5. Configuration Options
-6. API Reference
-7. Error Handling
-8. Pricing & Plans
-9. Use Cases
-10. Comparison with Alternatives
-11. FAQ
+6. Editing Responses
+7. API Reference
+8. Error Handling
+9. Pricing & Plans
+10. Use Cases
+11. Comparison with Alternatives
+12. FAQ
 
 ---
 
@@ -67,13 +68,16 @@ function App() {
 function MyApp() {
   return (
     <div>
-      <Gotcha elementId="hero-section" mode="feedback">
+      {/* The parent element must have position: relative */}
+      <div style={{ position: 'relative' }}>
         <HeroSection />
-      </Gotcha>
+        <Gotcha elementId="hero-section" mode="feedback" />
+      </div>
 
-      <Gotcha elementId="pricing-table" mode="vote">
+      <div style={{ position: 'relative' }}>
         <PricingTable />
-      </Gotcha>
+        <Gotcha elementId="pricing-table" mode="vote" />
+      </div>
     </div>
   );
 }
@@ -90,18 +94,37 @@ function MyApp() {
 
 ## 3. Core Concepts
 
-### Contextual Feedback
-Unlike traditional surveys that collect feedback at the page level, Gotcha ties feedback to specific UI elements. When a user rates a feature, you know exactly which component they're referring to.
+### Standalone Component (Not a Wrapper)
+Gotcha is a standalone component placed as a sibling inside a relative-positioned parent. It positions itself absolutely within that parent. Do NOT use it as a wrapper around your component.
+
+```tsx
+{/* CORRECT: Gotcha as a sibling inside a relative-positioned parent */}
+<div style={{ position: 'relative' }}>
+  <YourComponent />
+  <Gotcha elementId="my-feature" mode="feedback" />
+</div>
+
+{/* WRONG: Do NOT use Gotcha as a wrapper */}
+{/* <Gotcha elementId="my-feature" mode="feedback"><YourComponent /></Gotcha> */}
+```
 
 ### Element IDs
-Each wrapped component needs a unique `elementId`. This identifier:
+Each Gotcha instance needs a unique `elementId`. This identifier:
 - Links feedback to specific UI elements
 - Enables filtering in the dashboard
 - Persists across sessions for analytics
+- Tracks returning users to allow editing previous responses
 
 ### Modes
 - **feedback**: Star rating (1-5) with optional text comment
 - **vote**: Binary thumbs up/down with optional comment
+
+### Field Visibility (Feedback Mode)
+You can control which fields appear in feedback mode:
+- `showRating` (default: `true`) - Show/hide the star rating selector
+- `showText` (default: `true`) - Show/hide the text input field
+
+This lets you create rating-only, text-only, or combined feedback forms.
 
 ### Single Modal Pattern
 Only one feedback modal can be open at a time. Opening a new modal automatically closes any existing one.
@@ -117,8 +140,8 @@ The context provider that must wrap your app.
 ```tsx
 <GotchaProvider
   apiKey="your-api-key"
-  onError={(error) => console.error(error)}
-  onSuccess={(response) => console.log('Submitted:', response)}
+  debug={false}
+  disabled={false}
 >
   {children}
 </GotchaProvider>
@@ -126,25 +149,28 @@ The context provider that must wrap your app.
 
 **Props:**
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `apiKey` | string | Yes | Your project API key |
-| `onError` | (error: Error) => void | No | Error callback |
-| `onSuccess` | (response: Response) => void | No | Success callback |
-| `children` | ReactNode | Yes | Your app components |
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `apiKey` | string | Yes | - | Your project API key |
+| `children` | ReactNode | Yes | - | Your app components |
+| `baseUrl` | string | No | - | Override API base URL (for testing/staging) |
+| `debug` | boolean | No | false | Enable debug logging |
+| `disabled` | boolean | No | false | Disable all Gotcha buttons globally |
+| `defaultUser` | GotchaUser | No | {} | Default user metadata applied to all submissions |
 
 ### Gotcha
 
-The main wrapper component that adds a feedback button to any element.
+The main component that adds a feedback button to a parent element. Place it inside a relative-positioned container as a sibling to your content.
 
 ```tsx
-<Gotcha
-  elementId="unique-id"
-  mode="feedback"
-  position="bottom-right"
->
+<div style={{ position: 'relative' }}>
   <YourComponent />
-</Gotcha>
+  <Gotcha
+    elementId="unique-id"
+    mode="feedback"
+    position="top-right"
+  />
+</div>
 ```
 
 **Props:**
@@ -153,19 +179,70 @@ The main wrapper component that adds a feedback button to any element.
 |------|------|----------|---------|-------------|
 | `elementId` | string | Yes | - | Unique identifier for this element |
 | `mode` | 'feedback' \| 'vote' | Yes | - | Type of feedback to collect |
-| `position` | Position | No | 'bottom-right' | Button placement |
-| `children` | ReactNode | Yes | - | Component to wrap |
+| `showText` | boolean | No | true | Show text input in feedback mode |
+| `showRating` | boolean | No | true | Show star rating in feedback mode |
+| `position` | Position | No | 'top-right' | Button placement |
+| `size` | 'sm' \| 'md' \| 'lg' | No | 'md' | Button size |
+| `theme` | 'light' \| 'dark' \| 'auto' \| 'custom' | No | 'light' | Color theme |
+| `customStyles` | GotchaStyles | No | - | Custom style overrides |
+| `visible` | boolean | No | true | Control visibility programmatically |
+| `showOnHover` | boolean | No | true | Only show button when parent is hovered |
+| `touchBehavior` | TouchBehavior | No | 'always-visible' | Mobile behavior |
+| `promptText` | string | No | - | Custom prompt text in modal |
+| `placeholder` | string | No | - | Input placeholder text |
+| `submitText` | string | No | 'Submit' | Submit button text |
+| `thankYouMessage` | string | No | 'Thanks for your feedback!' | Post-submission message |
+| `voteLabels` | { up: string; down: string } | No | - | Custom labels for vote buttons |
+| `user` | GotchaUser | No | - | User metadata for segmentation |
+| `onSubmit` | (response: GotchaResponse) => void | No | - | Called after successful submission |
+| `onOpen` | () => void | No | - | Called when modal opens |
+| `onClose` | () => void | No | - | Called when modal closes |
+| `onError` | (error: GotchaError) => void | No | - | Called on error |
 
 **Position Options:**
-- `'top-right'` - Top right corner
+- `'top-right'` - Top right corner (default)
 - `'top-left'` - Top left corner
-- `'bottom-right'` - Bottom right corner (default)
+- `'bottom-right'` - Bottom right corner
 - `'bottom-left'` - Bottom left corner
 - `'inline'` - Inline with text (no absolute positioning)
+
+**GotchaStyles Interface:**
+```tsx
+interface GotchaStyles {
+  button?: React.CSSProperties;
+  modal?: React.CSSProperties;
+  input?: React.CSSProperties;
+  submitButton?: React.CSSProperties;
+}
+```
 
 ---
 
 ## 5. Configuration Options
+
+### showText and showRating
+
+Control which fields appear in feedback mode:
+
+```tsx
+{/* Rating only (no text input) */}
+<div style={{ position: 'relative' }}>
+  <QuickRating />
+  <Gotcha elementId="quick-rate" mode="feedback" showText={false} />
+</div>
+
+{/* Text only (no star rating) */}
+<div style={{ position: 'relative' }}>
+  <CommentBox />
+  <Gotcha elementId="comment-box" mode="feedback" showRating={false} />
+</div>
+
+{/* Both (default behavior) */}
+<div style={{ position: 'relative' }}>
+  <FullFeedback />
+  <Gotcha elementId="full-feedback" mode="feedback" />
+</div>
+```
 
 ### Domain Allowlisting
 
@@ -182,14 +259,56 @@ Gotcha automatically generates anonymous user IDs stored in localStorage. For id
   elementId="feature"
   mode="feedback"
   user={{ id: 'user-123', email: 'user@example.com' }}
->
-  <Feature />
-</Gotcha>
+/>
+```
+
+### Vote Labels
+
+Customize the vote button labels:
+
+```tsx
+<Gotcha
+  elementId="article"
+  mode="vote"
+  voteLabels={{ up: 'Helpful', down: 'Not helpful' }}
+/>
+```
+
+### Theme
+
+```tsx
+{/* Auto-detect system theme */}
+<Gotcha elementId="feature" mode="feedback" theme="auto" />
+
+{/* Force dark mode */}
+<Gotcha elementId="feature" mode="feedback" theme="dark" />
 ```
 
 ---
 
-## 6. API Reference
+## 6. Editing Responses
+
+Gotcha automatically supports editing previous responses. When a user has already submitted feedback for a given `elementId`:
+
+- The modal pre-fills with their previous rating, text, or vote
+- The submit button updates (rather than creates) their response
+- The thank-you message shows "Your feedback has been updated!" instead of the default
+- This works seamlessly for both feedback and vote modes
+
+No additional configuration is needed. The SDK detects existing responses automatically using the anonymous or identified user ID.
+
+```tsx
+{/* User clicks the button again after submitting */}
+{/* Their previous response is pre-filled and they can update it */}
+<div style={{ position: 'relative' }}>
+  <Feature />
+  <Gotcha elementId="feature-v2" mode="feedback" />
+</div>
+```
+
+---
+
+## 7. API Reference
 
 ### Submit Response
 ```
@@ -215,6 +334,8 @@ Content-Type: application/json
   "createdAt": "2025-01-15T10:30:00Z"
 }
 ```
+
+The `status` field can be `"created"`, `"duplicate"`, or `"updated"` (when editing a previous response).
 
 ### List Responses
 ```
@@ -249,39 +370,44 @@ Authorization: Bearer <api-key>
 
 ---
 
-## 7. Error Handling
+## 8. Error Handling
 
 ### Error Codes
 
 | Code | Description | Solution |
 |------|-------------|----------|
 | `INVALID_API_KEY` | API key not found or revoked | Check key in dashboard |
-| `DOMAIN_NOT_ALLOWED` | Origin not in allowlist | Add domain in dashboard |
+| `ORIGIN_NOT_ALLOWED` | Origin not in allowlist | Add domain in dashboard |
 | `RATE_LIMITED` | Too many requests | Wait or upgrade plan |
+| `QUOTA_EXCEEDED` | Monthly response limit reached | Upgrade to Pro |
 | `INVALID_REQUEST` | Malformed request body | Check payload format |
-| `PROJECT_NOT_FOUND` | Project deleted | Create new project |
+| `USER_NOT_FOUND` | User ID not found (GDPR endpoints) | Verify user ID |
+| `INTERNAL_ERROR` | Server error | Retry or contact support |
 
 ### Handling Errors
 
 ```tsx
-<GotchaProvider
-  apiKey="your-api-key"
+<Gotcha
+  elementId="feature"
+  mode="feedback"
   onError={(error) => {
     if (error.code === 'RATE_LIMITED') {
       // Show "Please wait" message
-    } else if (error.code === 'DOMAIN_NOT_ALLOWED') {
+    } else if (error.code === 'ORIGIN_NOT_ALLOWED') {
       // Log for debugging
       console.error('Domain not configured:', window.location.origin);
+    } else if (error.code === 'QUOTA_EXCEEDED') {
+      // Prompt user to upgrade
     }
   }}
->
-  {children}
-</GotchaProvider>
+/>
 ```
+
+The SDK also logs a `console.warn` for any submission failure by default, even without an `onError` callback.
 
 ---
 
-## 8. Pricing & Plans
+## 9. Pricing & Plans
 
 ### Free Plan
 - **Price**: $0/month
@@ -305,53 +431,73 @@ Visit https://gotcha.cx/dashboard/settings to upgrade.
 
 ---
 
-## 9. Use Cases
+## 10. Use Cases
 
 ### Feature Feedback
 Add to new features to measure user satisfaction:
 ```tsx
-<Gotcha elementId="new-editor-v2" mode="feedback">
+<div style={{ position: 'relative' }}>
   <NewEditor />
-</Gotcha>
+  <Gotcha elementId="new-editor-v2" mode="feedback" />
+</div>
+```
+
+### Rating Only (No Text)
+Collect quick star ratings without requiring text:
+```tsx
+<div style={{ position: 'relative' }}>
+  <RecipeCard />
+  <Gotcha elementId="recipe-card" mode="feedback" showText={false} />
+</div>
+```
+
+### Text Comments Only (No Stars)
+Collect open-ended comments without a rating:
+```tsx
+<div style={{ position: 'relative' }}>
+  <Article />
+  <Gotcha elementId="article-comments" mode="feedback" showRating={false} />
+</div>
 ```
 
 ### A/B Testing Sentiment
 Compare user reactions to design variations:
 ```tsx
-<Gotcha elementId={`checkout-${variant}`} mode="vote">
+<div style={{ position: 'relative' }}>
   <CheckoutFlow variant={variant} />
-</Gotcha>
+  <Gotcha elementId={`checkout-${variant}`} mode="vote" />
+</div>
 ```
 
 ### Documentation Rating
 Let users rate help articles:
 ```tsx
-<Gotcha elementId={`docs-${slug}`} mode="vote" position="inline">
-  <span>Was this helpful?</span>
-</Gotcha>
+<Gotcha elementId={`docs-${slug}`} mode="vote" position="inline" voteLabels={{ up: 'Helpful', down: 'Not helpful' }} />
 ```
 
 ### Bug Context
 Collect bug reports with element context:
 ```tsx
-<Gotcha elementId="data-table" mode="feedback">
+<div style={{ position: 'relative' }}>
   <DataTable />
-</Gotcha>
+  <Gotcha elementId="data-table" mode="feedback" promptText="Report an issue" />
+</div>
 ```
 
 ### Onboarding Flow
 Measure satisfaction at each step:
 ```tsx
 {steps.map((step, i) => (
-  <Gotcha key={i} elementId={`onboarding-step-${i}`} mode="feedback">
+  <div key={i} style={{ position: 'relative' }}>
     <OnboardingStep {...step} />
-  </Gotcha>
+    <Gotcha elementId={`onboarding-step-${i}`} mode="feedback" />
+  </div>
 ))}
 ```
 
 ---
 
-## 10. Comparison with Alternatives
+## 11. Comparison with Alternatives
 
 ### Gotcha vs Hotjar
 | Feature | Gotcha | Hotjar |
@@ -380,16 +526,16 @@ Measure satisfaction at each step:
 
 ---
 
-## 11. FAQ
+## 12. FAQ
 
 **Q: Does Gotcha work with Next.js?**
 A: Yes, Gotcha works with Next.js App Router and Pages Router. Use the client-side provider.
 
 **Q: Can I customize the button appearance?**
-A: The button uses a minimal "G" design. Custom styling is on the roadmap.
+A: The button uses a glassmorphism "G" design. You can pass `customStyles` to override button, modal, input, and submit button styles.
 
 **Q: Is feedback anonymous?**
-A: By default, yes. Gotcha generates anonymous IDs. You can optionally pass identified user data.
+A: By default, yes. Gotcha generates anonymous IDs. You can optionally pass identified user data via the `user` prop.
 
 **Q: How is data stored?**
 A: Data is stored in secure cloud infrastructure. GDPR compliant with data export/deletion APIs.
@@ -398,10 +544,16 @@ A: Data is stored in secure cloud infrastructure. GDPR compliant with data expor
 A: Pro plan includes CSV and JSON export. Free plan can use the API for programmatic access.
 
 **Q: What happens if I exceed the free limit?**
-A: New responses are rejected until the next billing cycle or you upgrade.
+A: New responses are rejected with a `QUOTA_EXCEEDED` error until the next billing cycle or you upgrade.
 
 **Q: Is there a self-hosted option?**
-A: Coming soon. Contact info@braintwopoint0.com for enterprise inquiries.
+A: Coming soon. Contact info@braintwopoint0.com for inquiries.
+
+**Q: Can users edit their feedback?**
+A: Yes. When a user clicks the Gotcha button on an element they have already submitted feedback for, the modal pre-fills their previous response and lets them update it.
+
+**Q: How does Gotcha handle the button on mobile?**
+A: By default, the button is always visible on touch devices (`touchBehavior: 'always-visible'`). You can set `touchBehavior: 'tap-to-reveal'` for tap-based interaction. On mobile, the modal renders as a full-screen portal overlay.
 
 ---
 
@@ -413,4 +565,4 @@ A: Coming soon. Contact info@braintwopoint0.com for enterprise inquiries.
 
 ---
 
-Last updated: January 2025
+Last updated: February 2026

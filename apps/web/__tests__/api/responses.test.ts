@@ -169,47 +169,6 @@ describe('Response API Logic', () => {
       });
     });
 
-    describe('Feature Request', () => {
-      it('should validate feature request submission', () => {
-        const result = submitResponseSchema.safeParse({
-          elementId: 'feature-form',
-          mode: 'feature-request',
-          title: 'Dark mode',
-          content: 'Please add dark mode support',
-        });
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.data.title).toBe('Dark mode');
-          expect(result.data.content).toBe('Please add dark mode support');
-        }
-      });
-    });
-
-    describe('A/B Test', () => {
-      it('should validate A/B test submission', () => {
-        const result = submitResponseSchema.safeParse({
-          elementId: 'checkout-button',
-          mode: 'ab',
-          experimentId: 'exp-button-color',
-          variant: 'green',
-        });
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.data.experimentId).toBe('exp-button-color');
-          expect(result.data.variant).toBe('green');
-        }
-      });
-
-      it('should reject A/B without experimentId', () => {
-        const result = submitResponseSchema.safeParse({
-          elementId: 'checkout-button',
-          mode: 'ab',
-          variant: 'green',
-        });
-        expect(result.success).toBe(false);
-      });
-    });
-
     describe('User Data', () => {
       it('should accept user with id', () => {
         const result = submitResponseSchema.safeParse({

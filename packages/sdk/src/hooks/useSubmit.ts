@@ -5,8 +5,6 @@ import { ResponseMode, GotchaUser, GotchaResponse, VoteType, ExistingResponse } 
 interface UseSubmitOptions {
   elementId: string;
   mode: ResponseMode;
-  experimentId?: string;
-  variant?: string;
   pollOptions?: string[];
   user?: GotchaUser;
   onSuccess?: (response: GotchaResponse) => void;
@@ -96,8 +94,6 @@ export function useSubmit(options: UseSubmitOptions) {
             vote: data.vote,
             pollOptions: options.pollOptions,
             pollSelected: data.pollSelected,
-            experimentId: options.experimentId,
-            variant: options.variant,
             user: { ...defaultUser, ...options.user },
           });
         }

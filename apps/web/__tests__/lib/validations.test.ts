@@ -12,8 +12,6 @@ describe('Validation Schemas', () => {
       expect(responseModeSchema.parse('feedback')).toBe('feedback');
       expect(responseModeSchema.parse('vote')).toBe('vote');
       expect(responseModeSchema.parse('poll')).toBe('poll');
-      expect(responseModeSchema.parse('feature-request')).toBe('feature-request');
-      expect(responseModeSchema.parse('ab')).toBe('ab');
     });
 
     it('should reject invalid modes', () => {
@@ -176,29 +174,6 @@ describe('Validation Schemas', () => {
           pollSelected: ['A', 'C'],
         });
         expect(result.pollSelected).toEqual(['A', 'C']);
-      });
-    });
-
-    describe('ab mode', () => {
-      it('should accept valid A/B response', () => {
-        const result = submitResponseSchema.parse({
-          elementId: 'ab-test-1',
-          mode: 'ab',
-          experimentId: 'exp-123',
-          variant: 'A',
-        });
-        expect(result.experimentId).toBe('exp-123');
-        expect(result.variant).toBe('A');
-      });
-
-      it('should require experimentId for ab mode', () => {
-        expect(() =>
-          submitResponseSchema.parse({
-            elementId: 'ab-test-1',
-            mode: 'ab',
-            variant: 'A',
-          })
-        ).toThrow('A/B mode requires experimentId');
       });
     });
 

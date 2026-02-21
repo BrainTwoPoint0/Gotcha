@@ -28,10 +28,6 @@ export interface GotchaProps {
   // Behavior
   /** Feedback mode */
   mode?: ResponseMode;
-  /** Required if mode is 'ab' */
-  experimentId?: string;
-  /** Current A/B variant shown to user */
-  variant?: string;
 
   // Feedback mode field visibility
   /** Show the text input in feedback mode (default: true) */
@@ -94,8 +90,6 @@ export function Gotcha({
   mode = 'feedback',
   showText = true,
   showRating = true,
-  experimentId,
-  variant,
   voteLabels,
   options,
   allowMultiple = false,
@@ -157,8 +151,6 @@ export function Gotcha({
   const { submit, isLoading, error, existingResponse, isEditing } = useSubmit({
     elementId,
     mode,
-    experimentId,
-    variant,
     pollOptions: options,
     user,
     onSuccess: (response) => {

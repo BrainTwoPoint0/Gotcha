@@ -70,6 +70,8 @@ function FeatureCard() {
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | Color theme |
 | `showOnHover` | `boolean` | `true` | Only show on hover |
+| `showText` | `boolean` | `true` | Show the text input in feedback mode |
+| `showRating` | `boolean` | `true` | Show the star rating in feedback mode |
 | `promptText` | `string` | Mode-specific | Custom prompt text |
 | `voteLabels` | `{ up: string, down: string }` | `{ up: 'Like', down: 'Dislike' }` | Custom vote button labels |
 | `options` | `string[]` | - | Poll options (2-6 items, required for poll mode) |
@@ -131,6 +133,35 @@ function FeatureCard() {
   options={["Analytics", "Segments", "Exports", "API"]}
   allowMultiple
   promptText="Which features matter most?"
+/>
+```
+
+### Feedback Field Options
+
+By default, feedback mode shows both a star rating and a text input. Use `showText` and `showRating` to control which fields appear.
+
+```tsx
+// Text only (no star rating)
+<Gotcha
+  elementId="text-only"
+  showRating={false}
+/>
+```
+
+```tsx
+// Rating only (no text input)
+<Gotcha
+  elementId="rating-only"
+  showText={false}
+/>
+```
+
+```tsx
+// Both fields (default behavior)
+<Gotcha
+  elementId="full-feedback"
+  showText={true}
+  showRating={true}
 />
 ```
 

@@ -20,9 +20,10 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback';
 function App() {
   return (
     <GotchaProvider apiKey="your-api-key">
-      <Gotcha elementId="feature-x" mode="feedback">
+      <div style={{ position: 'relative' }}>
         <YourComponent />
-      </Gotcha>
+        <Gotcha elementId="feature-x" mode="feedback" />
+      </div>
     </GotchaProvider>
   );
 }
@@ -30,9 +31,11 @@ function App() {
 
 ## Key Features
 
-- **One-line integration**: Wrap any component with `<Gotcha>` to add a contextual feedback button
+- **One-line integration**: Place `<Gotcha>` inside any relative-positioned parent to add a contextual feedback button
 - **Element-specific feedback**: Responses are tied to UI elements, not just pages
 - **Two collection modes**: `feedback` (1-5 star rating + text) and `vote` (thumbs up/down)
+- **Editable responses**: Users can update their previous feedback on the same element
+- **Configurable fields**: Show/hide star rating and text input independently with `showRating` and `showText`
 - **Dashboard analytics**: Filter responses by element, date, rating at gotcha.cx/dashboard
 - **Domain allowlisting**: API keys restricted to specific domains for security
 - **TypeScript support**: Full type definitions included
@@ -40,16 +43,17 @@ function App() {
 
 ## Feedback Mode
 
-Shows a floating "G" button on the wrapped component. On click:
-- 5-star rating selector
-- Optional text feedback input
+Shows a floating "G" button positioned on the parent element. On click:
+- 5-star rating selector (toggleable via `showRating`)
+- Optional text feedback input (toggleable via `showText`)
 - Submit button
 - Automatic element ID tracking
+- If user has already submitted, pre-fills their previous response for editing
 
 ## Vote Mode
 
 Shows a floating "G" button. On click:
-- Thumbs up / thumbs down buttons
+- Thumbs up / thumbs down buttons (customizable labels via `voteLabels`)
 - Optional comment field
 - Quick sentiment collection
 
@@ -59,24 +63,39 @@ Shows a floating "G" button. On click:
 |------|------|----------|---------|-------------|
 | `elementId` | string | Yes | - | Unique identifier for tracking |
 | `mode` | 'feedback' \| 'vote' | Yes | - | Collection type |
-| `position` | 'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline' | No | 'bottom-right' | Button placement |
-| `children` | ReactNode | Yes | - | Component to wrap |
+| `showText` | boolean | No | true | Show text input in feedback mode |
+| `showRating` | boolean | No | true | Show star rating in feedback mode |
+| `position` | 'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline' | No | 'top-right' | Button placement |
+| `size` | 'sm' \| 'md' \| 'lg' | No | 'md' | Button size |
+| `theme` | 'light' \| 'dark' \| 'auto' \| 'custom' | No | 'light' | Color theme |
+| `showOnHover` | boolean | No | true | Only show button when parent is hovered |
+| `touchBehavior` | 'always-visible' \| 'tap-to-reveal' | No | 'always-visible' | Mobile behavior |
+| `promptText` | string | No | - | Custom prompt text in modal |
+| `placeholder` | string | No | - | Input placeholder text |
+| `submitText` | string | No | 'Submit' | Submit button text |
+| `thankYouMessage` | string | No | 'Thanks for your feedback!' | Post-submission message |
+| `voteLabels` | { up: string; down: string } | No | - | Custom vote button labels |
+| `visible` | boolean | No | true | Control visibility programmatically |
+| `onSubmit` | (response) => void | No | - | Called after successful submission |
+| `onOpen` | () => void | No | - | Called when modal opens |
+| `onClose` | () => void | No | - | Called when modal closes |
+| `onError` | (error) => void | No | - | Called on error |
 
 ## Error Handling
 
 ```tsx
-<GotchaProvider
-  apiKey="your-api-key"
+<Gotcha
+  elementId="feature-x"
+  mode="feedback"
   onError={(error) => console.error('Gotcha error:', error)}
->
-  {/* components */}
-</GotchaProvider>
+/>
 ```
 
 Common errors:
 - `INVALID_API_KEY`: API key not found or revoked
-- `DOMAIN_NOT_ALLOWED`: Request origin not in allowlist
+- `ORIGIN_NOT_ALLOWED`: Request origin not in allowlist
 - `RATE_LIMITED`: Too many requests (Free: 100/min, Pro: 1000/min)
+- `QUOTA_EXCEEDED`: Monthly response limit reached
 
 ## Pricing
 
