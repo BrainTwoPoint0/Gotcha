@@ -68,7 +68,7 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
 
   const key = authHeader.replace('Bearer ', '');
 
-  if (!key || !key.startsWith('gtch_')) {
+  if (!key || !key.startsWith('gtch_') || key.length < 30 || key.length > 100) {
     return {
       success: false,
       error: {

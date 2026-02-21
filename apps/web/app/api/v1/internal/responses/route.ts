@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { submitResponseSchema } from '@/lib/validations';
 import { createHash } from 'crypto';
-import { isOriginAllowed } from '@/lib/origin-check';
+import { isInternalOriginAllowed } from '@/lib/origin-check';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -30,10 +31,20 @@ export async function POST(request: NextRequest) {
     // Only allow requests from the same origin (our own website)
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (!isOriginAllowed(origin, host)) {
+    if (!isInternalOriginAllowed(origin, host)) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
+      );
+    }
+
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimit = await checkRateLimit(`internal:${ip}`, 'free');
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
+        { status: 429 }
       );
     }
 
@@ -140,13 +151,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key',
-    },
-  });
-}
+// No OPTIONS/CORS — internal endpoints are same-origin only

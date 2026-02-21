@@ -61,30 +61,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const fields = ['companySize', 'role', 'industry', 'useCase'] as const;
-
-    const [totalUsers, ...groupResults] = await Promise.all([
-      prisma.user.count(),
-      ...fields.map((field) =>
-        prisma.user.groupBy({
-          by: [field],
-          _count: { [field]: true },
-          where: { [field]: { not: null } },
-        })
-      ),
-    ]);
-
-    const aggregates: Record<string, { value: string; count: number }[]> = {};
-    fields.forEach((field, i) => {
-      aggregates[field] = (groupResults[i] as Record<string, unknown>[]).map((row) => ({
-        value: row[field] as string,
-        count: (row._count as Record<string, number>)[field],
-      }));
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email! },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        companySize: true,
+        role: true,
+        industry: true,
+        useCase: true,
+        onboardedAt: true,
+      },
     });
 
-    return NextResponse.json({ totalUsers, aggregates });
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ user: dbUser });
   } catch (error) {
-    console.error('Error fetching insights:', error);
-    return NextResponse.json({ error: 'Failed to fetch insights' }, { status: 500 });
+    console.error('Error fetching profile:', error);
+    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
   }
 }

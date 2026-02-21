@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { stripe, STRIPE_PRO_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { shouldBlockCheckout } from '@/lib/stripe-guards';
 
 export async function POST(request: NextRequest) {
@@ -76,11 +75,7 @@ export async function POST(request: NextRequest) {
         ? STRIPE_PRO_ANNUAL_PRICE_ID
         : STRIPE_PRO_PRICE_ID;
 
-    // Get the host for redirect URLs
-    const headersList = await headers();
-    const host = headersList.get('host') || 'gotcha.cx';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gotcha.cx';
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({

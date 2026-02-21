@@ -36,13 +36,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const projectIdList = projectIds.map((p) => p.id);
 
-    // Find all responses for this user
+    // Find all responses for this user (bounded)
     const responses = await prisma.response.findMany({
       where: {
         projectId: { in: projectIdList },
         endUserId: userId,
       },
       orderBy: { createdAt: 'desc' },
+      take: 50000,
       select: {
         id: true,
         elementIdRaw: true,

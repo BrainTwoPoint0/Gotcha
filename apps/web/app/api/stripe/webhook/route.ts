@@ -27,12 +27,8 @@ export async function POST(request: Request) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const organizationId = session.metadata?.organizationId;
-        console.log('checkout.session.completed - organizationId:', organizationId);
-        console.log('checkout.session.completed - subscription:', session.subscription);
-
         if (organizationId && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-          console.log('Retrieved subscription:', subscription.id);
 
           // Get period end - handle both old and new Stripe API versions
           const periodEnd = (subscription as unknown as { current_period_end: number })
@@ -58,12 +54,8 @@ export async function POST(request: Request) {
               currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
             },
           });
-          console.log('Subscription updated to PRO');
-
           // Send Pro activation email (fire-and-forget)
           sendProActivatedEmail(organizationId).catch(console.error);
-        } else {
-          console.log('Missing organizationId or subscription in session');
         }
         break;
       }

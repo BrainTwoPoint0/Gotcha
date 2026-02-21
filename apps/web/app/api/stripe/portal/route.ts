@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 
 export async function POST() {
   try {
@@ -32,11 +31,7 @@ export async function POST() {
       return NextResponse.json({ error: 'No subscription found' }, { status: 404 });
     }
 
-    // Get the host for redirect URL
-    const headersList = await headers();
-    const host = headersList.get('host') || 'gotcha.cx';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gotcha.cx';
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,

@@ -80,9 +80,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get responses with endUserMeta
+    // Get responses with endUserMeta (bounded for safety)
     const responses = await prisma.response.findMany({
       where,
+      take: 100000,
       select: {
         rating: true,
         vote: true,

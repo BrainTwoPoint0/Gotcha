@@ -6,12 +6,15 @@ export const responseModeSchema = z.enum(['feedback', 'vote', 'poll']);
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);
 
-// User metadata (flexible but bounded)
+// User metadata (flexible but bounded to primitives)
 export const userSchema = z
   .object({
     id: z.string().optional(),
   })
-  .catchall(z.unknown())
+  .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]))
+  .refine((obj) => Object.keys(obj).length <= 20, {
+    message: 'Too many user metadata keys (max 20)',
+  })
   .refine((obj) => JSON.stringify(obj).length <= 4096, {
     message: 'User metadata too large (max 4KB)',
   });

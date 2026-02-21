@@ -61,10 +61,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError('INVALID_REQUEST', 'Response not found', 404);
     }
 
-    // Verify the user owns this response (if userId was set)
+    // Verify the user owns this response
     const userId = request.nextUrl.searchParams.get('userId');
-    if (userId && existingResponse.endUserId !== userId) {
-      return apiError('INVALID_REQUEST', 'You do not own this response', 403);
+    if (existingResponse.endUserId) {
+      if (!userId || existingResponse.endUserId !== userId) {
+        return apiError('INVALID_REQUEST', 'You do not own this response', 403);
+      }
     }
 
     // Update the response

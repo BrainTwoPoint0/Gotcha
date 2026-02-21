@@ -47,6 +47,15 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
+    // Validate date formats
+    const isValidDate = (d: string) => !isNaN(new Date(d).getTime());
+    if (startDate && !isValidDate(startDate)) {
+      return NextResponse.json({ error: 'Invalid startDate format' }, { status: 400 });
+    }
+    if (endDate && !isValidDate(endDate)) {
+      return NextResponse.json({ error: 'Invalid endDate format' }, { status: 400 });
+    }
+
     // Build where clause
     const where = {
       project: { organizationId: organization.id },
@@ -107,15 +116,15 @@ export async function GET(request: Request) {
       'Date',
     ];
     const rows = responses.map((r) => [
-      r.id,
-      r.project.name,
-      r.mode,
+      escapeCsvField(r.id),
+      escapeCsvField(r.project.name),
+      escapeCsvField(r.mode),
       escapeCsvField(r.content || ''),
       escapeCsvField(r.title || ''),
-      r.rating?.toString() || '',
-      r.vote || '',
-      r.elementIdRaw,
-      r.createdAt.toISOString(),
+      escapeCsvField(r.rating?.toString() || ''),
+      escapeCsvField(r.vote || ''),
+      escapeCsvField(r.elementIdRaw),
+      escapeCsvField(r.createdAt.toISOString()),
     ]);
 
     const csv = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');

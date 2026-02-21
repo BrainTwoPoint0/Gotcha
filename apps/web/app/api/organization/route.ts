@@ -41,8 +41,16 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Organization name is required' }, { status: 400 });
     }
 
+    if (name.length > 200) {
+      return NextResponse.json({ error: 'Organization name too long (max 200 chars)' }, { status: 400 });
+    }
+
     if (typeof slug !== 'string' || slug.trim().length === 0) {
       return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+    }
+
+    if (slug.length > 100) {
+      return NextResponse.json({ error: 'Slug too long (max 100 chars)' }, { status: 400 });
     }
 
     // Validate slug format

@@ -15,3 +15,20 @@ export function isOriginAllowed(origin: string | null, host: string | null): boo
     return false;
   }
 }
+
+/**
+ * Strict origin check for internal (browser-only) endpoints.
+ * Requires both Origin and Host to be present — rejects
+ * non-browser requests (curl, Postman, server-side scripts).
+ */
+export function isInternalOriginAllowed(origin: string | null, host: string | null): boolean {
+  if (!origin || !host) return false;
+
+  try {
+    const originHostname = new URL(origin).hostname;
+    const hostHostname = host.split(':')[0];
+    return originHostname === hostHostname;
+  } catch {
+    return false;
+  }
+}

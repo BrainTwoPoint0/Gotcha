@@ -134,11 +134,13 @@ export async function POST(request: Request) {
     // Generate initial API key
     const { key, hash } = generateApiKey('live');
 
+    // Store only hash + truncated prefix (never the full plaintext key)
+    const keyPrefix = key.substring(0, 15) + '...';
     await prisma.apiKey.create({
       data: {
         projectId: project.id,
         name: 'Production',
-        key,
+        key: keyPrefix,
         keyHash: hash,
         allowedDomains: [],
       },
