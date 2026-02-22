@@ -26,6 +26,32 @@ const voteMap: Record<string, VoteType> = {
   down: 'DOWN',
 };
 
+// Cache the API key lookup to avoid a DB round-trip on every request
+let cachedApiKey: { projectId: string } | null = null;
+let cachedKeyHash: string | null = null;
+
+async function getInternalApiKey() {
+  const apiKeyString = process.env.GOTCHA_SDK_API;
+  if (!apiKeyString) return null;
+
+  const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
+
+  // Return cached if hash matches (same env var)
+  if (cachedApiKey && cachedKeyHash === keyHash) return cachedApiKey;
+
+  const apiKey = await prisma.apiKey.findFirst({
+    where: { keyHash, revokedAt: null },
+    select: { projectId: true },
+  });
+
+  if (apiKey) {
+    cachedApiKey = apiKey;
+    cachedKeyHash = keyHash;
+  }
+
+  return apiKey;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Only allow requests from the same origin (our own website)
@@ -38,9 +64,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit by IP
+    // Run rate limit + body parsing + API key lookup in parallel
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
-    const rateLimit = await checkRateLimit(`internal:${ip}`, 'free');
+    const [rateLimit, body, apiKey] = await Promise.all([
+      checkRateLimit(`internal:${ip}`, 'free'),
+      request.json(),
+      getInternalApiKey(),
+    ]);
+
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
@@ -48,33 +79,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get API key from server-side env (not exposed to browser)
-    const apiKeyString = process.env.GOTCHA_SDK_API;
-    if (!apiKeyString) {
-      console.error('GOTCHA_SDK_API not configured');
+    if (!apiKey) {
+      console.error('GOTCHA_SDK_API not configured or invalid');
       return NextResponse.json(
         { error: { code: 'INTERNAL_ERROR', message: 'SDK not configured' } },
         { status: 500 }
       );
     }
 
-    // Validate the API key exists in database (lookup by hash, not plaintext)
-    const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
-    const apiKey = await prisma.apiKey.findFirst({
-      where: { keyHash, revokedAt: null },
-      include: { project: true },
-    });
-
-    if (!apiKey || apiKey.revokedAt) {
-      console.error('Invalid or revoked GOTCHA_SDK_API');
-      return NextResponse.json(
-        { error: { code: 'INVALID_API_KEY', message: 'Invalid API key' } },
-        { status: 401 }
-      );
-    }
-
-    // Parse and validate request body
-    const body = await request.json();
+    // Validate request body
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
@@ -89,56 +102,73 @@ export async function POST(request: NextRequest) {
       variant?: string;
     };
 
-    // Get or create element
-    let elementDbId: string;
-    const existingElement = await prisma.element.findUnique({
-      where: {
-        projectId_elementId: {
-          projectId: apiKey.projectId,
-          elementId: data.elementId,
-        },
-      },
-    });
+    // Generate ID and timestamp up front so we can respond immediately
+    const responseId = crypto.randomUUID();
+    const createdAt = new Date();
 
-    if (existingElement) {
-      elementDbId = existingElement.id;
-    } else {
-      const newElement = await prisma.element.create({
-        data: {
-          projectId: apiKey.projectId,
-          elementId: data.elementId,
-        },
-      });
-      elementDbId = newElement.id;
-    }
+    // --- Respond immediately after validation ---
+    // DB writes happen async (fire-and-forget), same pattern as external API
+    const asyncWrite = async () => {
+      try {
+        // Get or create element
+        let elementDbId: string;
+        const existingElement = await prisma.element.findUnique({
+          where: {
+            projectId_elementId: {
+              projectId: apiKey.projectId,
+              elementId: data.elementId,
+            },
+          },
+        });
 
-    // Create response
-    const response = await prisma.response.create({
-      data: {
-        projectId: apiKey.projectId,
-        elementId: elementDbId,
-        elementIdRaw: data.elementId,
-        mode: modeMap[data.mode],
-        content: data.content,
-        title: data.title,
-        rating: data.rating,
-        vote: data.vote ? voteMap[data.vote] : null,
-        pollOptions: data.pollOptions,
-        pollSelected: data.pollSelected,
-        experimentId: data.experimentId,
-        variant: data.variant,
-        endUserId: data.user?.id,
-        endUserMeta: (data.user || {}) as object,
-        url: data.context?.url,
-        userAgent: data.context?.userAgent,
-      },
-    });
+        if (existingElement) {
+          elementDbId = existingElement.id;
+        } else {
+          const newElement = await prisma.element.create({
+            data: {
+              projectId: apiKey.projectId,
+              elementId: data.elementId,
+            },
+          });
+          elementDbId = newElement.id;
+        }
+
+        // Create response
+        await prisma.response.create({
+          data: {
+            id: responseId,
+            projectId: apiKey.projectId,
+            elementId: elementDbId,
+            elementIdRaw: data.elementId,
+            mode: modeMap[data.mode],
+            content: data.content,
+            title: data.title,
+            rating: data.rating,
+            vote: data.vote ? voteMap[data.vote] : null,
+            pollOptions: data.pollOptions,
+            pollSelected: data.pollSelected,
+            experimentId: data.experimentId,
+            variant: data.variant,
+            endUserId: data.user?.id,
+            endUserMeta: (data.user || {}) as object,
+            url: data.context?.url,
+            userAgent: data.context?.userAgent,
+            createdAt,
+          },
+        });
+      } catch (err) {
+        console.error('Async DB write failed for internal response:', responseId, err);
+      }
+    };
+
+    // Fire DB writes without awaiting
+    asyncWrite();
 
     return NextResponse.json(
       {
-        id: response.id,
+        id: responseId,
         status: 'created',
-        createdAt: response.createdAt.toISOString(),
+        createdAt: createdAt.toISOString(),
       },
       { status: 201 }
     );

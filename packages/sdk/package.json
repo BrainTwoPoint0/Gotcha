@@ -1,6 +1,6 @@
 {
   "name": "gotcha-feedback",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "Developer-first contextual feedback SDK",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

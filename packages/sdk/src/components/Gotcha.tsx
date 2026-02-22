@@ -156,11 +156,11 @@ export function Gotcha({
     onSuccess: (response) => {
       setIsSubmitted(true);
       onSubmit?.(response);
-      // Auto-close after 3 seconds
+      // Auto-close after 1.5 seconds
       setTimeout(() => {
         closeModal();
         setIsSubmitted(false);
-      }, 3000);
+      }, 1500);
     },
     onError: (err) => {
       console.warn('[Gotcha] Submission failed:', err instanceof Error ? err.message : err);
