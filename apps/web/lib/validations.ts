@@ -41,7 +41,7 @@ export const submitResponseSchema = z
 
     // Poll specific
     pollOptions: z.array(z.string()).min(2).max(6).optional(),
-    pollSelected: z.array(z.string()).optional(),
+    pollSelected: z.array(z.string().max(500)).max(6).optional(),
 
     // User data
     user: userSchema.optional(),

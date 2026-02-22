@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Demo endpoint - accepts any submission and returns success
@@ -6,6 +7,16 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimit = await checkRateLimit(`demo:${ip}`, 'free');
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
+        { status: 429 }
+      );
+    }
+
     // Simulate a small delay like a real API
     await new Promise((resolve) => setTimeout(resolve, 300));
 

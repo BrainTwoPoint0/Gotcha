@@ -21,6 +21,12 @@ export async function POST(request: Request) {
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
+    if (name.length > 200) {
+      return NextResponse.json({ error: 'Project name too long (max 200 chars)' }, { status: 400 });
+    }
+    if (description && typeof description === 'string' && description.length > 2000) {
+      return NextResponse.json({ error: 'Description too long (max 2000 chars)' }, { status: 400 });
+    }
 
     // Generate slug from name
     const slug = name

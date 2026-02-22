@@ -1660,3 +1660,97 @@ FREE plan users are now properly limited to 1 project. Previously, users could b
 - **Production build:** Clean (0 errors)
 - **New endpoint:** `/api/health` returns 200
 
+---
+
+## Pre-Launch Production Readiness Audit
+
+**Date:** February 2026
+
+**Scope:** Final audit of all API routes, middleware, database schema, build config, SEO, and edge cases before public launch.
+
+### Audit Summary
+
+The codebase is in solid shape for launch. Previous security audits addressed the major issues (input validation, rate limiting, origin checks, CSV injection, atomic usage counters, auth redirect sanitization, etc.). This audit found **5 actionable findings** and confirmed that the remaining areas are production-ready.
+
+### Finding 1: Missing `not-found.tsx` page (Medium)
+
+**Issue:** There is no custom 404 page. When users hit a non-existent route, they see the default Next.js 404. For a launched product, a branded 404 page with navigation back to the homepage or dashboard would improve user experience.
+
+**Location:** `apps/web/app/not-found.tsx` (does not exist)
+
+**Recommendation:** Create `app/not-found.tsx` with a simple branded layout and links to `/` and `/dashboard`.
+
+---
+
+### Finding 2: Subscription record not created during email/password signup (Medium-High)
+
+**Issue:** When a user signs up via **email/password** and navigates to `/dashboard`, the middleware redirects do not trigger the `/auth/callback` route. The callback route (which creates the Prisma user, organization, and subscription) only fires for **OAuth (GitHub)** logins.
+
+For email/password signups, the user record and organization are lazily created in two places:
+- `dashboard/page.tsx` (line 63-121) -- creates user + org + subscription
+- `api/projects/route.ts` (line 44-81) -- creates user + org + subscription
+
+This is **working correctly** because the dashboard page has the fallback creation logic. However, the dashboard fallback does create the subscription (line 89-94), but it does **not** set `responsesResetAt`, while the projects API route does set it (line 78). The auth callback also does not set it. This means the first monthly usage reset will be triggered by the atomic increment function, which handles the null case correctly. So this is safe but inconsistent.
+
+**Recommendation:** No action strictly required -- the `atomicIncrementUsage()` function handles `responsesResetAt: null` correctly. But for consistency, set `responsesResetAt: new Date()` in the dashboard's lazy user creation (line 89-94) to match what `api/projects/route.ts` does.
+
+---
+
+### Finding 3: `stripeCustomerId` index missing on Subscription table (Low)
+
+**Issue:** The Stripe webhook handler looks up subscriptions by `stripeCustomerId` using `findFirst`:
+- `customer.subscription.updated` (webhook line 67)
+- `customer.subscription.deleted` (webhook line 99)
+- `invoice.payment_failed` (webhook line 121)
+
+The schema has `@@index([stripeCustomerId])` on the Subscription model. This is already present and correct. **No action needed.** The schema is properly indexed for all webhook lookup patterns.
+
+---
+
+### Finding 4: Demo endpoint accepts arbitrary JSON without size limit (Low)
+
+**Issue:** The `/api/v1/demo/responses` endpoint calls `request.json()` without body size validation. Since this is a demo-only endpoint that discards the data (just returns a mock response), the risk is limited to a theoretical memory exhaust from a huge POST body. However, Netlify and Next.js have built-in body size limits (~5MB), so this is not practically exploitable.
+
+**Location:** `/Users/karimfawaz/Dev Projects/gotcha/apps/web/app/api/v1/demo/responses/route.ts`
+
+**Recommendation:** No action required. The existing 300ms delay and lack of DB writes make this low-risk. Netlify's infrastructure limits protect against abuse.
+
+---
+
+### Finding 5: `invoice.payment_failed` webhook does not check for `null` subscription (Low)
+
+**Issue:** In the Stripe webhook handler, the `invoice.payment_failed` case updates the subscription to `PAST_DUE`. This correctly handles the case where the subscription exists. If `findFirst` returns null (no matching customer), the handler silently skips the update, which is the correct behavior. **No action needed.**
+
+---
+
+### Areas Confirmed Production-Ready
+
+**1. Error Handling:** All 20 API routes have try/catch blocks. No stack traces leak to clients. Error responses use generic messages. The `global-error.tsx` boundary catches unhandled client errors.
+
+**2. Environment Config (.env.example):** All 13 required env vars are documented. The `netlify.toml` is correctly configured with security headers (HSTS, X-Frame-Options, CSP-adjacent headers, etc.), CORS scoped to `/api/v1/*`, and static asset caching.
+
+**3. Database Schema Indexes:** All query patterns have corresponding indexes:
+- `Response`: indexes on `projectId`, `elementId`, `[projectId, elementIdRaw]`, `experimentId`, `createdAt`, `endUserId`, `idempotencyKey`
+- `ApiKey`: indexes on `keyHash`, `projectId`
+- `Subscription`: index on `stripeCustomerId`
+- All foreign keys have cascade deletes configured correctly
+
+**4. Middleware:** The matcher correctly covers `/dashboard/:path*`, `/projects/:path*`, `/login`, and `/signup`. Protected routes redirect to `/login`. Auth pages redirect logged-in users to `/dashboard`. The Supabase cookie refresh pattern is correct.
+
+**5. Build/Deploy:** The `package.json` scripts are correct. `prisma generate` runs both in `build` and `postinstall`. The `netlify.toml` base directory, build command, publish directory, and Node version are all correct. The `@netlify/plugin-nextjs` is included.
+
+**6. SEO:** `sitemap.ts` covers all 7 public pages. `robots.txt` disallows `/dashboard` and `/api/`. Root layout has OpenGraph + Twitter Card metadata with `metadataBase`. Marketing layout has JSON-LD structured data. OG image exists.
+
+**7. Stripe Webhook:** All 4 event types are handled (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`). Signature verification is correct. The `upsert` pattern handles edge cases where subscription records may not exist. Double-checkout prevention is in place.
+
+**8. Free Tier Limits:** The 500 response/month limit is enforced correctly. Usage is atomically incremented with month-boundary reset. Warning emails fire at 400/450/500. Dashboard shows appropriate gating UI. Responses over the limit are still collected but marked as `gated=true` and redacted server-side for free users.
+
+**9. No TODO/FIXME/HACK comments** found in any TypeScript files.
+
+**10. GDPR endpoints** (user delete + export) are properly API-key authenticated with project scoping.
+
+### Todo
+
+- [ ] Create `app/not-found.tsx` custom 404 page
+- [ ] Set `responsesResetAt: new Date()` in dashboard lazy user creation for consistency
+

@@ -89,6 +89,7 @@ export default async function DashboardPage() {
               create: {
                 plan: 'FREE',
                 status: 'ACTIVE',
+                responsesResetAt: new Date(),
               },
             },
           },

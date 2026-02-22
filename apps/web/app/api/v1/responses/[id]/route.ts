@@ -15,7 +15,7 @@ const updateResponseSchema = z.object({
   title: z.string().max(500).optional(),
   rating: z.number().min(1).max(5).optional(),
   vote: z.enum(['up', 'down']).optional(),
-  pollSelected: z.array(z.string()).optional(),
+  pollSelected: z.array(z.string().max(500)).max(6).optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
