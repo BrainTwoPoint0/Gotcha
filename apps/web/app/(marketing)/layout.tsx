@@ -13,7 +13,7 @@ const jsonLd = {
         'A developer-first contextual feedback SDK for React. Add feedback buttons to any UI component with a single line of code.',
       url: 'https://gotcha.cx',
       downloadUrl: 'https://www.npmjs.com/package/gotcha-feedback',
-      softwareVersion: '1.0.18',
+      softwareVersion: '1.0.19',
       author: {
         '@type': 'Organization',
         name: 'Gotcha',

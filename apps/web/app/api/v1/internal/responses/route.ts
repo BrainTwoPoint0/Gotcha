@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Fire DB writes without awaiting
-    asyncWrite();
+    // Await DB writes to ensure they complete on serverless (Netlify)
+    await asyncWrite();
 
     return NextResponse.json(
       {

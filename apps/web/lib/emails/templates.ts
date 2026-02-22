@@ -1,3 +1,12 @@
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface WelcomeEmailProps {
   name: string;
 }
@@ -46,7 +55,7 @@ export function welcomeEmail({ name }: WelcomeEmailProps): { subject: string; ht
       <div style="${baseStyles}">
         <h1 style="color: #0f172a; margin-bottom: 24px;">Welcome to Gotcha!</h1>
 
-        <p>Hey ${displayName},</p>
+        <p>Hey ${escapeHtml(displayName)},</p>
 
         <p>Thanks for signing up for Gotcha! We're excited to help you collect better feedback from your users.</p>
 
@@ -87,9 +96,9 @@ export function proActivatedEmail({ name, orgName }: ProActivatedEmailProps): {
       <div style="${baseStyles}">
         <h1 style="color: #0f172a; margin-bottom: 24px;">Welcome to Gotcha Pro!</h1>
 
-        <p>Hey ${displayName},</p>
+        <p>Hey ${escapeHtml(displayName)},</p>
 
-        <p>Thanks for upgrading <strong>${orgName}</strong> to Gotcha Pro! You now have access to:</p>
+        <p>Thanks for upgrading <strong>${escapeHtml(orgName)}</strong> to Gotcha Pro! You now have access to:</p>
 
         <ul style="padding-left: 20px;">
           <li style="margin-bottom: 8px;"><strong>Unlimited responses</strong> - No more monthly limits</li>
@@ -127,7 +136,7 @@ export function usageWarningEmail({ name, current, limit, percentage }: UsageWar
       <div style="${baseStyles}">
         <h1 style="color: #b45309; margin-bottom: 24px;">Approaching Your Response Limit</h1>
 
-        <p>Hey ${displayName},</p>
+        <p>Hey ${escapeHtml(displayName)},</p>
 
         <p>You've used <strong>${current} of ${limit}</strong> responses this month (${percentage}%).</p>
 
@@ -165,15 +174,15 @@ export function responseAlertEmail({
       <div style="${baseStyles}">
         <h1 style="color: #0f172a; margin-bottom: 24px;">New Feedback Received</h1>
 
-        <p>Hey ${displayName},</p>
+        <p>Hey ${escapeHtml(displayName)},</p>
 
-        <p>You received a new <strong>${typeLabel}</strong> on <strong>${projectName}</strong>:</p>
+        <p>You received a new <strong>${escapeHtml(typeLabel)}</strong> on <strong>${escapeHtml(projectName)}</strong>:</p>
 
         ${
           content
             ? `
           <div style="background: #f8fafc; border-left: 4px solid #334155; padding: 16px; margin: 24px 0;">
-            <p style="margin: 0; color: #334155;">"${content}"</p>
+            <p style="margin: 0; color: #334155;">"${escapeHtml(content)}"</p>
           </div>
         `
             : `

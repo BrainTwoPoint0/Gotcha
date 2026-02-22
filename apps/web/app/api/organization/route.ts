@@ -42,7 +42,10 @@ export async function PATCH(request: Request) {
     }
 
     if (name.length > 200) {
-      return NextResponse.json({ error: 'Organization name too long (max 200 chars)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Organization name too long (max 200 chars)' },
+        { status: 400 }
+      );
     }
 
     if (typeof slug !== 'string' || slug.trim().length === 0) {

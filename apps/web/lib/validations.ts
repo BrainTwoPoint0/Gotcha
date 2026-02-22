@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Response modes
-export const responseModeSchema = z.enum(['feedback', 'vote', 'poll']);
+export const responseModeSchema = z.enum(['feedback', 'vote', 'poll', 'feature-request', 'ab']);
 
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);
@@ -114,7 +114,7 @@ export const useCaseEnum = z.enum([
 ]);
 
 export const updateProfileSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().max(200).optional(),
   companySize: companySizeEnum.optional(),
   role: roleEnum.optional(),
   industry: industryEnum.optional(),

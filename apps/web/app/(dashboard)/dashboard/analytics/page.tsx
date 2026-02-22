@@ -215,6 +215,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       // Poll responses (still needs JS — limited set)
       prisma.response.findMany({
         where: { ...where, mode: 'POLL' },
+        take: 10000,
         select: {
           elementIdRaw: true,
           pollOptions: true,

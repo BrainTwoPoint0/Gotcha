@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createHash } from 'crypto';
 import { isInternalOriginAllowed } from '@/lib/origin-check';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Internal check route for the Gotcha website's own SDK usage.
@@ -16,6 +17,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
+      );
+    }
+
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimit = await checkRateLimit(`internal-check:${ip}`, 'free');
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
+        { status: 429 }
       );
     }
 

@@ -27,8 +27,6 @@ model Organization {
   members      OrganizationMember[]
   projects     Project[]
   subscription Subscription?
-
-  @@index([slug])
 }
 
 model OrganizationMember {

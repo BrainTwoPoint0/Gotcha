@@ -92,8 +92,7 @@ export async function POST(request: NextRequest) {
       cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result)).catch(() => {});
     }
 
-    // --- Respond immediately after validation ---
-    // DB writes (element lookup, response creation, usage tracking) happen async.
+    // DB writes (element lookup, response creation, usage tracking)
     const asyncWrite = async () => {
       try {
         // Get or create element
@@ -171,8 +170,8 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Fire DB writes without awaiting — they complete in the background
-    asyncWrite();
+    // Await DB writes to ensure they complete on serverless (Netlify)
+    await asyncWrite();
 
     return Response.json(result, {
       status: 201,

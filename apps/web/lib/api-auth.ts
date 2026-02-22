@@ -30,7 +30,7 @@ function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
 }
 
-// Validate origin against allowed domains
+// Validate origin against allowed domains (deterministic, no regex)
 function validateOrigin(origin: string | null, allowedDomains: string[]): boolean {
   // Allow requests with no origin (server-to-server, Postman, etc.)
   if (!origin) return true;
@@ -38,17 +38,29 @@ function validateOrigin(origin: string | null, allowedDomains: string[]): boolea
   // If no domains configured, allow all (not recommended for production)
   if (!allowedDomains.length) return true;
 
-  return allowedDomains.some((pattern) => {
-    // Convert pattern to regex
-    // *.example.com -> .*\.example\.com
-    // localhost:* -> localhost:\d+
-    const regexPattern = pattern
-      .replace(/\./g, '\\.')
-      .replace(/\*/g, '.*')
-      .replace(/:\.\*/g, ':\\d+');
+  let parsedOrigin: URL;
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    return false;
+  }
 
-    const regex = new RegExp(`^https?://${regexPattern}$`);
-    return regex.test(origin);
+  const originHost = parsedOrigin.hostname;
+  const originPort = parsedOrigin.port;
+
+  return allowedDomains.some((pattern) => {
+    const [patternHost, patternPort] = pattern.split(':');
+
+    // Check host: wildcard prefix match
+    const hostMatch =
+      patternHost === '*' ||
+      originHost === patternHost ||
+      (patternHost.startsWith('*.') && originHost.endsWith(patternHost.slice(1)));
+
+    // Check port if specified
+    const portMatch = !patternPort || patternPort === '*' || originPort === patternPort;
+
+    return hostMatch && portMatch;
   });
 }
 

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import { isInternalOriginAllowed } from '@/lib/origin-check';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Internal update route for the Gotcha website's own SDK usage.
@@ -35,6 +36,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
+      );
+    }
+
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimit = await checkRateLimit(`internal-patch:${ip}`, 'free');
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
+        { status: 429 }
       );
     }
 
@@ -88,11 +99,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const userId = request.nextUrl.searchParams.get('userId');
-    if (userId && existingResponse.endUserId !== userId) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_REQUEST', message: 'You do not own this response' } },
-        { status: 403 }
-      );
+    if (existingResponse.endUserId) {
+      if (!userId || existingResponse.endUserId !== userId) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_REQUEST', message: 'You do not own this response' } },
+          { status: 403 }
+        );
+      }
     }
 
     const modeMap: Record<string, string> = {
