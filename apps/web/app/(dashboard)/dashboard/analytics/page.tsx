@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
@@ -195,9 +196,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       FROM "Response"
       WHERE "projectId" IN (
         SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-        ${projectId ? prisma.$queryRaw`AND id = ${projectId}` : prisma.$queryRaw``}
+        ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
       )
-      ${elementId ? prisma.$queryRaw`AND "elementIdRaw" = ${elementId}` : prisma.$queryRaw``}
+      ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
       AND "createdAt" >= ${startDate}
       AND "createdAt" <= ${endDate}
       GROUP BY DATE("createdAt")
