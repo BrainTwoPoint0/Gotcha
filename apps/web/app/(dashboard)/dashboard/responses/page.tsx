@@ -4,6 +4,17 @@ import { ResponsesFilter } from './responses-filter';
 import { Pagination } from './pagination';
 import { ExportButton } from './export-button';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,32 +187,32 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       <ResponsesFilter elements={elementOptions} />
 
       {gatedCount > 0 && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-red-700">
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
             {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free
             limit.{' '}
-            <a href="/dashboard/settings" className="font-medium text-red-800 hover:underline">
+            <a href="/dashboard/settings" className="font-medium underline">
               Upgrade to Pro
             </a>{' '}
             to unlock all your data.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {!isPro && gatedCount === 0 && (
-        <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-slate-600">
+        <Alert className="mb-4">
+          <AlertDescription>
             Showing responses from the last 30 days.{' '}
-            <a href="/dashboard/settings" className="text-slate-700 font-medium hover:underline">
+            <a href="/dashboard/settings" className="font-medium underline">
               Upgrade to Pro
             </a>{' '}
             to view all historical data.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {safeResponses.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
+        <Card className="text-center py-16">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
             fill="none"
@@ -221,40 +232,30 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               ? 'Try adjusting your filters.'
               : 'Responses from your SDK integrations will appear here.'}
           </p>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200">
+        <Card>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 whitespace-nowrap">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Response
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Project
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="hidden md:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Element
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Response</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="hidden md:table-cell">Element</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {safeResponses.map((response) => {
                   const isGated = !isPro && response.gated;
 
                   return (
-                    <tr
+                    <TableRow
                       key={response.id}
                       className={`${isGated ? '' : 'hover:bg-gray-50'} relative`}
                     >
-                      <td className="px-4 sm:px-6 py-4">
+                      <TableCell className="px-4 sm:px-6 py-4">
                         <div
                           className={`flex items-center gap-2 ${isGated ? 'blur-sm select-none' : ''}`}
                         >
@@ -282,46 +283,53 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                             </span>
                           )}
                         </div>
-                      </td>
-                      <td
+                      </TableCell>
+                      <TableCell
                         className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
                       >
                         {response.project.name}
-                      </td>
-                      <td
+                      </TableCell>
+                      <TableCell
                         className={`px-4 sm:px-6 py-4 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
                       >
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModeStyle(response.mode)}`}
+                        <Badge
+                          variant={
+                            response.mode === 'FEEDBACK'
+                              ? 'secondary'
+                              : response.mode === 'VOTE'
+                                ? 'default'
+                                : 'outline'
+                          }
+                          className={getModeStyle(response.mode)}
                         >
                           {response.mode.toLowerCase()}
-                        </span>
-                      </td>
-                      <td
+                        </Badge>
+                      </TableCell>
+                      <TableCell
                         className={`hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono ${isGated ? 'blur-sm select-none' : ''}`}
                       >
                         {response.elementIdRaw}
-                      </td>
-                      <td
+                      </TableCell>
+                      <TableCell
                         className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
                       >
                         {new Date(response.createdAt).toLocaleString()}
-                      </td>
+                      </TableCell>
                       {isGated && (
-                        <td className="absolute inset-0 flex items-center justify-center">
+                        <TableCell className="absolute inset-0 flex items-center justify-center">
                           <span className="text-xs text-gray-400 bg-white/80 px-2 py-0.5 rounded">
                             Upgrade to view
                           </span>
-                        </td>
+                        </TableCell>
                       )}
-                    </tr>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <Pagination currentPage={page} totalPages={totalPages} total={total} />
-        </div>
+        </Card>
       )}
     </div>
   );

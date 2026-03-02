@@ -5,6 +5,11 @@ import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { OnboardingBanner } from './onboarding-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle } from 'lucide-react';
+import { StatCard } from './stat-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -175,72 +180,34 @@ export default async function DashboardPage() {
 
         {/* Plan Limit Warnings */}
         {subscription && overLimit && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-red-600 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <div>
-                <h3 className="font-medium text-red-800">Response limit exceeded</h3>
-                <p className="text-sm text-red-700 mt-1">
-                  You've exceeded the 500 response limit for the Free plan. Your responses are still
-                  being collected, but you need to upgrade to Pro to view new data.
-                </p>
-                <a
-                  href="/dashboard/settings"
-                  className="inline-block mt-2 text-sm font-medium text-red-800 hover:text-red-900 underline"
-                >
-                  Upgrade to Pro →
-                </a>
-              </div>
-            </div>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Response limit exceeded</AlertTitle>
+            <AlertDescription>
+              You've exceeded the 500 response limit for the Free plan. Your responses are still
+              being collected, but you need to upgrade to Pro to view new data.{' '}
+              <a href="/dashboard/settings" className="font-medium underline">
+                Upgrade to Pro &rarr;
+              </a>
+            </AlertDescription>
+          </Alert>
         )}
 
         {subscription &&
           !overLimit &&
           shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth) && (
-            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-yellow-600 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-                <div>
-                  <h3 className="font-medium text-yellow-800">Approaching response limit</h3>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    You've used {subscription.responsesThisMonth} of 500 responses this month (
-                    {Math.round((subscription.responsesThisMonth / 500) * 100)}%). Upgrade to Pro
-                    for unlimited responses.
-                  </p>
-                  <a
-                    href="/dashboard/settings"
-                    className="inline-block mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline"
-                  >
-                    Upgrade to Pro →
-                  </a>
-                </div>
-              </div>
-            </div>
+            <Alert className="mb-6 border-yellow-200 bg-yellow-50 text-yellow-800 [&>svg]:text-yellow-600">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Approaching response limit</AlertTitle>
+              <AlertDescription>
+                You've used {subscription.responsesThisMonth} of 500 responses this month (
+                {Math.round((subscription.responsesThisMonth / 500) * 100)}%). Upgrade to Pro for
+                unlimited responses.{' '}
+                <a href="/dashboard/settings" className="font-medium underline">
+                  Upgrade to Pro &rarr;
+                </a>
+              </AlertDescription>
+            </Alert>
           )}
 
         {/* Stats Cards */}
@@ -265,7 +232,7 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
               <Link
@@ -315,10 +282,10 @@ export default async function DashboardPage() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Projects */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
               <Link
@@ -334,7 +301,7 @@ export default async function DashboardPage() {
                 <p className="text-gray-500 mb-4">No projects yet.</p>
                 <Link
                   href="/dashboard/projects/new"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90"
                 >
                   Create your first project
                 </Link>
@@ -368,7 +335,7 @@ export default async function DashboardPage() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* Onboarding Checklist */}
@@ -393,16 +360,6 @@ export default async function DashboardPage() {
       </div>
     );
   }
-}
-
-function StatCard({ label, value, subtext }: { label: string; value: string; subtext: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
-      <p className="mt-1 text-sm text-gray-500">{subtext}</p>
-    </div>
-  );
 }
 
 function getModeColor(mode: string): string {

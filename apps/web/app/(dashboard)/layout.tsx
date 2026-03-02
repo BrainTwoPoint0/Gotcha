@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Footer } from '../components/Footer';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -26,12 +28,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 hidden sm:inline">{user.email}</span>
             <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100"
-              >
+              <Button variant="ghost" size="sm" type="submit">
                 Sign out
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -100,9 +99,9 @@ function NavLink({
       <Icon className="w-5 h-5 text-gray-400" />
       {children}
       {badge && (
-        <span className="ml-auto text-xs font-medium text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+        <Badge variant="secondary" className="ml-auto">
           {badge}
-        </span>
+        </Badge>
       )}
     </Link>
   );

@@ -1754,3 +1754,75 @@ The schema has `@@index([stripeCustomerId])` on the Subscription model. This is 
 - [ ] Create `app/not-found.tsx` custom 404 page
 - [ ] Set `responsesResetAt: new Date()` in dashboard lazy user creation for consistency
 
+---
+
+## Review: UI Migration to shadcn/ui + Aceternity UI
+
+### Summary
+
+Migrated the entire app from hand-built Tailwind components to **shadcn/ui** primitives with **Aceternity UI** effects on marketing pages and subtle dashboard interactions. The migration was done incrementally across 9 phases with build verification after each phase.
+
+### What Changed
+
+**Phase 1 — Foundation Setup**
+- Ran `npx shadcn@latest init` (style: new-york, base color: slate, CSS variables)
+- Installed `framer-motion` and `lucide-react`
+- Files: `tailwind.config.js`, `globals.css`, `lib/utils.ts`, `components.json`
+
+**Phase 2 — shadcn Primitives + Bridge Wrappers**
+- Installed 17 shadcn components into `components/ui/`
+- Created 4 bridge wrappers in `app/components/`: AppButton, AppSelect, AppSkeleton, LoadingSpinner
+- Bridge wrappers preserve the old component APIs, enabling incremental migration
+
+**Phase 3 — Import Swaps**
+- Replaced all imports from old components to new bridge wrappers
+- Button (6 files), Select (4 files), Spinner (2 files), Skeleton (9 files)
+- Deleted old custom components: `Button.tsx`, `Select.tsx`, `Spinner.tsx`, `Skeleton.tsx`
+
+**Phase 4 — Dashboard Pages**
+- Migrated all dashboard pages to use shadcn Card, Alert, Badge, Table, Button, Input, Label, Progress, DropdownMenu, Textarea components
+- Replaced inline HTML patterns with semantic shadcn equivalents
+- Files: dashboard/page.tsx, responses/page.tsx, pagination.tsx, settings/page.tsx, export-button.tsx, api-key-card.tsx, layout.tsx, onboarding-banner.tsx, new-project-form.tsx, settings-forms.tsx, projects/[slug]/page.tsx
+
+**Phase 5 — Charts**
+- Wrapped all chart sections in Card/CardHeader/CardTitle/CardContent
+- Migrated HTML tables to shadcn Table components
+- Files: charts.tsx, segment-charts.tsx, insights-charts.tsx
+
+**Phase 6 — Auth Pages**
+- Migrated login and signup pages to shadcn Input, Label, Alert, Separator, Button
+- GitHub OAuth button uses `Button variant="outline"` with Loader2 spinner
+- Replaced hardcoded colors with semantic tokens (text-muted-foreground, text-primary)
+
+**Phase 7 — Aceternity UI: Marketing**
+- Created 3 Aceternity components: `spotlight.tsx`, `background-beams.tsx`, `card-hover-effect.tsx`
+- Homepage: Spotlight on hero, HoverEffect on feature cards, BackgroundBeams on CTA, shadcn Buttons
+- Pricing: SpotlightCard for plan cards with cursor-following glow, shadcn Button + Badge
+- Navbar: "Get Started" link replaced with shadcn Button
+
+**Phase 8 — Aceternity UI: Dashboard**
+- StatCard with SpotlightCard for subtle cursor-following glow on dashboard stats
+- ProjectCard with SpotlightCard on the projects listing page
+
+**Phase 9 — Cleanup & Review**
+- All 832 unit tests pass
+- Build succeeds with no new warnings
+- This review section added
+
+### New Dependencies
+- `class-variance-authority`, `clsx`, `tailwind-merge` (shadcn utilities)
+- `@radix-ui/*` (various Radix primitives)
+- `lucide-react` (icons)
+- `framer-motion` (Aceternity animations)
+- `tailwindcss-animate` (Tailwind animation plugin)
+
+### New Files
+- `components/ui/` — 17 shadcn components
+- `app/components/ui/aceternity/` — 3 Aceternity components (spotlight, background-beams, card-hover-effect)
+- `app/components/AppButton.tsx`, `AppSelect.tsx`, `AppSkeleton.tsx`, `LoadingSpinner.tsx` — bridge wrappers
+- `app/(marketing)/hero-section.tsx`, `features-section.tsx`, `cta-section.tsx` — client component sections
+- `app/(dashboard)/dashboard/stat-card.tsx` — SpotlightCard stat card
+- `app/(dashboard)/dashboard/projects/project-card.tsx` — SpotlightCard project card
+- `lib/utils.ts` — `cn()` utility for class merging
+- `components.json` — shadcn configuration
+

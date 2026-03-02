@@ -3,7 +3,14 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Gotcha } from 'gotcha-feedback';
-import { Select } from '@/app/components/Select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import {
   BarChart,
   Bar,
@@ -14,6 +21,16 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Project {
   id: string;
@@ -104,58 +121,78 @@ export function SegmentCharts({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-          <Select
-            label="Project"
-            value={projectId}
-            onChange={(e) => setProjectId((e.target as HTMLSelectElement).value)}
-          >
-            <option value="">All Projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </Select>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+            <div className="w-full sm:w-auto space-y-1">
+              <Label>Project</Label>
+              <Select
+                value={projectId || '__all__'}
+                onValueChange={(v) => setProjectId(v === '__all__' ? '' : v)}
+              >
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="All Projects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Projects</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Select
-            label="Element"
-            value={elementId}
-            onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}
-          >
-            <option value="">All Elements</option>
-            {elements.map((el) => (
-              <option key={el.elementIdRaw} value={el.elementIdRaw}>
-                {el.elementIdRaw} ({el.count})
-              </option>
-            ))}
-          </Select>
+            <div className="w-full sm:w-auto space-y-1">
+              <Label>Element</Label>
+              <Select
+                value={elementId || '__all__'}
+                onValueChange={(v) => setElementId(v === '__all__' ? '' : v)}
+              >
+                <SelectTrigger className="w-full sm:w-[220px]">
+                  <SelectValue placeholder="All Elements" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Elements</SelectItem>
+                  {elements.map((el) => (
+                    <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
+                      {el.elementIdRaw} ({el.count})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Select
-            label="Group By"
-            value={groupBy}
-            onChange={(e) => setGroupBy((e.target as HTMLSelectElement).value)}
-          >
-            <option value="">Select a field</option>
-            {availableFields.map((field) => (
-              <option key={field.key} value={field.key}>
-                {field.displayName}
-              </option>
-            ))}
-          </Select>
+            <div className="w-full sm:w-auto space-y-1">
+              <Label>Group By</Label>
+              <Select
+                value={groupBy || '__none__'}
+                onValueChange={(v) => setGroupBy(v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Select a field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Select a field</SelectItem>
+                  {availableFields.map((field) => (
+                    <SelectItem key={field.key} value={field.key}>
+                      {field.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <button
-            onClick={applyFilters}
-            className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 text-white text-sm font-medium rounded-md hover:bg-slate-800 min-h-[44px] sm:min-h-0"
-          >
-            Apply
-          </button>
-        </div>
-      </div>
+            <Button onClick={applyFilters} className="flex-1 sm:flex-none">
+              Apply
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {availableFields.length === 0 && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+        <Card className="p-6 text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">No user metadata found</h3>
           <p className="text-gray-600 mb-4">
             To use segmentation, pass user attributes when collecting feedback:
@@ -171,142 +208,154 @@ export function SegmentCharts({
   }}
 />`}
           </pre>
-        </div>
+        </Card>
       )}
 
       {!hasData && availableFields.length > 0 && groupBy && (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500">No response data for the selected filters.</p>
-        </div>
+        <Card className="p-12 text-center">
+          <p className="text-muted-foreground">No response data for the selected filters.</p>
+        </Card>
       )}
 
       {!mounted && hasData && (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-400">Loading charts...</p>
-        </div>
+        <Card className="p-12 text-center">
+          <p className="text-muted-foreground">Loading charts...</p>
+        </Card>
       )}
 
       {mounted && hasData && (
         <>
           {/* Response Volume by Segment */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Response Volume by Segment</h3>
-              <Gotcha
-                elementId="segments-volume-chart"
-                mode="poll"
-                options={['Keep', 'Remove']}
-                position="inline"
-                theme="light"
-                showOnHover={false}
-                size="sm"
-                promptText="Should we keep this chart?"
-              />
-            </div>
-            <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                <BarChart data={countData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {countData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>Response Volume by Segment</CardTitle>
+                <Gotcha
+                  elementId="segments-volume-chart"
+                  mode="poll"
+                  options={['Keep', 'Remove']}
+                  position="inline"
+                  theme="light"
+                  showOnHover={false}
+                  size="sm"
+                  promptText="Should we keep this chart?"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                  <BarChart data={countData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      {countData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Average Rating by Segment */}
             {ratingData.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Avg Rating by Segment</h3>
-                  <Gotcha
-                    elementId="segments-rating-chart"
-                    mode="poll"
-                    options={['Keep', 'Remove']}
-                    position="inline"
-                    theme="light"
-                    showOnHover={false}
-                    size="sm"
-                    promptText="Should we keep this chart?"
-                  />
-                </div>
-                <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                    <BarChart data={ratingData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 5]} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '6px',
-                        }}
-                        formatter={(value) => [`${value ?? 0}/5`, 'Rating']}
-                      />
-                      <Bar dataKey="value" fill="#eab308" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CardTitle>Avg Rating by Segment</CardTitle>
+                    <Gotcha
+                      elementId="segments-rating-chart"
+                      mode="poll"
+                      options={['Keep', 'Remove']}
+                      position="inline"
+                      theme="light"
+                      showOnHover={false}
+                      size="sm"
+                      promptText="Should we keep this chart?"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                      <BarChart data={ratingData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 5]} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                          }}
+                          formatter={(value) => [`${value ?? 0}/5`, 'Rating']}
+                        />
+                        <Bar dataKey="value" fill="#eab308" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Positive Rate by Segment */}
             {sentimentData.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Positive Rate by Segment</h3>
-                  <Gotcha
-                    elementId="segments-sentiment-chart"
-                    mode="poll"
-                    options={['Keep', 'Remove']}
-                    position="inline"
-                    theme="light"
-                    showOnHover={false}
-                    size="sm"
-                    promptText="Should we keep this chart?"
-                  />
-                </div>
-                <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                    <BarChart data={sentimentData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 100]} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '6px',
-                        }}
-                        formatter={(value) => [`${value ?? 0}%`, 'Positive']}
-                      />
-                      <Bar dataKey="value" fill="#22c55e" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CardTitle>Positive Rate by Segment</CardTitle>
+                    <Gotcha
+                      elementId="segments-sentiment-chart"
+                      mode="poll"
+                      options={['Keep', 'Remove']}
+                      position="inline"
+                      theme="light"
+                      showOnHover={false}
+                      size="sm"
+                      promptText="Should we keep this chart?"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                      <BarChart data={sentimentData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 100]} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                          }}
+                          formatter={(value) => [`${value ?? 0}%`, 'Positive']}
+                        />
+                        <Bar dataKey="value" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
 
           {/* Comparison Table */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-gray-200">
+          <Card>
+            <CardHeader>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-gray-900">Segment Comparison</h3>
+                <CardTitle>Segment Comparison</CardTitle>
                 <Gotcha
                   elementId="segments-comparison-table"
                   mode="poll"
@@ -318,46 +367,32 @@ export function SegmentCharts({
                   promptText="Should we keep this table?"
                 />
               </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Segment
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Responses
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Avg Rating
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Positive Rate
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Segment</TableHead>
+                    <TableHead>Responses</TableHead>
+                    <TableHead>Avg Rating</TableHead>
+                    <TableHead>Positive Rate</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {segmentData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {row.segment}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {row.count}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {row.avgRating !== null ? `${row.avgRating}/5` : '-'}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{row.segment}</TableCell>
+                      <TableCell>{row.count}</TableCell>
+                      <TableCell>{row.avgRating !== null ? `${row.avgRating}/5` : '-'}</TableCell>
+                      <TableCell>
                         {row.positiveRate !== null ? `${row.positiveRate}%` : '-'}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

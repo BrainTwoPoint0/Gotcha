@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export function Navbar() {
   return (
@@ -20,12 +21,9 @@ export function Navbar() {
             <Link href="/login" className="text-gray-600 hover:text-gray-900">
               Login
             </Link>
-            <Link
-              href="/signup"
-              className="bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800"
-            >
-              Get Started
-            </Link>
+            <Button asChild>
+              <Link href="/signup">Get Started</Link>
+            </Button>
           </div>
         </div>
       </div>

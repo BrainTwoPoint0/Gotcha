@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonText } from '@/app/components/Skeleton';
+import { Skeleton, SkeletonText } from '@/app/components/AppSkeleton';
 
 export default function SettingsLoading() {
   return (

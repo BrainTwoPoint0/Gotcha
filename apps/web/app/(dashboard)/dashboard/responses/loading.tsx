@@ -1,4 +1,4 @@
-import { SkeletonTable, SkeletonStats } from '@/app/components/Skeleton';
+import { SkeletonTable, SkeletonStats } from '@/app/components/AppSkeleton';
 
 export default function ResponsesLoading() {
   return (

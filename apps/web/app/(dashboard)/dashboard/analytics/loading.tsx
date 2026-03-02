@@ -1,4 +1,4 @@
-import { SkeletonStats, SkeletonChart } from '@/app/components/Skeleton';
+import { SkeletonStats, SkeletonChart } from '@/app/components/AppSkeleton';
 
 export default function AnalyticsLoading() {
   return (

@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/app/components/Button';
+import { Button } from '@/app/components/AppButton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function NewProjectForm() {
   const [name, setName] = useState('');
@@ -63,61 +68,66 @@ export function NewProjectForm() {
         <p className="text-gray-600">Set up a new project to start collecting feedback.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6">
-        {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Project name
-            </label>
-            <input
-              id="name"
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My Awesome App"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm"
-            />
-            {slug && (
-              <p className="mt-1 text-sm text-gray-500">
-                Slug: <code className="bg-gray-100 px-1 rounded">{slug}</code>
-              </p>
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400">(optional)</span>
-            </label>
-            <textarea
-              id="description"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="A brief description of your project"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm"
-            />
-          </div>
-        </div>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Project name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="My Awesome App"
+                />
+                {slug && (
+                  <p className="text-sm text-muted-foreground">
+                    Slug: <code className="bg-muted px-1 rounded">{slug}</code>
+                  </p>
+                )}
+              </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <Link
-            href="/dashboard/projects"
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-          >
-            Cancel
-          </Link>
-          <Button type="submit" disabled={!name.trim()} loading={loading} loadingText="Creating...">
-            Create Project
-          </Button>
-        </div>
-      </form>
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  Description <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Textarea
+                  id="description"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="A brief description of your project"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <Link
+                href="/dashboard/projects"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </Link>
+              <Button
+                type="submit"
+                disabled={!name.trim()}
+                loading={loading}
+                loadingText="Creating..."
+              >
+                Create Project
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

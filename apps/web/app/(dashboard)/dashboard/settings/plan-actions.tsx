@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/app/components/Button';
+import { Button } from '@/app/components/AppButton';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 
 interface PlanActionsProps {
   currentPlan: string;
@@ -75,28 +77,19 @@ export function PlanActions({ currentPlan }: PlanActionsProps) {
             >
               Monthly
             </span>
-            <button
-              type="button"
-              onClick={() => setBilling(billing === 'monthly' ? 'annual' : 'monthly')}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                billing === 'annual' ? 'bg-slate-700' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            <Switch
+              checked={billing === 'annual'}
+              onCheckedChange={(checked) => setBilling(checked ? 'annual' : 'monthly')}
+            />
             <span
               className={`text-sm font-medium ${billing === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}
             >
               Annual
             </span>
             {billing === 'annual' && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
                 Save 17%
-              </span>
+              </Badge>
             )}
           </div>
           <Button onClick={handleUpgrade} loading={loading} loadingText="Loading...">

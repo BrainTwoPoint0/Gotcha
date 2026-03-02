@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 interface PaginationProps {
   currentPage: number;
@@ -26,20 +27,22 @@ export function Pagination({ currentPage, totalPages, total }: PaginationProps) 
         Page {currentPage} of {totalPages} ({total} total responses)
       </div>
       <div className="flex gap-2">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-2 sm:py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-h-[44px] sm:min-h-0"
         >
           Previous
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="px-3 py-2 sm:py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-h-[44px] sm:min-h-0"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

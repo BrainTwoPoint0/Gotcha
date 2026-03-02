@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { ProjectCard } from './project-card';
 
 interface ProjectItem {
   id: string;
@@ -89,49 +90,15 @@ export default async function ProjectsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Link
+            <ProjectCard
               key={project.id}
-              href={`/dashboard/projects/${project.slug}`}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {project.description || 'No description'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  {project._count.responses} responses
-                </span>
-                <span className="flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                    />
-                  </svg>
-                  {project._count.apiKeys} keys
-                </span>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-400">
-                  Created {new Date(project.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </Link>
+              slug={project.slug}
+              name={project.name}
+              description={project.description}
+              responseCount={project._count.responses}
+              apiKeyCount={project._count.apiKeys}
+              createdAt={new Date(project.createdAt).toLocaleDateString()}
+            />
           ))}
         </div>
       )}

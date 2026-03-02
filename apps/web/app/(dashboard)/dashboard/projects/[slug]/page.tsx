@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,45 +104,50 @@ export default async function ProjectPage({ params }: Props) {
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
             {project.description && <p className="text-gray-600">{project.description}</p>}
           </div>
-          <Link
-            href={`/dashboard/projects/${slug}/settings/metadata`}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
-              />
-            </svg>
-            Metadata Settings
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/projects/${slug}/settings/metadata`}>
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                />
+              </svg>
+              Metadata Settings
+            </Link>
+          </Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-500">Total Responses</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{project._count.responses}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-500">Active API Keys</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{project.apiKeys.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-500">Created</p>
-          <p className="mt-2 text-xl font-semibold text-gray-900">
-            {new Date(project.createdAt).toLocaleDateString()}
-          </p>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm font-medium text-muted-foreground">Total Responses</p>
+            <p className="mt-2 text-3xl font-semibold">{project._count.responses}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm font-medium text-muted-foreground">Active API Keys</p>
+            <p className="mt-2 text-3xl font-semibold">{project.apiKeys.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm font-medium text-muted-foreground">Created</p>
+            <p className="mt-2 text-xl font-semibold">
+              {new Date(project.createdAt).toLocaleDateString()}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* API Keys */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">API Keys</h2>
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">API Keys</h2>
 
           {project.apiKeys.length === 0 ? (
             <p className="text-gray-500 text-sm">No API keys yet.</p>
@@ -165,12 +173,12 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
 </GotchaProvider>`}
             </pre>
           </div>
-        </div>
+        </Card>
 
         {/* Recent Responses */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
+            <h2 className="text-lg font-semibold">Recent Responses</h2>
           </div>
 
           {project.responses.length === 0 ? (
@@ -187,11 +195,9 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModeStyle(response.mode)}`}
-                      >
+                      <Badge variant="secondary" className={getModeStyle(response.mode)}>
                         {response.mode.toLowerCase()}
-                      </span>
+                      </Badge>
                       <span className="text-xs text-gray-400">
                         {formatTimeAgo(response.createdAt)}
                       </span>
@@ -216,7 +222,7 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

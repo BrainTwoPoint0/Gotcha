@@ -1,4 +1,4 @@
-import { SkeletonCard } from '@/app/components/Skeleton';
+import { SkeletonCard } from '@/app/components/AppSkeleton';
 
 export default function ProjectsLoading() {
   return (

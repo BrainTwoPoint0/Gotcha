@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonTable } from '@/app/components/Skeleton';
+import { Skeleton, SkeletonTable } from '@/app/components/AppSkeleton';
 
 export default function ProjectDetailLoading() {
   return (

@@ -2,7 +2,16 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { Select } from '@/app/components/Select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface Element {
   elementIdRaw: string;
@@ -25,7 +34,7 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
     const params = new URLSearchParams();
     if (startDate) params.set('startDate', startDate);
     if (endDate) params.set('endDate', endDate);
-    if (elementId) params.set('elementId', elementId);
+    if (elementId && elementId !== '__all__') params.set('elementId', elementId);
     params.set('page', '1');
     router.push(`/dashboard/responses?${params.toString()}`);
   };
@@ -41,50 +50,38 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
-      <Select
-        label="Element"
-        value={elementId}
-        onChange={(e) => setElementId((e.target as HTMLSelectElement).value)}
-      >
-        <option value="">All Elements</option>
-        {elements.map((el) => (
-          <option key={el.elementIdRaw} value={el.elementIdRaw}>
-            {el.elementIdRaw} ({el.count})
-          </option>
-        ))}
-      </Select>
-      <div className="w-full sm:w-auto">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full sm:w-auto h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-        />
+      <div className="w-full sm:w-auto space-y-1">
+        <Label>Element</Label>
+        <Select value={elementId} onValueChange={setElementId}>
+          <SelectTrigger className="w-full sm:w-[220px]">
+            <SelectValue placeholder="All Elements" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All Elements</SelectItem>
+            {elements.map((el) => (
+              <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
+                {el.elementIdRaw} ({el.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="w-full sm:w-auto">
-        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-full sm:w-auto h-[38px] px-3 border border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-        />
+      <div className="w-full sm:w-auto space-y-1">
+        <Label>Start Date</Label>
+        <DatePicker value={startDate} onChange={setStartDate} placeholder="Start date" />
+      </div>
+      <div className="w-full sm:w-auto space-y-1">
+        <Label>End Date</Label>
+        <DatePicker value={endDate} onChange={setEndDate} placeholder="End date" />
       </div>
       <div className="flex gap-2 sm:gap-4">
-        <button
-          onClick={handleFilter}
-          className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 min-h-[44px] sm:min-h-0"
-        >
+        <Button onClick={handleFilter} className="flex-1 sm:flex-none">
           Apply Filter
-        </button>
+        </Button>
         {hasFilters && (
-          <button
-            onClick={handleClear}
-            className="px-4 py-2 text-gray-600 hover:text-gray-900 text-sm min-h-[44px] sm:min-h-0"
-          >
+          <Button variant="ghost" onClick={handleClear}>
             Clear
-          </button>
+          </Button>
         )}
       </div>
     </div>

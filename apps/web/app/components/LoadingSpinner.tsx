@@ -1,30 +1,26 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
 const sizeClasses = {
-  sm: 'h-4 w-4 border-2',
-  md: 'h-8 w-8 border-2',
-  lg: 'h-12 w-12 border-3',
+  sm: 'h-4 w-4',
+  md: 'h-8 w-8',
+  lg: 'h-12 w-12',
 };
 
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
-    <div
-      className={`
-        ${sizeClasses[size]}
-        animate-spin rounded-full
-        border-slate-200 border-t-slate-700
-        ${className}
-      `}
+    <Loader2
+      className={cn(sizeClasses[size], 'animate-spin text-muted-foreground', className)}
       role="status"
       aria-label="Loading"
-    >
-      <span className="sr-only">Loading...</span>
-    </div>
+    />
   );
 }
 
@@ -36,7 +32,7 @@ export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
       <Spinner size="lg" />
-      <p className="text-gray-500 text-sm animate-pulse">{message}</p>
+      <p className="text-muted-foreground text-sm animate-pulse">{message}</p>
     </div>
   );
 }
@@ -47,10 +43,10 @@ interface LoadingOverlayProps {
 
 export function LoadingOverlay({ message }: LoadingOverlayProps) {
   return (
-    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="md" />
-        {message && <p className="text-gray-600 text-sm">{message}</p>}
+        {message && <p className="text-muted-foreground text-sm">{message}</p>}
       </div>
     </div>
   );

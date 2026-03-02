@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const tiers = {
   monthly: [
@@ -101,33 +104,33 @@ export function PricingToggle() {
         >
           Annual
         </span>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-opacity ${
+        <Badge
+          variant="secondary"
+          className={`transition-opacity ${
             billing === 'annual'
               ? 'bg-green-100 text-green-700 opacity-100'
               : 'bg-green-100 text-green-700 opacity-0'
           }`}
         >
           Save 17%
-        </span>
+        </Badge>
       </div>
 
       {/* Tier Cards */}
       <div className="grid md:grid-cols-2 gap-8">
         {currentTiers.map((tier) => (
-          <div
+          <SpotlightCard
             key={tier.name}
-            className={`bg-white rounded-2xl p-8 ${
-              tier.highlighted
-                ? 'ring-2 ring-slate-600 shadow-xl scale-105'
-                : 'border border-gray-200 shadow-sm'
+            className={`p-8 ${
+              tier.highlighted ? 'ring-2 ring-slate-600 shadow-xl scale-105' : 'shadow-sm'
             }`}
+            spotlightColor={
+              tier.highlighted ? 'rgba(71, 85, 105, 0.15)' : 'rgba(148, 163, 184, 0.1)'
+            }
           >
             {tier.highlighted && (
               <div className="text-center mb-4">
-                <span className="bg-slate-700 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  Recommended
-                </span>
+                <Badge className="bg-slate-700 text-white hover:bg-slate-700">Recommended</Badge>
               </div>
             )}
             <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
@@ -160,17 +163,10 @@ export function PricingToggle() {
                 </li>
               ))}
             </ul>
-            <Link
-              href={tier.href}
-              className={`block text-center py-2 px-4 rounded-lg font-medium transition ${
-                tier.highlighted
-                  ? 'bg-slate-700 text-white hover:bg-slate-800'
-                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-              }`}
-            >
-              {tier.cta}
-            </Link>
-          </div>
+            <Button variant={tier.highlighted ? 'default' : 'secondary'} className="w-full" asChild>
+              <Link href={tier.href}>{tier.cta}</Link>
+            </Button>
+          </SpotlightCard>
         ))}
       </div>
     </div>

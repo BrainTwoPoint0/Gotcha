@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/app/components/Button';
+import { Button } from '@/app/components/AppButton';
+import { Button as ShadcnButton } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -60,40 +66,25 @@ export default function LoginPage() {
     <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-center text-3xl font-bold text-gray-900">Gotcha</h1>
-          <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <h1 className="text-center text-3xl font-bold">Gotcha</h1>
+          <h2 className="mt-6 text-center text-2xl font-semibold">Sign in to your account</h2>
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Or{' '}
-            <Link href="/signup" className="font-medium text-slate-600 hover:text-slate-500">
+            <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
               create a new account
             </Link>
           </p>
         </div>
 
         <div className="mt-8 space-y-4">
-          <button
+          <ShadcnButton
+            variant="outline"
+            className="w-full py-3 gap-3"
             onClick={handleGithubLogin}
             disabled={githubLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {githubLoading ? (
-              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -104,31 +95,26 @@ export default function LoginPage() {
               </svg>
             )}
             {githubLoading ? 'Connecting...' : 'Continue with GitHub'}
-          </button>
+          </ShadcnButton>
         </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">Or continue with email</span>
-          </div>
+        <div className="relative flex items-center gap-4">
+          <Separator className="flex-1" />
+          <span className="text-sm text-muted-foreground">Or continue with email</span>
+          <Separator className="flex-1" />
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -136,16 +122,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm bg-white"
                 placeholder="you@example.com"
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -153,7 +136,6 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm bg-white"
                 placeholder="••••••••"
               />
             </div>

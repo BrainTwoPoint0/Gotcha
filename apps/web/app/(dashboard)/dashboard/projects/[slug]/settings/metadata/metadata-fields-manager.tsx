@@ -2,7 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Select } from '@/app/components/Select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface ConfiguredField {
   id: string;
@@ -119,47 +129,43 @@ export function MetadataFieldsManager({
               <div key={field.id} className="p-4 sm:p-6">
                 {editingField === field.id ? (
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Display Name
-                      </label>
-                      <input
+                    <div className="space-y-1">
+                      <Label>Display Name</Label>
+                      <Input
                         type="text"
                         value={editValues.displayName}
                         onChange={(e) =>
                           setEditValues({ ...editValues, displayName: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </div>
-                    <Select
-                      label="Field Type"
-                      value={editValues.fieldType}
-                      onChange={(e) =>
-                        setEditValues({
-                          ...editValues,
-                          fieldType: (e.target as HTMLSelectElement).value,
-                        })
-                      }
-                    >
-                      <option value="string">String</option>
-                      <option value="number">Number</option>
-                      <option value="boolean">Boolean</option>
-                    </Select>
+                    <div className="space-y-1">
+                      <Label>Field Type</Label>
+                      <Select
+                        value={editValues.fieldType}
+                        onValueChange={(v) => setEditValues({ ...editValues, fieldType: v })}
+                      >
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="string">String</SelectItem>
+                          <SelectItem value="number">Number</SelectItem>
+                          <SelectItem value="boolean">Boolean</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        size="sm"
                         onClick={() => updateField(field.id, editValues)}
                         disabled={loading === field.id}
-                        className="px-3 py-1.5 bg-slate-700 text-white text-sm rounded-md hover:bg-slate-800 disabled:opacity-50"
                       >
                         {loading === field.id ? 'Saving...' : 'Save'}
-                      </button>
-                      <button
-                        onClick={() => setEditingField(null)}
-                        className="px-3 py-1.5 text-gray-600 text-sm hover:text-gray-900"
-                      >
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditingField(null)}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -172,39 +178,32 @@ export function MetadataFieldsManager({
                         <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
                           {field.fieldKey}
                         </code>
-                        <span
-                          className={`text-xs px-1.5 py-0.5 rounded ${
-                            field.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
+                        <Badge variant={field.isActive ? 'default' : 'secondary'}>
                           {field.isActive ? 'Active' : 'Inactive'}
-                        </span>
+                        </Badge>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">Type: {field.fieldType}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => startEditing(field)}
-                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => startEditing(field)}>
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => updateField(field.id, { isActive: !field.isActive })}
                         disabled={loading === field.id}
-                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md disabled:opacity-50"
                       >
                         {field.isActive ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         onClick={() => deleteField(field.id)}
                         disabled={loading === field.id}
-                        className="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 border border-red-200 rounded-md disabled:opacity-50"
                       >
                         Remove
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -244,13 +243,13 @@ export function MetadataFieldsManager({
                     </p>
                   )}
                 </div>
-                <button
+                <Button
+                  size="sm"
                   onClick={() => addField(field.key)}
                   disabled={loading === field.key}
-                  className="px-3 py-1.5 text-sm bg-slate-700 text-white rounded-md hover:bg-slate-800 disabled:opacity-50"
                 >
                   {loading === field.key ? 'Adding...' : 'Add for Segmentation'}
-                </button>
+                </Button>
               </div>
             ))}
           </div>

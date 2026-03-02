@@ -1,4 +1,4 @@
-import { SkeletonStats, SkeletonCard, SkeletonTable } from '@/app/components/Skeleton';
+import { SkeletonStats, SkeletonCard, SkeletonTable } from '@/app/components/AppSkeleton';
 
 export default function DashboardHomeLoading() {
   return (

@@ -1,11 +1,6 @@
-interface SkeletonProps {
-  className?: string;
-  style?: React.CSSProperties;
-}
+import { Skeleton } from '@/components/ui/skeleton';
 
-export function Skeleton({ className = '', style }: SkeletonProps) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} style={style} />;
-}
+export { Skeleton };
 
 export function SkeletonText({
   lines = 3,
@@ -25,7 +20,7 @@ export function SkeletonText({
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center gap-4 mb-4">
         <Skeleton className="h-10 w-10 rounded-full" />
         <div className="flex-1">
@@ -40,9 +35,8 @@ export function SkeletonCard() {
 
 export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <div className="border-b border-border bg-muted px-6 py-3">
         <div className="flex gap-4">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-32" />
@@ -50,9 +44,8 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
           <Skeleton className="h-4 w-28" />
         </div>
       </div>
-      {/* Rows */}
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="border-b border-gray-100 px-6 py-4">
+        <div key={i} className="border-b border-border/50 px-6 py-4">
           <div className="flex gap-4">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-32" />
@@ -69,7 +62,7 @@ export function SkeletonStats() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
+        <div key={i} className="bg-card rounded-lg border border-border p-4">
           <Skeleton className="h-3 w-20 mb-2" />
           <Skeleton className="h-8 w-16" />
         </div>
@@ -80,7 +73,7 @@ export function SkeletonStats() {
 
 export function SkeletonChart() {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-card rounded-lg border border-border p-6">
       <Skeleton className="h-5 w-32 mb-4" />
       <div className="flex items-end gap-2 h-48">
         {Array.from({ length: 12 }).map((_, i) => (

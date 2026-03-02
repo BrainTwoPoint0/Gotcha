@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/app/components/Button';
+import { Button } from '@/app/components/AppButton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const COMPANY_SIZES = [
   { value: 'solo', label: 'Solo / Freelancer' },
@@ -76,85 +85,102 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
   };
 
   return (
-    <div className="mb-6 max-w-2xl bg-slate-50 rounded-lg border border-slate-200 border-l-4 border-l-slate-600 p-6">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+    <Card className="mb-6 max-w-2xl border-l-4 border-l-primary">
+      <CardHeader>
+        <CardTitle>
           Welcome{userName ? `, ${userName}` : ''}! Tell us a bit about yourself
-        </h2>
-        <p className="text-sm text-slate-500 mt-1">
+        </CardTitle>
+        <CardDescription>
           This helps us understand our users better. You can always update this in Settings.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="space-y-1">
+            <Label>Company Size</Label>
+            <Select
+              value={companySize || '__none__'}
+              onValueChange={(v) => setCompanySize(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select...</SelectItem>
+                {COMPANY_SIZES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Company Size</label>
-          <select
-            value={companySize}
-            onChange={(e) => setCompanySize(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-          >
-            <option value="">Select...</option>
-            {COMPANY_SIZES.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <div className="space-y-1">
+            <Label>Your Role</Label>
+            <Select
+              value={role || '__none__'}
+              onValueChange={(v) => setRole(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select...</SelectItem>
+                {ROLES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Industry</Label>
+            <Select
+              value={industry || '__none__'}
+              onValueChange={(v) => setIndustry(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select...</SelectItem>
+                {INDUSTRIES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Primary Use Case</Label>
+            <Select
+              value={useCase || '__none__'}
+              onValueChange={(v) => setUseCase(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select...</SelectItem>
+                {USE_CASES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Your Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-          >
-            <option value="">Select...</option>
-            {ROLES.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Industry</label>
-          <select
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-          >
-            <option value="">Select...</option>
-            {INDUSTRIES.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Primary Use Case</label>
-          <select
-            value={useCase}
-            onChange={(e) => setUseCase(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-slate-500 focus:border-slate-500"
-          >
-            <option value="">Select...</option>
-            {USE_CASES.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <Button type="button" onClick={handleSave} loading={loading} loadingText="Saving...">
-        Save &amp; Continue
-      </Button>
-    </div>
+        <Button type="button" onClick={handleSave} loading={loading} loadingText="Saving...">
+          Save &amp; Continue
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
