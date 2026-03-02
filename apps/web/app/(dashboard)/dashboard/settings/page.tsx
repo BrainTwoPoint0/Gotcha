@@ -171,7 +171,7 @@ export default async function SettingsPage() {
                   popular
                 />
               </div>
-              <PlanActions currentPlan={subscription?.plan || 'FREE'} />
+              <PlanActions currentPlan={subscription?.plan || 'FREE'} hasStripeSubscription={!!subscription?.stripeCustomerId} />
             </div>
           </CardContent>
         </Card>

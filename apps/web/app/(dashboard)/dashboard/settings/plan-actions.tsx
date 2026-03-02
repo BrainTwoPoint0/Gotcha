@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 
 interface PlanActionsProps {
   currentPlan: string;
+  hasStripeSubscription: boolean;
 }
 
-export function PlanActions({ currentPlan }: PlanActionsProps) {
+export function PlanActions({ currentPlan, hasStripeSubscription }: PlanActionsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
@@ -61,14 +62,20 @@ export function PlanActions({ currentPlan }: PlanActionsProps) {
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {currentPlan === 'PRO' ? (
-        <Button
-          variant="secondary"
-          onClick={handleManage}
-          loading={loading}
-          loadingText="Loading..."
-        >
-          Manage Subscription
-        </Button>
+        hasStripeSubscription ? (
+          <Button
+            variant="secondary"
+            onClick={handleManage}
+            loading={loading}
+            loadingText="Loading..."
+          >
+            Manage Subscription
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Your Pro plan was activated manually. No billing to manage.
+          </p>
+        )
       ) : (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
