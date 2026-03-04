@@ -1,3 +1,20 @@
+# Feature 3: Response Tagging/Status
+
+## Plan
+
+- [x] 1. Add `status`, `tags`, `reviewedAt`, `reviewedBy` fields to Response model + `ResponseStatus` enum
+- [x] 2. Run Prisma migration (`db push`)
+- [x] 3. Create `PATCH /api/responses/[id]/status` endpoint (session auth)
+- [x] 4. Create `PATCH /api/responses/[id]/tags` endpoint (session auth, PRO only)
+- [x] 5. Add `StatusBadge` client component with dropdown to change status
+- [x] 6. Add status column to responses table
+- [x] 7. Add status filter to `ResponsesFilter` component
+- [x] 8. Build passes
+
+Keeping it simple — no bulk actions for V1.
+
+---
+
 # Gotcha — Project Plan
 
 > **Phase:** 1 (Foundation MVP)

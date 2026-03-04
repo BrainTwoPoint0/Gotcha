@@ -5,16 +5,15 @@ import { Pagination } from './pagination';
 import { ExportButton } from './export-button';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ResponseRow } from './response-row';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +29,8 @@ interface ResponseItem {
   pollSelected: unknown;
   elementIdRaw: string;
   gated: boolean;
+  status: string;
+  tags: string[];
   createdAt: Date;
   project: { name: string; slug: string };
 }
@@ -40,6 +41,7 @@ interface PageProps {
     endDate?: string;
     page?: string;
     elementId?: string;
+    status?: string;
   }>;
 }
 
@@ -83,12 +85,22 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const effectiveStartDate = !isPro && !startDate ? thirtyDaysAgo : startDate;
 
+  // Parse status filter
+  const validStatuses = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
+  type ResponseStatus = (typeof validStatuses)[number];
+  const statusFilter = params.status
+    ? (params.status.split(',').filter((s): s is ResponseStatus =>
+        (validStatuses as readonly string[]).includes(s)
+      ))
+    : undefined;
+
   // Build where clause
   const where = {
     project: {
       organizationId: organization?.id,
     },
     ...(params.elementId && { elementIdRaw: params.elementId }),
+    ...(statusFilter && statusFilter.length > 0 && { status: { in: statusFilter } }),
     ...(effectiveStartDate || endDate
       ? {
           createdAt: {
@@ -130,7 +142,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               select: { name: true, slug: true },
             },
           },
-        }) as Promise<ResponseItem[]>,
+        }) as unknown as Promise<ResponseItem[]>,
       ])
     : [[], 0, 0, [] as ResponseItem[]];
 
@@ -184,7 +196,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         <ExportButton isPro={isPro} />
       </div>
 
-      <ResponsesFilter elements={elementOptions} />
+      <ResponsesFilter elements={elementOptions} currentStatus={params.status} />
 
       {gatedCount > 0 && (
         <Alert variant="destructive" className="mb-4">
@@ -236,95 +248,33 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       ) : (
         <Card>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed w-full">
+              <colgroup>
+                <col className="w-[60%] sm:w-[30%]" />
+                <col className="hidden sm:table-column sm:w-[15%]" />
+                <col className="hidden sm:table-column sm:w-[10%]" />
+                <col className="w-[40%] sm:w-[10%]" />
+                <col className="hidden md:table-column md:w-[20%]" />
+                <col className="hidden sm:table-column sm:w-[15%]" />
+              </colgroup>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Response</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="hidden md:table-cell">Element</TableHead>
-                  <TableHead>Date</TableHead>
+                <TableRow className="border-b border-gray-200/80">
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Response</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Project</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Type</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Status</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Element</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {safeResponses.map((response) => {
-                  const isGated = !isPro && response.gated;
-
-                  return (
-                    <TableRow
-                      key={response.id}
-                      className={`${isGated ? '' : 'hover:bg-gray-50'} relative`}
-                    >
-                      <TableCell className="px-4 sm:px-6 py-4">
-                        <div
-                          className={`flex items-center gap-2 ${isGated ? 'blur-sm select-none' : ''}`}
-                        >
-                          {response.rating && (
-                            <span className="text-yellow-500 text-sm">
-                              {'★'.repeat(response.rating)}
-                            </span>
-                          )}
-                          {response.vote && (
-                            <span
-                              className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}
-                            >
-                              {response.vote === 'UP' ? '👍' : '👎'}
-                            </span>
-                          )}
-                          {Array.isArray(response.pollSelected) &&
-                            response.pollSelected.length > 0 && (
-                              <span className="text-xs sm:text-sm text-purple-700">
-                                {response.pollSelected.join(', ')}
-                              </span>
-                            )}
-                          {!Array.isArray(response.pollSelected) && (
-                            <span className="text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-xs">
-                              {response.content || response.title || '-'}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
-                      >
-                        {response.project.name}
-                      </TableCell>
-                      <TableCell
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
-                      >
-                        <Badge
-                          variant={
-                            response.mode === 'FEEDBACK'
-                              ? 'secondary'
-                              : response.mode === 'VOTE'
-                                ? 'default'
-                                : 'outline'
-                          }
-                          className={getModeStyle(response.mode)}
-                        >
-                          {response.mode.toLowerCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell
-                        className={`hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 font-mono ${isGated ? 'blur-sm select-none' : ''}`}
-                      >
-                        {response.elementIdRaw}
-                      </TableCell>
-                      <TableCell
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
-                      >
-                        {new Date(response.createdAt).toLocaleString()}
-                      </TableCell>
-                      {isGated && (
-                        <TableCell className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs text-gray-400 bg-white/80 px-2 py-0.5 rounded">
-                            Upgrade to view
-                          </span>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
+                {safeResponses.map((response) => (
+                  <ResponseRow
+                    key={response.id}
+                    response={response}
+                    isGated={!isPro && response.gated}
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -333,15 +283,4 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       )}
     </div>
   );
-}
-
-function getModeStyle(mode: string): string {
-  const styles: Record<string, string> = {
-    FEEDBACK: 'bg-slate-100 text-slate-800',
-    VOTE: 'bg-green-100 text-green-800',
-    POLL: 'bg-purple-100 text-purple-800',
-    FEATURE_REQUEST: 'bg-orange-100 text-orange-800',
-    AB: 'bg-pink-100 text-pink-800',
-  };
-  return styles[mode] || 'bg-gray-100 text-gray-800';
 }

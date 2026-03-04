@@ -20,21 +20,24 @@ interface Element {
 
 interface ResponsesFilterProps {
   elements?: Element[];
+  currentStatus?: string;
 }
 
-export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
+export function ResponsesFilter({ elements = [], currentStatus }: ResponsesFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
   const [endDate, setEndDate] = useState(searchParams.get('endDate') || '');
   const [elementId, setElementId] = useState(searchParams.get('elementId') || '');
+  const [status, setStatus] = useState(currentStatus || '');
 
   const handleFilter = () => {
     const params = new URLSearchParams();
     if (startDate) params.set('startDate', startDate);
     if (endDate) params.set('endDate', endDate);
     if (elementId && elementId !== '__all__') params.set('elementId', elementId);
+    if (status && status !== '__all__') params.set('status', status);
     params.set('page', '1');
     router.push(`/dashboard/responses?${params.toString()}`);
   };
@@ -43,10 +46,11 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
     setStartDate('');
     setEndDate('');
     setElementId('');
+    setStatus('');
     router.push('/dashboard/responses');
   };
 
-  const hasFilters = startDate || endDate || elementId;
+  const hasFilters = startDate || endDate || elementId || status;
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
@@ -63,6 +67,21 @@ export function ResponsesFilter({ elements = [] }: ResponsesFilterProps) {
                 {el.elementIdRaw} ({el.count})
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="w-full sm:w-auto space-y-1">
+        <Label>Status</Label>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All Statuses</SelectItem>
+            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="REVIEWED">Reviewed</SelectItem>
+            <SelectItem value="ADDRESSED">Addressed</SelectItem>
+            <SelectItem value="ARCHIVED">Archived</SelectItem>
           </SelectContent>
         </Select>
       </div>
