@@ -4,6 +4,7 @@ import { submitResponseSchema } from '@/lib/validations';
 import { createHash } from 'crypto';
 import { isInternalOriginAllowed } from '@/lib/origin-check';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { fireWebhooks } from '@/lib/webhooks';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -163,6 +164,17 @@ export async function POST(request: NextRequest) {
 
     // Await DB writes to ensure they complete on serverless (Netlify)
     await asyncWrite();
+
+    // Fire webhooks (non-blocking)
+    fireWebhooks(apiKey.projectId, 'response.created', {
+      id: responseId,
+      elementId: data.elementId,
+      mode: data.mode,
+      content: data.content,
+      rating: data.rating,
+      vote: data.vote,
+      createdAt: createdAt.toISOString(),
+    }).catch(console.error);
 
     return NextResponse.json(
       {

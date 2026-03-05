@@ -5,6 +5,7 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StatusBadge } from './status-badge';
+import { TagEditor } from './tag-editor';
 
 // Mode badge styling — desaturated, muted tones matching Linear's label system
 const MODE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -47,9 +48,10 @@ interface ResponseRowProps {
     project: { name: string; slug: string };
   };
   isGated: boolean;
+  isPro: boolean;
 }
 
-export function ResponseRow({ response, isGated }: ResponseRowProps) {
+export function ResponseRow({ response, isGated, isPro }: ResponseRowProps) {
   const [expanded, setExpanded] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
@@ -299,6 +301,13 @@ export function ResponseRow({ response, isGated }: ResponseRowProps) {
                   <span className="text-gray-200">·</span>
                   <code className="text-[11px] text-gray-400 font-mono">{response.elementIdRaw}</code>
                 </div>
+
+                {/* Tags */}
+                <TagEditor
+                  responseId={response.id}
+                  initialTags={response.tags}
+                  isPro={isPro}
+                />
               </div>
             </div>
           </div>

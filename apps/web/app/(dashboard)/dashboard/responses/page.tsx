@@ -42,6 +42,7 @@ interface PageProps {
     page?: string;
     elementId?: string;
     status?: string;
+    tag?: string;
   }>;
 }
 
@@ -85,14 +86,15 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const effectiveStartDate = !isPro && !startDate ? thirtyDaysAgo : startDate;
 
-  // Parse status filter
+  // Parse status filter — defaults to excluding ARCHIVED
   const validStatuses = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
+  const defaultStatuses = ['NEW', 'REVIEWED', 'ADDRESSED'] as const;
   type ResponseStatus = (typeof validStatuses)[number];
   const statusFilter = params.status
     ? (params.status.split(',').filter((s): s is ResponseStatus =>
         (validStatuses as readonly string[]).includes(s)
       ))
-    : undefined;
+    : [...defaultStatuses];
 
   // Build where clause
   const where = {
@@ -100,7 +102,8 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       organizationId: organization?.id,
     },
     ...(params.elementId && { elementIdRaw: params.elementId }),
-    ...(statusFilter && statusFilter.length > 0 && { status: { in: statusFilter } }),
+    ...(params.tag && { tags: { has: params.tag.trim().toLowerCase() } }),
+    ...(statusFilter.length > 0 && { status: { in: statusFilter } }),
     ...(effectiveStartDate || endDate
       ? {
           createdAt: {
@@ -273,6 +276,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                     key={response.id}
                     response={response}
                     isGated={!isPro && response.gated}
+                    isPro={isPro}
                   />
                 ))}
               </TableBody>
