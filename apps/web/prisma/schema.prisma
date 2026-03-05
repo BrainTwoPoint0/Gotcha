@@ -95,6 +95,7 @@ model Project {
   responses      Response[]
   experiments    Experiment[]
   metadataFields MetadataField[]
+  webhooks       Webhook[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -311,4 +312,47 @@ enum SubStatus {
   PAST_DUE
   CANCELED
   TRIALING
+}
+
+// ============================================
+// WEBHOOKS
+// ============================================
+
+model Webhook {
+  id              String    @id @default(cuid())
+  projectId       String
+  url             String
+  secret          String
+  events          String[]  // e.g. ["response.created"]
+  active          Boolean   @default(true)
+  description     String?
+  lastTriggeredAt DateTime?
+  lastStatusCode  Int?
+  failureCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logs    WebhookLog[]
+
+  @@index([projectId])
+}
+
+model WebhookLog {
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  statusCode Int?
+  responseMs Int?
+  error      String?
+  success    Boolean
+  createdAt  DateTime @default(now())
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
 }

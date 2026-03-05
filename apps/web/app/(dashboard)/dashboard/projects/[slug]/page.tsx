@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
@@ -70,7 +69,7 @@ export default async function ProjectPage({ params }: Props) {
       },
       responses: {
         orderBy: { createdAt: 'desc' },
-        take: 20,
+        take: 5,
       },
       _count: {
         select: { responses: true },
@@ -104,19 +103,34 @@ export default async function ProjectPage({ params }: Props) {
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
             {project.description && <p className="text-gray-600">{project.description}</p>}
           </div>
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/projects/${slug}/settings/metadata`}>
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
-                />
-              </svg>
-              Metadata Settings
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/dashboard/projects/${slug}/webhooks`}>
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
+                  />
+                </svg>
+                Webhooks
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={`/dashboard/projects/${slug}/settings/metadata`}>
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                  />
+                </svg>
+                Metadata Settings
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -178,7 +192,13 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
         {/* Recent Responses */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Recent Responses</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
+            <Link
+              href="/dashboard/responses"
+              className="text-sm text-slate-600 hover:text-slate-500"
+            >
+              View all
+            </Link>
           </div>
 
           {project.responses.length === 0 ? (
@@ -187,37 +207,29 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
               <p className="text-sm mt-1">Integrate the SDK to start collecting feedback.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {(project.responses as ResponseItem[]).map((response) => (
                 <div
                   key={response.id}
-                  className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className={getModeStyle(response.mode)}>
-                        {response.mode.toLowerCase()}
-                      </Badge>
-                      <span className="text-xs text-gray-400">
-                        {formatTimeAgo(response.createdAt)}
-                      </span>
-                    </div>
-                    {response.rating && (
-                      <span className="text-yellow-500 text-sm">
-                        {'★'.repeat(response.rating)}
-                        {'☆'.repeat(5 - response.rating)}
-                      </span>
-                    )}
-                    {response.vote && (
-                      <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
-                        {response.vote === 'UP' ? '👍' : '👎'}
-                      </span>
-                    )}
+                  <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">
+                      {response.content || `${response.mode.toLowerCase()} response`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {response.elementIdRaw} · {formatTimeAgo(response.createdAt)}
+                    </p>
                   </div>
-                  {response.content && (
-                    <p className="mt-2 text-sm text-gray-700">{response.content}</p>
+                  {response.rating && (
+                    <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
                   )}
-                  <p className="mt-1 text-xs text-gray-400">Element: {response.elementIdRaw}</p>
+                  {response.vote && (
+                    <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
+                      {response.vote === 'UP' ? '👍' : '👎'}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -228,15 +240,15 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
   );
 }
 
-function getModeStyle(mode: string): string {
-  const styles: Record<string, string> = {
-    FEEDBACK: 'bg-slate-100 text-slate-800',
-    VOTE: 'bg-green-100 text-green-800',
-    POLL: 'bg-purple-100 text-purple-800',
-    FEATURE_REQUEST: 'bg-orange-100 text-orange-800',
-    AB: 'bg-pink-100 text-pink-800',
+function getModeColor(mode: string): string {
+  const colors: Record<string, string> = {
+    FEEDBACK: 'bg-slate-500',
+    VOTE: 'bg-green-500',
+    POLL: 'bg-purple-500',
+    FEATURE_REQUEST: 'bg-orange-500',
+    AB: 'bg-pink-500',
   };
-  return styles[mode] || 'bg-gray-100 text-gray-800';
+  return colors[mode] || 'bg-gray-500';
 }
 
 function formatTimeAgo(date: Date): string {

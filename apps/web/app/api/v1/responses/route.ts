@@ -11,6 +11,7 @@ import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 import { sendUsageWarningEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
 import { atomicIncrementUsage } from '@/lib/usage-atomic';
+import { fireWebhooks } from '@/lib/webhooks';
 
 // Define types locally instead of importing Prisma enums
 type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
@@ -172,6 +173,19 @@ export async function POST(request: NextRequest) {
 
     // Await DB writes to ensure they complete on serverless (Netlify)
     await asyncWrite();
+
+    // Fire webhooks for PRO orgs (non-blocking)
+    if (apiKey.plan === 'PRO') {
+      fireWebhooks(apiKey.projectId, 'response.created', {
+        id: responseId,
+        elementId: data.elementId,
+        mode: data.mode,
+        content: data.content,
+        rating: data.rating,
+        vote: data.vote,
+        createdAt: createdAt.toISOString(),
+      }).catch(console.error);
+    }
 
     return Response.json(result, {
       status: 201,

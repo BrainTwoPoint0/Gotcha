@@ -115,7 +115,7 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
           disabled={isUpdating}
         >
           {config.icon}
-          {config.label}
+          <span className="inline-block w-[58px]">{config.label}</span>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-0.5 opacity-40">
             <path d="M3 4L5 6L7 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
