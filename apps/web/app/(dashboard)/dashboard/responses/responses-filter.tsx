@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -32,9 +32,10 @@ const STATUS_LABELS: Record<string, string> = {
 interface ResponsesFilterProps {
   elements?: Element[];
   currentStatus?: string;
+  availableTags?: { tag: string; count: number }[];
 }
 
-export function ResponsesFilter({ elements = [], currentStatus }: ResponsesFilterProps) {
+export function ResponsesFilter({ elements = [], currentStatus, availableTags = [] }: ResponsesFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -45,6 +46,13 @@ export function ResponsesFilter({ elements = [], currentStatus }: ResponsesFilte
     currentStatus ? currentStatus.split(',') : DEFAULT_STATUSES
   );
   const [tag, setTag] = useState(searchParams.get('tag') || '');
+  const [tagFocused, setTagFocused] = useState(false);
+  const [tagHighlight, setTagHighlight] = useState(-1);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const tagSuggestions = tag.trim() && tagFocused
+    ? availableTags.filter((t) => t.tag.startsWith(tag.trim().toLowerCase())).slice(0, 6)
+    : [];
 
   const handleFilter = () => {
     const params = new URLSearchParams();
@@ -120,12 +128,64 @@ export function ResponsesFilter({ elements = [], currentStatus }: ResponsesFilte
       </div>
       <div className="w-full sm:w-auto space-y-1">
         <Label>Tag</Label>
-        <Input
-          value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          placeholder="Filter by tag"
-          className="w-full sm:w-[160px]"
-        />
+        <div className="relative">
+          <Input
+            ref={tagInputRef}
+            value={tag}
+            onChange={(e) => {
+              setTag(e.target.value);
+              setTagHighlight(-1);
+            }}
+            onFocus={() => setTagFocused(true)}
+            onBlur={() => setTimeout(() => setTagFocused(false), 150)}
+            onKeyDown={(e) => {
+              if (tagSuggestions.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setTagHighlight((i) => (i < tagSuggestions.length - 1 ? i + 1 : 0));
+                  return;
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setTagHighlight((i) => (i > 0 ? i - 1 : tagSuggestions.length - 1));
+                  return;
+                }
+                if (e.key === 'Enter' && tagHighlight >= 0) {
+                  e.preventDefault();
+                  setTag(tagSuggestions[tagHighlight].tag);
+                  setTagFocused(false);
+                  setTagHighlight(-1);
+                  return;
+                }
+              }
+            }}
+            placeholder="Filter by tag"
+            className="w-full sm:w-[160px]"
+          />
+          {tagSuggestions.length > 0 && (
+            <div className="absolute top-full left-0 z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-md shadow-lg py-1">
+              {tagSuggestions.map((s, i) => (
+                <button
+                  key={s.tag}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setTag(s.tag);
+                    setTagFocused(false);
+                    setTagHighlight(-1);
+                  }}
+                  className={`
+                    w-full text-left px-2.5 py-1.5 text-sm flex items-center justify-between gap-3
+                    ${i === tagHighlight ? 'bg-sky-50 text-sky-700' : 'text-gray-700 hover:bg-gray-50'}
+                  `}
+                >
+                  <span>{s.tag}</span>
+                  <span className="text-xs text-gray-400">{s.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="w-full sm:w-auto space-y-1">
         <Label>Start Date</Label>

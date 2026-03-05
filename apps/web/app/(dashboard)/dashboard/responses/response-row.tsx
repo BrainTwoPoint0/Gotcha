@@ -49,9 +49,10 @@ interface ResponseRowProps {
   };
   isGated: boolean;
   isPro: boolean;
+  availableTags: { tag: string; count: number }[];
 }
 
-export function ResponseRow({ response, isGated, isPro }: ResponseRowProps) {
+export function ResponseRow({ response, isGated, isPro, availableTags }: ResponseRowProps) {
   const [expanded, setExpanded] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
@@ -307,6 +308,7 @@ export function ResponseRow({ response, isGated, isPro }: ResponseRowProps) {
                   responseId={response.id}
                   initialTags={response.tags}
                   isPro={isPro}
+                  availableTags={availableTags}
                 />
               </div>
             </div>

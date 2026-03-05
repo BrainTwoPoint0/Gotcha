@@ -6,14 +6,23 @@ interface TagEditorProps {
   responseId: string;
   initialTags: string[];
   isPro: boolean;
+  availableTags?: { tag: string; count: number }[];
 }
 
-export function TagEditor({ responseId, initialTags, isPro }: TagEditorProps) {
+export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }: TagEditorProps) {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isAdding, setIsAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = inputValue.trim()
+    ? availableTags
+        .filter((t) => t.tag.startsWith(inputValue.trim().toLowerCase()) && !tags.includes(t.tag))
+        .slice(0, 6)
+    : [];
 
   const saveTags = useCallback(async (newTags: string[]) => {
     setSaving(true);
@@ -51,13 +60,41 @@ export function TagEditor({ responseId, initialTags, isPro }: TagEditorProps) {
     saveTags(newTags);
   };
 
+  const selectSuggestion = (suggestion: string) => {
+    if (tags.includes(suggestion) || tags.length >= 10) return;
+    const newTags = [...tags, suggestion];
+    setTags(newTags);
+    setInputValue('');
+    setHighlightIndex(-1);
+    saveTags(newTags);
+    inputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setHighlightIndex((i) => (i < suggestions.length - 1 ? i + 1 : 0));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlightIndex((i) => (i > 0 ? i - 1 : suggestions.length - 1));
+        return;
+      }
+      if (e.key === 'Enter' && highlightIndex >= 0) {
+        e.preventDefault();
+        selectSuggestion(suggestions[highlightIndex].tag);
+        return;
+      }
+    }
     if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
     } else if (e.key === 'Escape') {
       setIsAdding(false);
       setInputValue('');
+      setHighlightIndex(-1);
     }
   };
 
@@ -125,27 +162,59 @@ export function TagEditor({ responseId, initialTags, isPro }: TagEditorProps) {
         ))}
 
         {isAdding ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={() => {
-              if (inputValue.trim()) addTag();
-              else setIsAdding(false);
-            }}
-            placeholder="add tag…"
-            maxLength={30}
-            autoFocus
-            className="
-              text-xs px-2 h-6 rounded-md
-              border border-sky-300 bg-white
-              outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200/50
-              w-24 text-sky-800 placeholder:text-sky-300
-              transition-all duration-150
-            "
-          />
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setHighlightIndex(-1);
+              }}
+              onKeyDown={handleKeyDown}
+              onBlur={() => {
+                // Delay to allow click on suggestion
+                setTimeout(() => {
+                  if (inputValue.trim()) addTag();
+                  else setIsAdding(false);
+                }, 150);
+              }}
+              placeholder="add tag…"
+              maxLength={30}
+              autoFocus
+              className="
+                text-xs px-2 h-6 rounded-md
+                border border-sky-300 bg-white
+                outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200/50
+                w-24 text-sky-800 placeholder:text-sky-300
+                transition-all duration-150
+              "
+            />
+            {suggestions.length > 0 && (
+              <div
+                ref={dropdownRef}
+                className="absolute top-7 left-0 z-50 min-w-[160px] bg-white border border-gray-200 rounded-md shadow-lg py-1"
+              >
+                {suggestions.map((s, i) => (
+                  <button
+                    key={s.tag}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectSuggestion(s.tag);
+                    }}
+                    className={`
+                      w-full text-left px-2.5 py-1 text-xs flex items-center justify-between gap-3
+                      ${i === highlightIndex ? 'bg-sky-50 text-sky-700' : 'text-gray-700 hover:bg-gray-50'}
+                    `}
+                  >
+                    <span>{s.tag}</span>
+                    <span className="text-[10px] text-gray-400">{s.count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
           <button
             onClick={(e) => {

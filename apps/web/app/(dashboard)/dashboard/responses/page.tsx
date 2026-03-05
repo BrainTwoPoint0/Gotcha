@@ -115,7 +115,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   };
 
   // Run all queries in parallel
-  const [elements, total, gatedCount, responses] = organization
+  const [elements, total, gatedCount, responses, availableTags] = organization
     ? await Promise.all([
         prisma.response.groupBy({
           by: ['elementIdRaw'],
@@ -146,8 +146,19 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
             },
           },
         }) as unknown as Promise<ResponseItem[]>,
+        prisma.$queryRaw<{ tag: string; count: bigint }[]>`
+          SELECT unnest(tags) as tag, COUNT(*) as count
+          FROM "Response"
+          WHERE "projectId" IN (SELECT id FROM "Project" WHERE "organizationId" = ${organization.id})
+          GROUP BY tag ORDER BY count DESC
+        `,
       ])
-    : [[], 0, 0, [] as ResponseItem[]];
+    : [[], 0, 0, [] as ResponseItem[], [] as { tag: string; count: bigint }[]];
+
+  const availableTagOptions = availableTags.map((t) => ({
+    tag: t.tag,
+    count: Number(t.count),
+  }));
 
   const elementOptions = elements.map((e) => ({
     elementIdRaw: e.elementIdRaw,
@@ -199,7 +210,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         <ExportButton isPro={isPro} />
       </div>
 
-      <ResponsesFilter elements={elementOptions} currentStatus={params.status} />
+      <ResponsesFilter elements={elementOptions} currentStatus={params.status} availableTags={availableTagOptions} />
 
       {gatedCount > 0 && (
         <Alert variant="destructive" className="mb-4">
@@ -277,6 +288,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                     response={response}
                     isGated={!isPro && response.gated}
                     isPro={isPro}
+                    availableTags={availableTagOptions}
                   />
                 ))}
               </TableBody>
