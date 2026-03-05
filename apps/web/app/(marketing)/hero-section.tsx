@@ -33,16 +33,32 @@ export function HeroSection() {
           <p className="text-sm text-muted-foreground mt-4">
             No credit card required. Free tier available.
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center justify-center gap-3 mt-6">
             <a
               href="https://www.npmjs.com/package/gotcha-feedback"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-600 hover:text-slate-800 underline"
             >
-              View on npm
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://img.shields.io/npm/dt/gotcha-feedback?style=for-the-badge&logo=npm&label=downloads&color=1e293b&labelColor=334155"
+                alt="npm downloads"
+                className="inline-block h-7"
+              />
             </a>
-          </p>
+            <a
+              href="https://www.npmjs.com/package/gotcha-feedback"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://img.shields.io/npm/v/gotcha-feedback?style=for-the-badge&logo=npm&color=1e293b&labelColor=334155"
+                alt="npm version"
+                className="inline-block h-7"
+              />
+            </a>
+          </div>
         </div>
       </div>
     </section>
