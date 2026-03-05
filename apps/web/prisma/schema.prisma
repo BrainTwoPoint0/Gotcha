@@ -321,8 +321,9 @@ enum SubStatus {
 model Webhook {
   id              String    @id @default(cuid())
   projectId       String
+  type            String    @default("custom") // "custom" | "slack" | "discord"
   url             String
-  secret          String
+  secret          String?
   events          String[]  // e.g. ["response.created"]
   active          Boolean   @default(true)
   description     String?

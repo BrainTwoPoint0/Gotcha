@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
-import { generateSignature } from '@/lib/webhooks';
+import { generateSignature, formatSlackPayload, formatDiscordPayload } from '@/lib/webhooks';
 
 export async function POST(
   request: NextRequest,
@@ -63,9 +63,22 @@ export async function POST(
       createdAt: new Date().toISOString(),
     };
 
-    const body = JSON.stringify(testPayload);
-    const signature = generateSignature(webhook.secret, body);
-    const timestamp = Date.now().toString();
+    // Format body + headers based on webhook type
+    let body: string;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (webhook.type === 'slack') {
+      body = JSON.stringify(formatSlackPayload('test', testPayload));
+    } else if (webhook.type === 'discord') {
+      body = JSON.stringify(formatDiscordPayload('test', testPayload));
+    } else {
+      body = JSON.stringify(testPayload);
+      if (webhook.secret) {
+        headers['X-Gotcha-Signature'] = generateSignature(webhook.secret, body);
+      }
+      headers['X-Gotcha-Event'] = 'test';
+      headers['X-Gotcha-Timestamp'] = Date.now().toString();
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
@@ -78,12 +91,7 @@ export async function POST(
     try {
       const res = await fetch(webhook.url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Gotcha-Signature': signature,
-          'X-Gotcha-Event': 'test',
-          'X-Gotcha-Timestamp': timestamp,
-        },
+        headers,
         body,
         signal: controller.signal,
       });

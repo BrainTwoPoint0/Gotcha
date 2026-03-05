@@ -10,13 +10,16 @@ import { WebhookLogs } from './webhook-logs';
 export function AddWebhookButton() {
   return (
     <Button onClick={() => window.dispatchEvent(new CustomEvent('gotcha:add-webhook'))}>
-      Add Webhook
+      Add Integration
     </Button>
   );
 }
 
+type WebhookType = 'custom' | 'slack' | 'discord';
+
 interface Webhook {
   id: string;
+  type: string;
   url: string;
   events: string[];
   active: boolean;
@@ -27,6 +30,24 @@ interface Webhook {
   createdAt: string;
 }
 
+const TYPE_CONFIG: Record<WebhookType, { label: string; icon: string; placeholder: string }> = {
+  slack: {
+    label: 'Slack',
+    icon: '#',
+    placeholder: 'https://hooks.slack.com/services/...',
+  },
+  discord: {
+    label: 'Discord',
+    icon: '🎮',
+    placeholder: 'https://discord.com/api/webhooks/...',
+  },
+  custom: {
+    label: 'Webhook',
+    icon: '🔗',
+    placeholder: 'https://example.com/webhook',
+  },
+};
+
 interface WebhookManagerProps {
   projectSlug: string;
   webhooks: Webhook[];
@@ -36,6 +57,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [newType, setNewType] = useState<WebhookType | null>(null);
   const [newUrl, setNewUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
@@ -49,6 +71,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   }, []);
 
   const createWebhook = async () => {
+    if (!newType) return;
     setLoading('create');
     try {
       const res = await fetch(`/api/projects/${projectSlug}/webhooks`, {
@@ -58,14 +81,18 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
           url: newUrl,
           events: ['response.created'],
           description: newDescription || undefined,
+          type: newType,
         }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setCreatedSecret(data.webhook.secret);
+        if (data.webhook.secret) {
+          setCreatedSecret(data.webhook.secret);
+        }
         setNewUrl('');
         setNewDescription('');
+        setNewType(null);
         setShowAdd(false);
         router.refresh();
       }
@@ -93,7 +120,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   };
 
   const deleteWebhook = async (id: string) => {
-    if (!confirm('Delete this webhook? This cannot be undone.')) return;
+    if (!confirm('Delete this integration? This cannot be undone.')) return;
     setLoading(id);
     try {
       await fetch(`/api/projects/${projectSlug}/webhooks/${id}`, {
@@ -170,48 +197,80 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         </div>
       )}
 
-      {/* Add webhook form */}
-      {showAdd && (
-          <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
-            <h3 className="font-medium text-gray-900">New Webhook</h3>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-600">Endpoint URL</label>
-              <Input
-                type="url"
-                placeholder="https://example.com/webhook"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-600">Description (optional)</label>
-              <Input
-                type="text"
-                placeholder="e.g. Slack notifications"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
-              Events: <code className="bg-gray-100 px-1 rounded">response.created</code>
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={createWebhook} disabled={!newUrl || loading === 'create'}>
-                {loading === 'create' ? 'Creating...' : 'Create Webhook'}
-              </Button>
-              <Button variant="ghost" onClick={() => setShowAdd(false)}>
-                Cancel
-              </Button>
-            </div>
+      {/* Add integration flow */}
+      {showAdd && !newType && (
+        <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
+          <h3 className="font-medium text-gray-900">Choose Integration Type</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {(['slack', 'discord', 'custom'] as WebhookType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => setNewType(type)}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-2xl">{TYPE_CONFIG[type].icon}</span>
+                <span className="text-sm font-medium text-gray-900">{TYPE_CONFIG[type].label}</span>
+              </button>
+            ))}
           </div>
+          <Button variant="ghost" onClick={() => setShowAdd(false)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+
+      {showAdd && newType && (
+        <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setNewType(null)} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h3 className="font-medium text-gray-900">
+              New {TYPE_CONFIG[newType].label} Integration
+            </h3>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">
+              {newType === 'slack' ? 'Slack Webhook URL' : newType === 'discord' ? 'Discord Webhook URL' : 'Endpoint URL'}
+            </label>
+            <Input
+              type="url"
+              placeholder={TYPE_CONFIG[newType].placeholder}
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">Description (optional)</label>
+            <Input
+              type="text"
+              placeholder={`e.g. ${newType === 'slack' ? '#feedback channel' : newType === 'discord' ? '#feedback channel' : 'Production notifications'}`}
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-gray-500">
+            Events: <code className="bg-gray-100 px-1 rounded">response.created</code>
+          </p>
+          <div className="flex gap-2">
+            <Button onClick={createWebhook} disabled={!newUrl || loading === 'create'}>
+              {loading === 'create' ? 'Creating...' : `Create ${TYPE_CONFIG[newType].label} Integration`}
+            </Button>
+            <Button variant="ghost" onClick={() => { setShowAdd(false); setNewType(null); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Webhook list */}
       {webhooks.length === 0 && !showAdd ? (
         <div className="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
-          <p>No webhooks configured yet.</p>
+          <p>No integrations configured yet.</p>
           <p className="text-sm mt-1">
-            Add a webhook to receive real-time notifications when feedback comes in.
+            Add Slack, Discord, or a custom webhook to receive real-time notifications.
           </p>
         </div>
       ) : (
@@ -222,6 +281,10 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-xs">
+                        {TYPE_CONFIG[webhook.type as WebhookType]?.icon}{' '}
+                        {TYPE_CONFIG[webhook.type as WebhookType]?.label || webhook.type}
+                      </Badge>
                       {statusBadge(webhook)}
                       {webhook.description && (
                         <span className="text-sm font-medium text-gray-900">

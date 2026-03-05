@@ -54,6 +54,7 @@ export default async function WebhooksPage({ params }: Props) {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
+          type: true,
           url: true,
           events: true,
           active: true,
@@ -80,7 +81,7 @@ export default async function WebhooksPage({ params }: Props) {
         </Link>
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Webhooks</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
             <p className="text-gray-600">
               Receive real-time notifications when feedback comes in
             </p>
@@ -93,7 +94,7 @@ export default async function WebhooksPage({ params }: Props) {
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-2">PRO Feature</h3>
           <p className="text-gray-600 mb-4">
-            Webhooks are available on the Pro plan. Get real-time notifications for Zapier, Slack, and custom integrations.
+            Integrations are available on the Pro plan. Connect Slack, Discord, and custom webhooks for real-time notifications.
           </p>
           <Link
             href="/dashboard/settings"

@@ -10,6 +10,7 @@ const createWebhookSchema = z.object({
   url: z.string().url(),
   events: z.array(z.enum(['response.created'])).min(1),
   description: z.string().max(200).optional(),
+  type: z.enum(['custom', 'slack', 'discord']).default('custom'),
 });
 
 async function getOrgAndProject(request: NextRequest, slug: string) {
@@ -66,6 +67,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        type: true,
         url: true,
         events: true,
         active: true,
@@ -110,11 +112,13 @@ export async function POST(
       );
     }
 
-    const secret = generateSecret();
+    const webhookType = validation.data.type;
+    const secret = webhookType === 'custom' ? generateSecret() : null;
 
     const webhook = await prisma.webhook.create({
       data: {
         projectId: result.project.id,
+        type: webhookType,
         url: validation.data.url,
         secret,
         events: validation.data.events,
@@ -122,12 +126,13 @@ export async function POST(
       },
     });
 
-    // Return secret only on creation
+    // Return secret only on creation for custom type
     return NextResponse.json({
       webhook: {
         id: webhook.id,
+        type: webhook.type,
         url: webhook.url,
-        secret,
+        ...(webhookType === 'custom' ? { secret } : {}),
         events: webhook.events,
         active: webhook.active,
         description: webhook.description,

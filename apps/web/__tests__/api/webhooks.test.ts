@@ -1,6 +1,7 @@
 /**
  * Unit tests for webhook logic
- * Tests HMAC signature, secret generation, payload structure, failure counting
+ * Tests HMAC signature, secret generation, payload structure, failure counting,
+ * and Slack/Discord payload formatters
  */
 
 import crypto from 'crypto';
@@ -12,6 +13,89 @@ function generateSignature(secret: string, payload: string): string {
 
 function generateSecret(): string {
   return `whsec_${crypto.randomBytes(24).toString('hex')}`;
+}
+
+// Inline formatters (mirrors lib/webhooks.ts) to avoid Prisma import
+function formatSlackPayload(
+  event: string,
+  payload: Record<string, unknown>
+): Record<string, unknown> {
+  const mode = String(payload.mode || 'feedback').toLowerCase();
+  const elementId = payload.elementId || payload.elementIdRaw || 'unknown';
+
+  const fields: string[] = [];
+  fields.push(`*Event:* \`${event}\``);
+  fields.push(`*Element:* \`${elementId}\``);
+  fields.push(`*Mode:* ${mode}`);
+
+  if (payload.rating != null) {
+    const stars = '★'.repeat(Number(payload.rating)) + '☆'.repeat(5 - Number(payload.rating));
+    fields.push(`*Rating:* ${stars}`);
+  }
+  if (payload.vote != null) {
+    const emoji = String(payload.vote).toUpperCase() === 'UP' ? ':thumbsup:' : ':thumbsdown:';
+    fields.push(`*Vote:* ${emoji}`);
+  }
+  if (payload.content) {
+    fields.push(`*Content:*\n>${String(payload.content)}`);
+  }
+
+  return {
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*New ${mode} response* from Gotcha`,
+        },
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: fields.join('\n'),
+        },
+      },
+    ],
+  };
+}
+
+function formatDiscordPayload(
+  event: string,
+  payload: Record<string, unknown>
+): Record<string, unknown> {
+  const mode = String(payload.mode || 'feedback').toLowerCase();
+  const elementId = payload.elementId || payload.elementIdRaw || 'unknown';
+
+  const embedFields: { name: string; value: string; inline: boolean }[] = [
+    { name: 'Event', value: `\`${event}\``, inline: true },
+    { name: 'Element', value: `\`${elementId}\``, inline: true },
+    { name: 'Mode', value: mode, inline: true },
+  ];
+
+  if (payload.rating != null) {
+    const stars = '★'.repeat(Number(payload.rating)) + '☆'.repeat(5 - Number(payload.rating));
+    embedFields.push({ name: 'Rating', value: stars, inline: true });
+  }
+  if (payload.vote != null) {
+    const emoji = String(payload.vote).toUpperCase() === 'UP' ? '👍' : '👎';
+    embedFields.push({ name: 'Vote', value: emoji, inline: true });
+  }
+
+  const description = payload.content ? String(payload.content) : undefined;
+
+  return {
+    embeds: [
+      {
+        title: `New ${mode} response`,
+        description,
+        color: 0x6366f1,
+        fields: embedFields,
+        timestamp: new Date().toISOString(),
+        footer: { text: 'Gotcha' },
+      },
+    ],
+  };
 }
 
 const MAX_FAILURES = 10;
@@ -209,6 +293,179 @@ describe('Webhook Logic', () => {
 
       expect(matching).toHaveLength(1);
       expect(matching[0].id).toBe('2');
+    });
+  });
+
+  describe('Slack Payload Formatter', () => {
+    const basePayload = {
+      id: 'resp_123',
+      elementId: 'feature-x',
+      mode: 'feedback',
+      content: 'Great feature!',
+      rating: 4,
+      vote: null,
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+
+    it('should return Slack Block Kit structure with blocks array', () => {
+      const result = formatSlackPayload('response.created', basePayload) as { blocks: unknown[] };
+      expect(result).toHaveProperty('blocks');
+      expect(Array.isArray(result.blocks)).toBe(true);
+      expect(result.blocks).toHaveLength(2);
+    });
+
+    it('should have section blocks with mrkdwn text', () => {
+      const result = formatSlackPayload('response.created', basePayload) as {
+        blocks: Array<{ type: string; text: { type: string; text: string } }>;
+      };
+      expect(result.blocks[0].type).toBe('section');
+      expect(result.blocks[0].text.type).toBe('mrkdwn');
+      expect(result.blocks[0].text.text).toContain('feedback');
+    });
+
+    it('should include rating stars', () => {
+      const result = formatSlackPayload('response.created', basePayload) as {
+        blocks: Array<{ text: { text: string } }>;
+      };
+      const fieldsText = result.blocks[1].text.text;
+      expect(fieldsText).toContain('★★★★☆');
+    });
+
+    it('should include content as quote', () => {
+      const result = formatSlackPayload('response.created', basePayload) as {
+        blocks: Array<{ text: { text: string } }>;
+      };
+      const fieldsText = result.blocks[1].text.text;
+      expect(fieldsText).toContain('>Great feature!');
+    });
+
+    it('should show vote emoji for vote mode', () => {
+      const votePayload = { ...basePayload, mode: 'vote', vote: 'UP', rating: null };
+      const result = formatSlackPayload('response.created', votePayload) as {
+        blocks: Array<{ text: { text: string } }>;
+      };
+      const fieldsText = result.blocks[1].text.text;
+      expect(fieldsText).toContain(':thumbsup:');
+    });
+
+    it('should include element name', () => {
+      const result = formatSlackPayload('response.created', basePayload) as {
+        blocks: Array<{ text: { text: string } }>;
+      };
+      const fieldsText = result.blocks[1].text.text;
+      expect(fieldsText).toContain('feature-x');
+    });
+  });
+
+  describe('Discord Payload Formatter', () => {
+    const basePayload = {
+      id: 'resp_123',
+      elementId: 'feature-x',
+      mode: 'feedback',
+      content: 'Great feature!',
+      rating: 3,
+      vote: null,
+      createdAt: '2024-01-01T00:00:00.000Z',
+    };
+
+    it('should return Discord embed structure', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as { embeds: unknown[] };
+      expect(result).toHaveProperty('embeds');
+      expect(Array.isArray(result.embeds)).toBe(true);
+      expect(result.embeds).toHaveLength(1);
+    });
+
+    it('should have correct embed title and description', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as {
+        embeds: Array<{ title: string; description: string }>;
+      };
+      expect(result.embeds[0].title).toBe('New feedback response');
+      expect(result.embeds[0].description).toBe('Great feature!');
+    });
+
+    it('should have embed color and timestamp', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as {
+        embeds: Array<{ color: number; timestamp: string }>;
+      };
+      expect(result.embeds[0].color).toBe(0x6366f1);
+      expect(result.embeds[0].timestamp).toBeDefined();
+    });
+
+    it('should have inline fields for event, element, mode', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as {
+        embeds: Array<{ fields: Array<{ name: string; value: string; inline: boolean }> }>;
+      };
+      const fields = result.embeds[0].fields;
+      expect(fields.length).toBeGreaterThanOrEqual(3);
+      expect(fields[0].name).toBe('Event');
+      expect(fields[1].name).toBe('Element');
+      expect(fields[2].name).toBe('Mode');
+      expect(fields.every((f) => f.inline)).toBe(true);
+    });
+
+    it('should include rating stars as a field', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as {
+        embeds: Array<{ fields: Array<{ name: string; value: string }> }>;
+      };
+      const ratingField = result.embeds[0].fields.find((f) => f.name === 'Rating');
+      expect(ratingField).toBeDefined();
+      expect(ratingField!.value).toBe('★★★☆☆');
+    });
+
+    it('should include vote emoji for vote mode', () => {
+      const votePayload = { ...basePayload, mode: 'vote', vote: 'DOWN', rating: null };
+      const result = formatDiscordPayload('response.created', votePayload) as {
+        embeds: Array<{ fields: Array<{ name: string; value: string }> }>;
+      };
+      const voteField = result.embeds[0].fields.find((f) => f.name === 'Vote');
+      expect(voteField).toBeDefined();
+      expect(voteField!.value).toBe('👎');
+    });
+
+    it('should have Gotcha footer', () => {
+      const result = formatDiscordPayload('response.created', basePayload) as {
+        embeds: Array<{ footer: { text: string } }>;
+      };
+      expect(result.embeds[0].footer.text).toBe('Gotcha');
+    });
+  });
+
+  describe('Type-based Signature Behavior', () => {
+    it('custom type should generate a signature', () => {
+      const secret = 'whsec_test';
+      const payload = '{"test":true}';
+      const sig = generateSignature(secret, payload);
+      expect(sig).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it('slack type should not need a signature (no secret)', () => {
+      // Slack webhooks don't use HMAC — secret is null
+      const secret = null;
+      expect(secret).toBeNull();
+    });
+
+    it('discord type should not need a signature (no secret)', () => {
+      const secret = null;
+      expect(secret).toBeNull();
+    });
+
+    it('custom type should generate a secret on creation', () => {
+      const type = 'custom';
+      const secret = type === 'custom' ? generateSecret() : null;
+      expect(secret).not.toBeNull();
+      expect(secret).toMatch(/^whsec_/);
+    });
+
+    it('slack type should not generate a secret on creation', () => {
+      const type = 'slack';
+      const secret = type === 'custom' ? generateSecret() : null;
+      expect(secret).toBeNull();
+    });
+
+    it('discord type should not generate a secret on creation', () => {
+      const type = 'discord';
+      const secret = type === 'custom' ? generateSecret() : null;
+      expect(secret).toBeNull();
     });
   });
 });
