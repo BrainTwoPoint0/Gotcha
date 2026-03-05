@@ -30,20 +30,52 @@ interface Webhook {
   createdAt: string;
 }
 
-const TYPE_CONFIG: Record<WebhookType, { label: string; icon: string; placeholder: string }> = {
+function SlackIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 2447.6 2452.5" xmlns="http://www.w3.org/2000/svg">
+      <g clipRule="evenodd" fillRule="evenodd">
+        <path d="m897.4 0c-135.3.1-244.8 109.9-244.7 245.2-.1 135.3 109.5 245.1 244.8 245.2h244.8v-245.1c.1-135.3-109.5-245.1-244.9-245.3.1 0 .1 0 0 0m0 654h-652.6c-135.3.1-244.9 109.9-244.8 245.2-.2 135.3 109.4 245.1 244.7 245.3h652.7c135.3-.1 244.9-109.9 244.8-245.2.1-135.4-109.5-245.2-244.8-245.3z" fill="#36c5f0"/>
+        <path d="m2447.6 899.2c.1-135.3-109.5-245.1-244.8-245.2-135.3.1-244.9 109.9-244.8 245.2v245.3h244.8c135.3-.1 244.9-109.9 244.8-245.3zm-652.7 0v-654c.1-135.2-109.4-245-244.7-245.2-135.3.1-244.9 109.9-244.8 245.2v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.3z" fill="#2eb67d"/>
+        <path d="m1550.1 2452.5c135.3-.1 244.9-109.9 244.8-245.2.1-135.3-109.5-245.1-244.8-245.2h-244.8v245.2c-.1 135.2 109.5 245 244.8 245.2zm0-654.1h652.7c135.3-.1 244.9-109.9 244.8-245.2.2-135.3-109.4-245.1-244.7-245.3h-652.7c-135.3.1-244.9 109.9-244.8 245.2-.1 135.4 109.4 245.2 244.7 245.3z" fill="#ecb22e"/>
+        <path d="m0 1553.2c-.1 135.3 109.5 245.1 244.8 245.2 135.3-.1 244.9-109.9 244.8-245.2v-245.2h-244.8c-135.3.1-244.9 109.9-244.8 245.2zm652.7 0v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.2v-653.9c.2-135.3-109.4-245.1-244.7-245.3-135.4 0-244.9 109.8-244.8 245.1 0 0 0 .1 0 0" fill="#e01e5a"/>
+      </g>
+    </svg>
+  );
+}
+
+function DiscordIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 127.14 96.36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2.03a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2.03a68.68 68.68 0 0 1-10.87 5.19 77.3 77.3 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53.05s5-12.68 11.45-12.68S54 46.07 53.89 53.05c0 6.95-5.11 12.64-11.44 12.64Zm42.24 0C78.41 65.69 73.25 60 73.25 53.05s5-12.68 11.44-12.68S96.23 46.07 96.12 53.05c0 6.95-5.07 12.64-11.43 12.64Z" fill="#5865F2"/>
+    </svg>
+  );
+}
+
+function WebhookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+    </svg>
+  );
+}
+
+const TYPE_ICONS: Record<WebhookType, (props: { className?: string }) => React.ReactNode> = {
+  slack: SlackIcon,
+  discord: DiscordIcon,
+  custom: WebhookIcon,
+};
+
+const TYPE_CONFIG: Record<WebhookType, { label: string; placeholder: string }> = {
   slack: {
     label: 'Slack',
-    icon: '#',
     placeholder: 'https://hooks.slack.com/services/...',
   },
   discord: {
     label: 'Discord',
-    icon: '🎮',
     placeholder: 'https://discord.com/api/webhooks/...',
   },
   custom: {
     label: 'Webhook',
-    icon: '🔗',
     placeholder: 'https://example.com/webhook',
   },
 };
@@ -202,16 +234,19 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
           <h3 className="font-medium text-gray-900">Choose Integration Type</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(['slack', 'discord', 'custom'] as WebhookType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() => setNewType(type)}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-2xl">{TYPE_CONFIG[type].icon}</span>
-                <span className="text-sm font-medium text-gray-900">{TYPE_CONFIG[type].label}</span>
-              </button>
-            ))}
+            {(['slack', 'discord', 'custom'] as WebhookType[]).map((type) => {
+              const Icon = TYPE_ICONS[type];
+              return (
+                <button
+                  key={type}
+                  onClick={() => setNewType(type)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                >
+                  <Icon className="w-8 h-8 text-gray-700" />
+                  <span className="text-sm font-medium text-gray-900">{TYPE_CONFIG[type].label}</span>
+                </button>
+              );
+            })}
           </div>
           <Button variant="ghost" onClick={() => setShowAdd(false)}>
             Cancel
@@ -281,8 +316,11 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-xs">
-                        {TYPE_CONFIG[webhook.type as WebhookType]?.icon}{' '}
+                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                        {(() => {
+                          const Icon = TYPE_ICONS[webhook.type as WebhookType];
+                          return Icon ? <Icon className="w-3.5 h-3.5" /> : null;
+                        })()}
                         {TYPE_CONFIG[webhook.type as WebhookType]?.label || webhook.type}
                       </Badge>
                       {statusBadge(webhook)}

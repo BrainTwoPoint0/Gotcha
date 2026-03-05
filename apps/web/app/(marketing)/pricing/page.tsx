@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { PricingToggle } from './pricing-toggle';
+import { CtaSection } from '../cta-section';
+import { PricingHero } from './pricing-hero';
+import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
 
 const programs = [
   {
@@ -64,20 +67,10 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="bg-white py-16 sm:py-24">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            Simple, transparent pricing
-          </h1>
-          <p className="text-xl text-gray-600 mb-2">Add feedback to any component in 5 minutes.</p>
-          <p className="text-lg text-gray-500">
-            No credit card required. Start free, upgrade when you need.
-          </p>
-        </div>
-      </div>
+      <PricingHero />
 
       {/* Pricing Tiers */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-8 py-16">
+      <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-8 py-20">
         <PricingToggle />
 
         {/* Need more? */}
@@ -95,11 +88,11 @@ export default function PricingPage() {
       </div>
 
       {/* Special Programs */}
-      <div className="bg-white py-16">
+      <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Special Programs</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Special Programs</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Special pricing for students, startups, and investors. Program managers get visibility
               into their entire cohort.
             </p>
@@ -107,9 +100,10 @@ export default function PricingPage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {programs.map((program) => (
-              <div
+              <SpotlightCard
                 key={program.name}
-                className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition"
+                className="p-6"
+                spotlightColor="rgba(148, 163, 184, 0.1)"
               >
                 <div className="text-4xl mb-4">{program.icon}</div>
                 <h3 className="text-xl font-semibold text-gray-900">{program.name}</h3>
@@ -140,18 +134,18 @@ export default function PricingPage() {
                 >
                   Contact Us
                 </a>
-              </div>
+              </SpotlightCard>
             ))}
           </div>
         </div>
       </div>
 
       {/* Build vs Buy */}
-      <div className="py-16 bg-gray-50">
+      <div className="py-20 bg-gray-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Build vs Buy</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Build vs Buy</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Why spend weeks building when you can integrate in minutes?
             </p>
           </div>
@@ -239,7 +233,7 @@ export default function PricingPage() {
           </div>
 
           {/* Code Example */}
-          <div className="mt-12 bg-gray-900 rounded-2xl p-6 overflow-hidden">
+          <div className="mt-12 bg-gray-800 rounded-2xl p-6 overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -266,9 +260,9 @@ function App() {
       </div>
 
       {/* FAQ */}
-      <div className="bg-white py-16">
+      <div className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
@@ -314,30 +308,7 @@ function App() {
       </div>
 
       {/* CTA */}
-      <div className="bg-slate-700 py-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to start collecting feedback?
-          </h2>
-          <p className="text-slate-200 mb-8">
-            Join hundreds of developers who ship better products with Gotcha.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="bg-white text-slate-600 px-8 py-3 rounded-lg font-semibold hover:bg-slate-50 transition"
-            >
-              Start for Free
-            </Link>
-            <a
-              href="mailto:info@braintwopoint0.com"
-              className="bg-slate-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-slate-500 transition"
-            >
-              Contact Sales
-            </a>
-          </div>
-        </div>
-      </div>
+      <CtaSection />
     </main>
   );
 }
