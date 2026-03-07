@@ -8,13 +8,13 @@ import {
   type PlanType,
 } from '@/lib/rate-limit';
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
-import { sendUsageWarningEmail } from '@/lib/emails/send';
+import { sendUsageWarningEmail, sendBugReportEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
 import { atomicIncrementUsage } from '@/lib/usage-atomic';
 import { fireWebhooks } from '@/lib/webhooks';
 
 // Define types locally instead of importing Prisma enums
-type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
+type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB' | 'NPS';
 type VoteType = 'UP' | 'DOWN';
 
 // Map SDK mode strings to Prisma enums
@@ -24,6 +24,7 @@ const modeMap: Record<string, ResponseMode> = {
   poll: 'POLL',
   'feature-request': 'FEATURE_REQUEST',
   ab: 'AB',
+  nps: 'NPS',
 };
 
 const voteMap: Record<string, VoteType> = {
@@ -164,8 +165,49 @@ export async function POST(request: NextRequest) {
             idempotencyKey: idempotencyKey,
             createdAt: createdAt,
             gated,
+            isBug: data.isBug || false,
           },
         });
+
+        // If flagged as bug, create a BugTicket
+        if (data.isBug) {
+          const bugTitle = data.content
+            ? data.content.slice(0, 80) + (data.content.length > 80 ? '...' : '')
+            : `Bug report from ${data.elementId}`;
+          const descParts: string[] = [];
+          if (data.content) descParts.push(data.content);
+          if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
+          if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
+
+          const bugDescription = descParts.join('\n\n') || 'No details provided';
+          const bugTicket = await prisma.bugTicket.create({
+            data: {
+              projectId: apiKey.projectId,
+              responseId,
+              title: bugTitle,
+              description: bugDescription,
+              elementId: data.elementId,
+              pageUrl: data.context?.url,
+              userAgent: data.context?.userAgent,
+              endUserMeta: (data.user || {}) as object,
+              endUserId: data.user?.id,
+              reporterEmail: typeof data.user?.email === 'string' ? data.user.email : null,
+              reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
+            },
+          });
+
+          // Send bug report email (PRO only, non-blocking)
+          if (apiKey.plan === 'PRO') {
+            sendBugReportEmail(apiKey.organizationId, {
+              id: bugTicket.id,
+              title: bugTitle,
+              description: bugDescription,
+              elementId: data.elementId,
+              pageUrl: data.context?.url || null,
+              projectId: apiKey.projectId,
+            }).catch(console.error);
+          }
+        }
       } catch (err) {
         console.error('Async DB write failed for response:', responseId, err);
       }
@@ -183,8 +225,23 @@ export async function POST(request: NextRequest) {
         content: data.content,
         rating: data.rating,
         vote: data.vote,
+        isBug: data.isBug || false,
         createdAt: createdAt.toISOString(),
       }).catch(console.error);
+
+      if (data.isBug) {
+        fireWebhooks(apiKey.projectId, 'bug.created', {
+          responseId,
+          elementId: data.elementId,
+          title: data.content
+            ? data.content.slice(0, 80) + (data.content.length > 80 ? '...' : '')
+            : `Bug report from ${data.elementId}`,
+          status: 'OPEN',
+          priority: 'MEDIUM',
+          pageUrl: data.context?.url,
+          createdAt: createdAt.toISOString(),
+        }).catch(console.error);
+      }
     }
 
     return Response.json(result, {

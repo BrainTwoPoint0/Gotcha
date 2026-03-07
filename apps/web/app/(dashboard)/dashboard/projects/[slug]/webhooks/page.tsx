@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { WebhookManager, AddWebhookButton } from './webhook-manager';
@@ -17,25 +18,11 @@ export default async function WebhooksPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const dbUser = user
-    ? await prisma.user.findUnique({
-        where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: { subscription: true },
-              },
-            },
-          },
-        },
-      })
-    : null;
-
-  const organization = dbUser?.memberships[0]?.organization;
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
   if (!organization) notFound();
 
-  const isPro = organization.subscription?.plan === 'PRO';
+  const isPro = activeOrg?.isPro ?? false;
 
   const project = await prisma.project.findUnique({
     where: {

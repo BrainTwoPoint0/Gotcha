@@ -677,6 +677,37 @@ For developer-led SaaS teams who need fast, actionable feedback on specific feat
 
 ---
 
+## 11. Team Access & Multi-User Models
+
+### How Competitors Handle Teams
+
+| Tool | Pricing Model | Seats Included | Access Scope | Extra for Members? |
+|------|--------------|----------------|--------------|-------------------|
+| **Canny** | Per tracked end-user | Unlimited admins | Per-org | No |
+| **Hotjar** | Usage-based (sessions) | Unlimited on all plans | Per-org | No |
+| **Survicate** | Flat tiers by responses | 3-10 depending on tier | Per-workspace | Yes, seat limits per tier |
+| **Frill** | Flat monthly | Unlimited on all plans | Per-org | No |
+| **Sleekplan** | Flat tiers | 1-10 depending on tier | Per-org | Yes, seat limits per tier |
+| **Nolt** | Per-board | Unlimited admins | Per-board | No |
+| **PostHog** | Usage-based (events) | Unlimited on all plans | Per-org | No |
+| **Linear** | Per-seat ($10-16/user/mo) | Unlimited on free (250 issues) | Per-workspace | Yes |
+
+### Key Findings
+
+Three models exist in the market:
+
+1. **Usage-based, unlimited seats** (Hotjar, PostHog, Canny) — pay for data volume, team is free. Most team-friendly.
+2. **Flat-rate with seat caps** (Survicate, Sleekplan) — fixed price per tier with hard member limits. Creates friction.
+3. **Flat-rate, unlimited seats** (Frill, Nolt) — simplest model. Scale by features/usage, not seats.
+
+**Trend:** Most feedback tools avoid per-seat pricing because it discourages adoption. Canny switched FROM per-admin TO per-tracked-user in May 2025 — per-seat was hurting growth. PostHog and Hotjar explicitly market "unlimited seats" as a competitive advantage.
+
+### Gotcha's Approach
+
+Gotcha uses **flat-rate with unlimited seats** — the friendliest model. Free and Pro both include unlimited team members. Pricing scales by response volume and feature access, not headcount. This matches Frill, Nolt, Hotjar, and PostHog's approach and avoids the friction of per-seat or seat-capped models.
+
+---
+
 ## Sources
 
 - [Canny Pricing](https://canny.io/pricing)

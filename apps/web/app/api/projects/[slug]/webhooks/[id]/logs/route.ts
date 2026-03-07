@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -18,26 +19,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-      include: {
-        memberships: {
-          include: {
-            organization: {
-              include: { subscription: true },
-            },
-          },
-        },
-      },
-    });
-
-    const organization = dbUser?.memberships[0]?.organization;
-    if (!organization || organization.subscription?.plan !== 'PRO') {
+    const activeOrg = await getActiveOrganization(user.email);
+    if (!activeOrg || !activeOrg.isPro) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const project = await prisma.project.findFirst({
-      where: { slug, organizationId: organization.id },
+      where: { slug, organizationId: activeOrg.organization.id },
     });
 
     if (!project) {

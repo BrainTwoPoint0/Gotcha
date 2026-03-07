@@ -53,6 +53,7 @@ interface SegmentDataPoint {
   count: number;
   avgRating: number | null;
   positiveRate: number | null;
+  npsScore: number | null;
 }
 
 interface SegmentChartsProps {
@@ -116,6 +117,13 @@ export function SegmentCharts({
     .map((d) => ({
       name: d.segment,
       value: d.positiveRate,
+    }));
+
+  const npsData = segmentData
+    .filter((d) => d.npsScore !== null)
+    .map((d) => ({
+      name: d.segment,
+      value: d.npsScore,
     }));
 
   return (
@@ -351,6 +359,45 @@ export function SegmentCharts({
             )}
           </div>
 
+          {/* NPS by Segment */}
+          {npsData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>NPS by Segment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                    <BarChart data={npsData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 12 }} domain={[-100, 100]} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '6px',
+                        }}
+                        formatter={(value) => [`${value ?? 0}`, 'NPS']}
+                      />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {npsData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              (entry.value ?? 0) >= 50 ? '#10B981' :
+                              (entry.value ?? 0) >= 0 ? '#F59E0B' : '#EF4444'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Comparison Table */}
           <Card>
             <CardHeader>
@@ -376,6 +423,7 @@ export function SegmentCharts({
                     <TableHead>Responses</TableHead>
                     <TableHead>Avg Rating</TableHead>
                     <TableHead>Positive Rate</TableHead>
+                    <TableHead>NPS</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -386,6 +434,18 @@ export function SegmentCharts({
                       <TableCell>{row.avgRating !== null ? `${row.avgRating}/5` : '-'}</TableCell>
                       <TableCell>
                         {row.positiveRate !== null ? `${row.positiveRate}%` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {row.npsScore !== null ? (
+                          <span
+                            className="font-medium"
+                            style={{
+                              color: row.npsScore >= 50 ? '#10B981' : row.npsScore >= 0 ? '#F59E0B' : '#EF4444',
+                            }}
+                          >
+                            {row.npsScore}
+                          </span>
+                        ) : '-'}
                       </TableCell>
                     </TableRow>
                   ))}

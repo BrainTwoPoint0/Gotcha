@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 import { isInternalOriginAllowed } from '@/lib/origin-check';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { fireWebhooks } from '@/lib/webhooks';
+import { sendBugReportEmail } from '@/lib/emails/send';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -28,7 +29,7 @@ const voteMap: Record<string, VoteType> = {
 };
 
 // Cache the API key lookup to avoid a DB round-trip on every request
-let cachedApiKey: { projectId: string } | null = null;
+let cachedApiKey: { projectId: string; organizationId: string; plan: string } | null = null;
 let cachedKeyHash: string | null = null;
 
 async function getInternalApiKey() {
@@ -42,15 +43,26 @@ async function getInternalApiKey() {
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
-    select: { projectId: true },
+    select: {
+      projectId: true,
+      project: {
+        select: {
+          organizationId: true,
+          organization: { select: { subscription: { select: { plan: true } } } },
+        },
+      },
+    },
   });
 
   if (apiKey) {
-    cachedApiKey = apiKey;
+    const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
+    const result = { projectId: apiKey.projectId, organizationId: apiKey.project.organizationId, plan };
+    cachedApiKey = result;
     cachedKeyHash = keyHash;
+    return result;
   }
 
-  return apiKey;
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -155,8 +167,49 @@ export async function POST(request: NextRequest) {
             url: data.context?.url,
             userAgent: data.context?.userAgent,
             createdAt,
+            isBug: data.isBug || false,
           },
         });
+
+        // If flagged as bug, create a BugTicket
+        if (data.isBug) {
+          const bugTitle = data.content
+            ? data.content.slice(0, 80) + (data.content.length > 80 ? '...' : '')
+            : `Bug report from ${data.elementId}`;
+          const descParts: string[] = [];
+          if (data.content) descParts.push(data.content);
+          if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
+          if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
+
+          const bugDescription = descParts.join('\n\n') || 'No details provided';
+          const bugTicket = await prisma.bugTicket.create({
+            data: {
+              projectId: apiKey.projectId,
+              responseId,
+              title: bugTitle,
+              description: bugDescription,
+              elementId: data.elementId,
+              pageUrl: data.context?.url,
+              userAgent: data.context?.userAgent,
+              endUserMeta: (data.user || {}) as object,
+              endUserId: data.user?.id,
+              reporterEmail: typeof data.user?.email === 'string' ? data.user.email : null,
+              reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
+            },
+          });
+
+          // Send bug report email (PRO only, non-blocking)
+          if (apiKey.plan === 'PRO') {
+            sendBugReportEmail(apiKey.organizationId, {
+              id: bugTicket.id,
+              title: bugTitle,
+              description: bugDescription,
+              elementId: data.elementId,
+              pageUrl: data.context?.url || null,
+              projectId: apiKey.projectId,
+            }).catch(console.error);
+          }
+        }
       } catch (err) {
         console.error('Async DB write failed for internal response:', responseId, err);
       }

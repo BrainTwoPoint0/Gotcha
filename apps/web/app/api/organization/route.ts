@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(request: Request) {
@@ -13,20 +14,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: {
-        memberships: {
-          include: { organization: true },
-        },
-      },
-    });
-
-    if (!dbUser || !dbUser.memberships[0]) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    const activeOrg = await getActiveOrganization(user.email!);
+    if (!activeOrg) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
 
-    const membership = dbUser.memberships[0];
+    const { organization, membership } = activeOrg;
 
     // Only admins and owners can update organization
     if (membership.role !== 'ADMIN' && membership.role !== 'OWNER') {
@@ -38,12 +31,12 @@ export async function PATCH(request: Request) {
 
     // Validate inputs
     if (typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: 'Organization name is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Workspace name is required' }, { status: 400 });
     }
 
     if (name.length > 200) {
       return NextResponse.json(
-        { error: 'Organization name too long (max 200 chars)' },
+        { error: 'Workspace name too long (max 200 chars)' },
         { status: 400 }
       );
     }
@@ -69,12 +62,12 @@ export async function PATCH(request: Request) {
       where: { slug },
     });
 
-    if (existingOrg && existingOrg.id !== membership.organizationId) {
+    if (existingOrg && existingOrg.id !== organization.id) {
       return NextResponse.json({ error: 'This slug is already taken' }, { status: 400 });
     }
 
     const updatedOrg = await prisma.organization.update({
-      where: { id: membership.organizationId },
+      where: { id: organization.id },
       data: {
         name: name.trim(),
         slug: slug.trim(),

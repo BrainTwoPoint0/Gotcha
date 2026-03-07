@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
@@ -38,18 +39,8 @@ export default async function ProjectPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const dbUser = user
-    ? await prisma.user.findUnique({
-        where: { email: user.email! },
-        include: {
-          memberships: {
-            include: { organization: true },
-          },
-        },
-      })
-    : null;
-
-  const organization = dbUser?.memberships[0]?.organization;
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
 
   if (!organization) {
     notFound();

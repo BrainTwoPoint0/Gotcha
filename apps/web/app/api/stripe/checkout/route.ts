@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getActiveOrganization } from '@/lib/auth';
 import { stripe, STRIPE_PRO_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { shouldBlockCheckout } from '@/lib/stripe-guards';
@@ -15,30 +16,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: {
-        memberships: {
-          include: {
-            organization: {
-              include: { subscription: true },
-            },
-          },
-        },
-      },
+    const activeOrg = await getActiveOrganization(user.email!);
+    if (!activeOrg) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
+    }
+    const { organization } = activeOrg;
+
+    // Fetch full subscription (including stripeCustomerId)
+    const subscription = await prisma.subscription.findUnique({
+      where: { organizationId: organization.id },
     });
 
-    const organization = dbUser?.memberships[0]?.organization;
-    if (!organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
     // Prevent double-checkout for users already on PRO
-    if (shouldBlockCheckout(organization.subscription)) {
+    if (shouldBlockCheckout(subscription)) {
       return NextResponse.json({ error: 'Already subscribed to Pro' }, { status: 400 });
     }
 
-    let customerId = organization.subscription?.stripeCustomerId;
+    let customerId = subscription?.stripeCustomerId;
 
     // Create Stripe customer if doesn't exist
     if (!customerId) {

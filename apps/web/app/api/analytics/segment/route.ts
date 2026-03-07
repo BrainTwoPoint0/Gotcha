@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 
 interface SegmentData {
   segment: string;
@@ -21,22 +22,10 @@ async function getUserOrganization() {
     return null;
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
-    include: {
-      memberships: {
-        include: {
-          organization: {
-            include: {
-              subscription: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const activeOrg = await getActiveOrganization(user.email);
+  if (!activeOrg) return null;
 
-  return dbUser?.memberships[0]?.organization || null;
+  return { ...activeOrg.organization, isPro: activeOrg.isPro };
 }
 
 export async function GET(request: NextRequest) {
@@ -48,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is on Pro plan
-    if (organization.subscription?.plan !== 'PRO') {
+    if (!organization.isPro) {
       return NextResponse.json({ error: 'Segmentation is a Pro feature' }, { status: 403 });
     }
 

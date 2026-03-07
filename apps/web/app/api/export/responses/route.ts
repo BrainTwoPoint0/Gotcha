@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { escapeCsvField } from '@/lib/csv-escape';
 
@@ -14,32 +15,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's organization and subscription
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-      include: {
-        memberships: {
-          include: {
-            organization: {
-              include: {
-                subscription: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const organization = dbUser?.memberships[0]?.organization;
-    const subscription = organization?.subscription;
-
-    // Pro gate - also check organization exists
-    if (!organization || subscription?.plan !== 'PRO') {
+    const activeOrg = await getActiveOrganization(user.email);
+    if (!activeOrg || !activeOrg.isPro) {
       return NextResponse.json(
         { error: 'Export is a Pro feature. Please upgrade to access.' },
         { status: 403 }
       );
     }
+
+    const { organization } = activeOrg;
 
     // Parse query params
     const { searchParams } = new URL(request.url);

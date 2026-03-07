@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
@@ -22,26 +23,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-      include: {
-        memberships: {
-          include: {
-            organization: {
-              include: { subscription: true },
-            },
-          },
-        },
-      },
-    });
-
-    const organization = dbUser?.memberships[0]?.organization;
-    if (!organization) {
+    const activeOrg = await getActiveOrganization(user.email);
+    if (!activeOrg) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { organization, isPro } = activeOrg;
+
     // PRO only
-    if (organization.subscription?.plan !== 'PRO') {
+    if (!isPro) {
       return NextResponse.json({ error: 'Tags are a Pro feature' }, { status: 403 });
     }
 

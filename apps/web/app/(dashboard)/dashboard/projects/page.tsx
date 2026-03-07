@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { ProjectCard } from './project-card';
 
@@ -18,32 +19,16 @@ export default async function ProjectsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const dbUser = user
-    ? await prisma.user.findUnique({
-        where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: {
-                  projects: {
-                    include: {
-                      _count: {
-                        select: { responses: true, apiKeys: true },
-                      },
-                    },
-                    orderBy: { createdAt: 'desc' },
-                  },
-                },
-              },
-            },
-          },
-        },
-      })
-    : null;
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
 
-  const organization = dbUser?.memberships[0]?.organization;
-  const projects: ProjectItem[] = organization?.projects ?? [];
+  const projects: ProjectItem[] = organization
+    ? await prisma.project.findMany({
+        where: { organizationId: organization.id },
+        include: { _count: { select: { responses: true, apiKeys: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+    : [];
 
   return (
     <div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { z } from 'zod';
 
 const createFieldSchema = z.object({
@@ -35,18 +36,8 @@ async function getUserOrganization(request: NextRequest) {
     return null;
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
-    include: {
-      memberships: {
-        include: {
-          organization: true,
-        },
-      },
-    },
-  });
-
-  return dbUser?.memberships[0]?.organization || null;
+  const activeOrg = await getActiveOrganization(user.email);
+  return activeOrg?.organization || null;
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

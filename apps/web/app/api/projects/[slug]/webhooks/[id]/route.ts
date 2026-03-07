@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { z } from 'zod';
 
 const updateWebhookSchema = z.object({
@@ -18,26 +19,11 @@ async function getOrgProjectWebhook(request: NextRequest, slug: string, webhookI
 
   if (!user?.email) return null;
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
-    include: {
-      memberships: {
-        include: {
-          organization: {
-            include: { subscription: true },
-          },
-        },
-      },
-    },
-  });
-
-  const organization = dbUser?.memberships[0]?.organization;
-  if (!organization) return null;
-
-  if (organization.subscription?.plan !== 'PRO') return null;
+  const activeOrg = await getActiveOrganization(user.email);
+  if (!activeOrg || !activeOrg.isPro) return null;
 
   const project = await prisma.project.findFirst({
-    where: { slug, organizationId: organization.id },
+    where: { slug, organizationId: activeOrg.organization.id },
   });
 
   if (!project) return null;
@@ -48,7 +34,7 @@ async function getOrgProjectWebhook(request: NextRequest, slug: string, webhookI
 
   if (!webhook) return null;
 
-  return { organization, project, webhook };
+  return { organization: activeOrg.organization, project, webhook };
 }
 
 export async function PATCH(

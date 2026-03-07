@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { isOverProjectLimit, getProjectLimitDisplay } from '@/lib/plan-limits';
 import Link from 'next/link';
 import { NewProjectForm } from './new-project-form';
@@ -12,30 +12,10 @@ export default async function NewProjectPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const dbUser = user
-    ? await prisma.user.findUnique({
-        where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: {
-                  subscription: true,
-                  _count: {
-                    select: { projects: true },
-                  },
-                },
-              },
-            },
-          },
-        },
-      })
-    : null;
-
-  const organization = dbUser?.memberships[0]?.organization;
-  const subscription = organization?.subscription;
-  const plan = subscription?.plan || 'FREE';
-  const projectCount = organization?._count?.projects || 0;
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
+  const plan = organization?.subscription?.plan || 'FREE';
+  const projectCount = organization?.projects?.length || 0;
   const isAtLimit = isOverProjectLimit(plan, projectCount);
 
   if (isAtLimit) {

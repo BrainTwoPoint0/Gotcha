@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getActiveOrganization } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
 import { NextResponse } from 'next/server';
 
@@ -14,18 +15,16 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: {
-        memberships: {
-          include: {
-            organization: { include: { subscription: true } },
-          },
-        },
-      },
+    const activeOrg = await getActiveOrganization(user.email!);
+    if (!activeOrg) {
+      return NextResponse.json({ error: 'No subscription found' }, { status: 404 });
+    }
+
+    const subscription = await prisma.subscription.findUnique({
+      where: { organizationId: activeOrg.organization.id },
     });
 
-    const customerId = dbUser?.memberships[0]?.organization?.subscription?.stripeCustomerId;
+    const customerId = subscription?.stripeCustomerId;
 
     if (!customerId) {
       return NextResponse.json({ error: 'No subscription found' }, { status: 404 });

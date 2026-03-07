@@ -1,8 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { SegmentCharts } from './segment-charts';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { calculateNPS } from '@/lib/nps';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,23 +22,12 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
   const dbUser = user
     ? await prisma.user.findUnique({
         where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: {
-                  subscription: true,
-                },
-              },
-            },
-          },
-        },
       })
     : null;
 
-  const organization = dbUser?.memberships[0]?.organization;
-  const subscription = organization?.subscription;
-  const isPro = subscription?.plan === 'PRO';
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
+  const isPro = activeOrg?.isPro ?? false;
 
   // Pro gate
   if (!isPro || !organization) {
@@ -197,6 +188,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     count: number;
     avgRating: number | null;
     positiveRate: number | null;
+    npsScore: number | null;
   }> = [];
   let segmentDataCapped = false;
 
@@ -213,6 +205,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     const responses = await prisma.response.findMany({
       where: responseWhere,
       select: {
+        mode: true,
         rating: true,
         vote: true,
         endUserMeta: true,
@@ -220,7 +213,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
       take: SEGMENT_LIMIT,
     });
 
-    const segments: Record<string, { ratings: number[]; votes: { up: number; down: number } }> = {};
+    const segments: Record<string, { ratings: number[]; npsRatings: number[]; votes: { up: number; down: number } }> = {};
 
     responses.forEach((r) => {
       const meta = r.endUserMeta as Record<string, unknown>;
@@ -229,11 +222,15 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         segmentValue !== undefined && segmentValue !== null ? String(segmentValue) : '(not set)';
 
       if (!segments[segment]) {
-        segments[segment] = { ratings: [], votes: { up: 0, down: 0 } };
+        segments[segment] = { ratings: [], npsRatings: [], votes: { up: 0, down: 0 } };
       }
 
       if (r.rating) {
-        segments[segment].ratings.push(r.rating);
+        if (r.mode === 'NPS') {
+          segments[segment].npsRatings.push(r.rating);
+        } else {
+          segments[segment].ratings.push(r.rating);
+        }
       }
 
       if (r.vote === 'UP') {
@@ -255,11 +252,14 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         const totalVotes = data.votes.up + data.votes.down;
         const positiveRate = totalVotes > 0 ? Math.round((data.votes.up / totalVotes) * 100) : null;
 
+        const npsResult = data.npsRatings.length >= 3 ? calculateNPS(data.npsRatings) : null;
+
         return {
           segment,
-          count: data.ratings.length + data.votes.up + data.votes.down,
+          count: data.ratings.length + data.npsRatings.length + data.votes.up + data.votes.down,
           avgRating,
           positiveRate,
+          npsScore: npsResult?.score ?? null,
         };
       })
       .sort((a, b) => b.count - a.count);

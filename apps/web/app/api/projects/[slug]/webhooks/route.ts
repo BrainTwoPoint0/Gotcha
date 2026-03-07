@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { generateSecret } from '@/lib/webhooks';
 import { z } from 'zod';
 
@@ -21,29 +22,16 @@ async function getOrgAndProject(request: NextRequest, slug: string) {
 
   if (!user?.email) return null;
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
-    include: {
-      memberships: {
-        include: {
-          organization: {
-            include: { subscription: true },
-          },
-        },
-      },
-    },
-  });
-
-  const organization = dbUser?.memberships[0]?.organization;
-  if (!organization) return null;
+  const activeOrg = await getActiveOrganization(user.email);
+  if (!activeOrg) return null;
 
   const project = await prisma.project.findFirst({
-    where: { slug, organizationId: organization.id },
+    where: { slug, organizationId: activeOrg.organization.id },
   });
 
   if (!project) return null;
 
-  return { organization, project };
+  return { organization: activeOrg.organization, project, isPro: activeOrg.isPro };
 }
 
 export async function GET(
@@ -58,7 +46,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (result.organization.subscription?.plan !== 'PRO') {
+    if (!result.isPro) {
       return NextResponse.json({ error: 'PRO plan required' }, { status: 403 });
     }
 
@@ -98,7 +86,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (result.organization.subscription?.plan !== 'PRO') {
+    if (!result.isPro) {
       return NextResponse.json({ error: 'PRO plan required' }, { status: 403 });
     }
 

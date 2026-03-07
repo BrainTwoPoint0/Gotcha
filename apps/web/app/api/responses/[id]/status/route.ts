@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 
 const VALID_STATUSES = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
 
@@ -21,19 +22,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-      include: {
-        memberships: {
-          include: { organization: true },
-        },
-      },
-    });
-
-    const organization = dbUser?.memberships[0]?.organization;
-    if (!organization) {
+    const activeOrg = await getActiveOrganization(user.email);
+    if (!activeOrg) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { organization } = activeOrg;
 
     // Validate body
     const body = await request.json();
@@ -45,6 +39,11 @@ export async function PATCH(
         { status: 400 }
       );
     }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+      select: { id: true },
+    });
 
     // Verify response belongs to this organization
     const response = await prisma.response.findFirst({

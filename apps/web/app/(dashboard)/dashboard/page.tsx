@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
@@ -39,35 +40,17 @@ export default async function DashboardPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Get user's organization and stats
+    // Get user's profile data
     let dbUser = user
       ? await prisma.user.findUnique({
           where: { email: user.email! },
-          include: {
-            memberships: {
-              include: {
-                organization: {
-                  include: {
-                    projects: {
-                      include: {
-                        _count: {
-                          select: { responses: true },
-                        },
-                      },
-                    },
-                    subscription: true,
-                  },
-                },
-              },
-            },
-          },
         })
       : null;
 
     // If user is authenticated but doesn't exist in our database, create them
     if (user?.email && !dbUser) {
       try {
-        const newUser = await prisma.user.create({
+        dbUser = await prisma.user.create({
           data: {
             email: user.email,
             name: user.user_metadata?.full_name || user.user_metadata?.name || null,
@@ -82,11 +65,11 @@ export default async function DashboardPage() {
           .replace(/[^a-z0-9]/g, '-');
         await prisma.organization.create({
           data: {
-            name: `${newUser.name || 'My'}'s Organization`,
+            name: `${dbUser.name || 'My'}'s Organization`,
             slug: `${orgSlug}-${Date.now()}`,
             members: {
               create: {
-                userId: newUser.id,
+                userId: dbUser.id,
                 role: 'OWNER',
               },
             },
@@ -99,36 +82,22 @@ export default async function DashboardPage() {
             },
           },
         });
-        // Re-fetch user with all relations
-        dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          include: {
-            memberships: {
-              include: {
-                organization: {
-                  include: {
-                    projects: {
-                      include: {
-                        _count: {
-                          select: { responses: true },
-                        },
-                      },
-                    },
-                    subscription: true,
-                  },
-                },
-              },
-            },
-          },
-        });
       } catch (createError) {
         console.error('Error creating user in database:', createError);
         // Continue anyway - user can still see the dashboard, just without org data
       }
     }
 
-    const organization = dbUser?.memberships[0]?.organization;
-    const projects: ProjectItem[] = organization?.projects ?? [];
+    const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+    const organization = activeOrg?.organization;
+
+    // Fetch projects with response counts for this org
+    const projects: ProjectItem[] = organization
+      ? await prisma.project.findMany({
+          where: { organizationId: organization.id },
+          include: { _count: { select: { responses: true } } },
+        })
+      : [];
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
     const overLimit = subscription

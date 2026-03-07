@@ -17,6 +17,8 @@ interface DashboardFeedbackProps {
   voteLabels?: { up: string; down: string };
   options?: string[];
   allowMultiple?: boolean;
+  /** When true, shows submitted state and allows review/edit instead of new submission (default: true for dashboard) */
+  onePerUser?: boolean;
 }
 
 export function DashboardFeedback({
@@ -29,6 +31,7 @@ export function DashboardFeedback({
   voteLabels,
   options,
   allowMultiple,
+  onePerUser = true,
 }: DashboardFeedbackProps) {
   return (
     <Gotcha
@@ -42,6 +45,7 @@ export function DashboardFeedback({
       voteLabels={voteLabels}
       options={options}
       allowMultiple={allowMultiple}
+      {...(onePerUser !== undefined ? { onePerUser } : {})}
       user={
         userEmail
           ? {

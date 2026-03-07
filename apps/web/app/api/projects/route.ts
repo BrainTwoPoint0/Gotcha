@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getActiveOrganization } from '@/lib/auth';
 import { generateApiKey } from '@/lib/api-auth';
 import { isOverProjectLimit } from '@/lib/plan-limits';
 import { NextResponse } from 'next/server';
@@ -35,60 +36,56 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, '');
 
     // Get or create user and organization
-    let dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      include: {
-        memberships: {
-          include: { organization: true },
-        },
-      },
-    });
+    let activeOrg = await getActiveOrganization(user.email!);
 
-    let organization = dbUser?.memberships[0]?.organization;
-
-    // If no user exists, create user and organization
-    if (!dbUser) {
-      // Create organization first
-      organization = await prisma.organization.create({
+    // If no org exists, create user + organization
+    if (!activeOrg) {
+      const newOrg = await prisma.organization.create({
         data: {
           name: `${user.email?.split('@')[0]}'s Organization`,
           slug: `org-${Date.now()}`,
         },
       });
 
-      // Create user
-      dbUser = await prisma.user.create({
-        data: {
-          email: user.email!,
-          name: user.user_metadata?.full_name || user.email?.split('@')[0],
+      await prisma.user.upsert({
+        where: { email: user.email! },
+        update: {
           memberships: {
             create: {
-              organizationId: organization.id,
+              organizationId: newOrg.id,
               role: 'OWNER',
             },
           },
         },
-        include: {
+        create: {
+          email: user.email!,
+          name: user.user_metadata?.full_name || user.email?.split('@')[0],
           memberships: {
-            include: { organization: true },
+            create: {
+              organizationId: newOrg.id,
+              role: 'OWNER',
+            },
           },
         },
       });
 
-      // Create subscription
       await prisma.subscription.create({
         data: {
-          organizationId: organization.id,
+          organizationId: newOrg.id,
           plan: 'FREE',
           status: 'ACTIVE',
           responsesResetAt: new Date(),
         },
       });
+
+      activeOrg = await getActiveOrganization(user.email!);
     }
 
-    if (!organization) {
+    if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 500 });
     }
+
+    const organization = activeOrg.organization;
 
     // Check project limit
     const subscription = await prisma.subscription.findUnique({
@@ -175,29 +172,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
+    const activeOrg = await getActiveOrganization(user.email!);
+    if (!activeOrg) {
+      return NextResponse.json([]);
+    }
+
+    const projects = await prisma.project.findMany({
+      where: { organizationId: activeOrg.organization.id },
       include: {
-        memberships: {
-          include: {
-            organization: {
-              include: {
-                projects: {
-                  include: {
-                    _count: {
-                      select: { responses: true },
-                    },
-                  },
-                  orderBy: { createdAt: 'desc' },
-                },
-              },
-            },
-          },
+        _count: {
+          select: { responses: true },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
-
-    const projects = dbUser?.memberships[0]?.organization?.projects || [];
 
     return NextResponse.json(projects);
   } catch (error) {
