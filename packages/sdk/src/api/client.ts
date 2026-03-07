@@ -105,7 +105,12 @@ export function createApiClient(config: ApiClientConfig) {
       debug
     );
 
-    const data = await response.json();
+    let data: Record<string, unknown>;
+    try {
+      data = await response.json();
+    } catch {
+      throw { code: 'PARSE_ERROR', message: 'Invalid response from server', status: response.status } as GotchaError;
+    }
 
     if (!response.ok) {
       const error = data.error as GotchaError;

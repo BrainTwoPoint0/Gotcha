@@ -91,7 +91,8 @@ export type ErrorCode =
   | 'QUOTA_EXCEEDED'
   | 'INVALID_REQUEST'
   | 'USER_NOT_FOUND'
-  | 'INTERNAL_ERROR';
+  | 'INTERNAL_ERROR'
+  | 'PARSE_ERROR';
 
 // ============================================
 // SCORE DATA

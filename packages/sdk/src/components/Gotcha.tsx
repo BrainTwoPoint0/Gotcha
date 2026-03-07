@@ -44,8 +44,6 @@ export interface GotchaProps {
   options?: string[];
   /** Allow selecting multiple options */
   allowMultiple?: boolean;
-  /** Show results after voting */
-  showResults?: boolean;
 
   // NPS mode specific
   /** Custom NPS question (default: "How likely are you to recommend us?") */
@@ -115,7 +113,6 @@ export function Gotcha({
   voteLabels,
   options,
   allowMultiple = false,
-  showResults = true,
   npsQuestion,
   npsFollowUp = true,
   npsFollowUpPlaceholder,
@@ -296,7 +293,6 @@ export function Gotcha({
             backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}
           onClick={handleClose}
-          aria-hidden="true"
         >
           <div onClick={(e) => e.stopPropagation()}>
             <GotchaModal
@@ -320,6 +316,8 @@ export function Gotcha({
               npsQuestion={npsQuestion}
               npsFollowUp={npsFollowUp}
               npsFollowUpPlaceholder={npsFollowUpPlaceholder}
+              npsLowLabel={npsLowLabel}
+              npsHighLabel={npsHighLabel}
               enableBugFlag={enableBugFlag}
               bugFlagLabel={bugFlagLabel}
               onSubmit={handleSubmit}

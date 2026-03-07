@@ -10,12 +10,17 @@ export function getAnonymousId(): string {
     return `anon_${crypto.randomUUID()}`;
   }
 
-  const stored = localStorage.getItem(STORAGE_KEYS.ANONYMOUS_ID);
-  if (stored) return stored;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.ANONYMOUS_ID);
+    if (stored) return stored;
 
-  const id = `anon_${crypto.randomUUID()}`;
-  localStorage.setItem(STORAGE_KEYS.ANONYMOUS_ID, id);
-  return id;
+    const id = `anon_${crypto.randomUUID()}`;
+    localStorage.setItem(STORAGE_KEYS.ANONYMOUS_ID, id);
+    return id;
+  } catch {
+    // localStorage unavailable (incognito Safari, sandboxed iframes)
+    return `anon_${crypto.randomUUID()}`;
+  }
 }
 
 /**
