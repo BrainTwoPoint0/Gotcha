@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { ProfileForm, OrganizationForm } from './settings-forms';
+import { TeamManagement } from './team-management';
 import { PlanActions } from './plan-actions';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,22 +21,11 @@ export default async function SettingsPage() {
   const dbUser = user
     ? await prisma.user.findUnique({
         where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: {
-                  subscription: true,
-                  projects: true,
-                },
-              },
-            },
-          },
-        },
       })
     : null;
 
-  const organization = dbUser?.memberships[0]?.organization;
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
   const subscription = organization?.subscription;
 
   // Get actual response count for this month
@@ -83,7 +74,7 @@ export default async function SettingsPage() {
             }}
           />
         </div>
-        <p className="text-gray-600">Manage your account and organization</p>
+        <p className="text-gray-600">Manage your account and workspace</p>
       </div>
 
       <div className="space-y-8">
@@ -104,13 +95,23 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Organization Section */}
+        {/* Workspace Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Organization</CardTitle>
+            <CardTitle>Workspace</CardTitle>
           </CardHeader>
           <CardContent>
             <OrganizationForm name={organization?.name || ''} slug={organization?.slug || ''} />
+          </CardContent>
+        </Card>
+
+        {/* Team Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Team</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TeamManagement />
           </CardContent>
         </Card>
 

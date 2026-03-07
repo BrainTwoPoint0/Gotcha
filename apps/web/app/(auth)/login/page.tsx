@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/app/components/AppButton';
 import { Button as ShadcnButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('invite');
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -37,7 +39,11 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
+    if (inviteToken) {
+      router.push(`/api/invitations/accept?token=${inviteToken}`);
+    } else {
+      router.push('/dashboard');
+    }
     router.refresh();
   };
 
@@ -49,10 +55,13 @@ export default function LoginPage() {
     const siteUrl = isLocalhost
       ? window.location.origin
       : process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const callbackUrl = inviteToken
+      ? `${siteUrl}/auth/callback?next=/api/invitations/accept?token=${inviteToken}`
+      : `${siteUrl}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${siteUrl}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     });
 
@@ -70,7 +79,7 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-2xl font-semibold">Sign in to your account</h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Or{' '}
-            <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
+            <Link href={inviteToken ? `/signup?invite=${inviteToken}` : '/signup'} className="font-medium text-primary hover:text-primary/80">
               create a new account
             </Link>
           </p>

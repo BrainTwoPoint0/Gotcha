@@ -5,6 +5,9 @@ import {
   proActivatedEmail,
   usageWarningEmail,
   responseAlertEmail,
+  bugReportEmail,
+  bugResolutionEmail,
+  inviteEmail,
 } from './templates';
 
 interface User {
@@ -16,6 +19,15 @@ interface ResponseData {
   mode: string;
   content: string | null;
   title: string | null;
+  projectId: string;
+}
+
+interface BugData {
+  id: string;
+  title: string;
+  description: string;
+  elementId: string;
+  pageUrl: string | null;
   projectId: string;
 }
 
@@ -153,5 +165,113 @@ export async function sendResponseAlertEmail(
     console.log(`Response alert email sent to ${owner.email}`);
   } catch (error) {
     console.error('Failed to send response alert email:', error);
+  }
+}
+
+export async function sendBugReportEmail(
+  organizationId: string,
+  bug: BugData
+): Promise<void> {
+  try {
+    const owner = await getOrganizationOwner(organizationId);
+    if (!owner) {
+      console.error('No owner found for organization:', organizationId);
+      return;
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: bug.projectId },
+      select: { name: true },
+    });
+
+    const { subject, html } = bugReportEmail({
+      name: owner.name || '',
+      projectName: project?.name || 'Unknown Project',
+      title: bug.title,
+      description: bug.description,
+      elementId: bug.elementId,
+      pageUrl: bug.pageUrl,
+      bugId: bug.id,
+    });
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: owner.email,
+      subject,
+      html,
+    });
+
+    console.log(`Bug report email sent to ${owner.email}`);
+  } catch (error) {
+    console.error('Failed to send bug report email:', error);
+  }
+}
+
+export async function sendInviteEmail({
+  email,
+  inviterName,
+  orgName,
+  role,
+  token,
+}: {
+  email: string;
+  inviterName: string;
+  orgName: string;
+  role: string;
+  token: string;
+}): Promise<void> {
+  try {
+    const acceptUrl = `https://gotcha.cx/api/invitations/accept?token=${token}`;
+    const { subject, html } = inviteEmail({ inviterName, orgName, role, acceptUrl });
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject,
+      html,
+    });
+
+    console.log(`Invite email sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send invite email:', error);
+  }
+}
+
+export async function sendBugResolutionEmail({
+  reporterEmail,
+  reporterName,
+  projectId,
+  bugTitle,
+  message,
+}: {
+  reporterEmail: string;
+  reporterName: string | null;
+  projectId: string;
+  bugTitle: string;
+  message: string;
+}): Promise<void> {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+
+    const { subject, html } = bugResolutionEmail({
+      reporterName,
+      projectName: project?.name || 'Unknown Project',
+      bugTitle,
+      message,
+    });
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: reporterEmail,
+      subject,
+      html,
+    });
+
+    console.log(`Bug resolution email sent to ${reporterEmail}`);
+  } catch (error) {
+    console.error('Failed to send bug resolution email:', error);
   }
 }

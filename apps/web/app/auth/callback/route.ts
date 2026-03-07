@@ -54,29 +54,41 @@ export async function GET(request: Request) {
             },
           });
 
-          // Create default organization for new user
-          const orgSlug = user.email
-            .split('@')[0]
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '-');
-          await prisma.organization.create({
-            data: {
-              name: `${newUser.name || 'My'}'s Organization`,
-              slug: `${orgSlug}-${Date.now()}`,
-              members: {
-                create: {
-                  userId: newUser.id,
-                  role: 'OWNER',
-                },
-              },
-              subscription: {
-                create: {
-                  plan: 'FREE',
-                  status: 'ACTIVE',
-                },
-              },
+          // Check if this user has a pending invitation — if so, skip creating a default org
+          // (the accept-invite route will add them to the inviting org)
+          const hasPendingInvite = await prisma.invitation.findFirst({
+            where: {
+              email: user.email.toLowerCase(),
+              status: 'PENDING',
+              expiresAt: { gt: new Date() },
             },
           });
+
+          if (!hasPendingInvite) {
+            // Create default organization for new user
+            const orgSlug = user.email
+              .split('@')[0]
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '-');
+            await prisma.organization.create({
+              data: {
+                name: `${newUser.name || 'My'}'s Workspace`,
+                slug: `${orgSlug}-${Date.now()}`,
+                members: {
+                  create: {
+                    userId: newUser.id,
+                    role: 'OWNER',
+                  },
+                },
+                subscription: {
+                  create: {
+                    plan: 'FREE',
+                    status: 'ACTIVE',
+                  },
+                },
+              },
+            });
+          }
 
           // Send welcome email (fire-and-forget)
           sendWelcomeEmail(newUser).catch(console.error);

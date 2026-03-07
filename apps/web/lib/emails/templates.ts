@@ -30,6 +30,30 @@ interface ResponseAlertEmailProps {
   content: string | null;
 }
 
+interface BugReportEmailProps {
+  name: string;
+  projectName: string;
+  title: string;
+  description: string;
+  elementId: string;
+  pageUrl: string | null;
+  bugId: string;
+}
+
+interface InviteEmailProps {
+  inviterName: string;
+  orgName: string;
+  role: string;
+  acceptUrl: string;
+}
+
+interface BugResolutionEmailProps {
+  reporterName: string | null;
+  projectName: string;
+  bugTitle: string;
+  message: string;
+}
+
 const baseStyles = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
@@ -197,6 +221,127 @@ export function responseAlertEmail({
         <p style="margin-top: 24px;">
           Cheers,<br/>
           The Gotcha Team
+        </p>
+      </div>
+    `,
+  };
+}
+
+export function bugReportEmail({
+  name,
+  projectName,
+  title,
+  description,
+  elementId,
+  pageUrl,
+  bugId,
+}: BugReportEmailProps): { subject: string; html: string } {
+  const displayName = name || 'there';
+
+  return {
+    subject: `New issue reported on ${projectName}`,
+    html: `
+      <div style="${baseStyles}">
+        <h1 style="color: #b45309; margin-bottom: 24px;">New Issue Reported</h1>
+
+        <p>Hey ${escapeHtml(displayName)},</p>
+
+        <p>A user flagged an issue on <strong>${escapeHtml(projectName)}</strong>:</p>
+
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #92400e;">${escapeHtml(title)}</p>
+          <p style="margin: 0; color: #78350f; font-size: 14px;">${escapeHtml(description)}</p>
+        </div>
+
+        <table style="font-size: 14px; color: #4b5563; margin: 16px 0;">
+          <tr>
+            <td style="padding: 4px 16px 4px 0; font-weight: 500;">Element</td>
+            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${escapeHtml(elementId)}</code></td>
+          </tr>
+          ${pageUrl ? `
+          <tr>
+            <td style="padding: 4px 16px 4px 0; font-weight: 500;">Page</td>
+            <td>${escapeHtml(pageUrl)}</td>
+          </tr>
+          ` : ''}
+        </table>
+
+        <div style="margin-top: 32px;">
+          <a href="https://gotcha.cx/dashboard/bugs/${escapeHtml(bugId)}" style="${buttonStyles}">View Issue</a>
+        </div>
+
+        <p style="margin-top: 24px;">
+          Cheers,<br/>
+          The Gotcha Team
+        </p>
+      </div>
+    `,
+  };
+}
+
+export function inviteEmail({ inviterName, orgName, role, acceptUrl }: InviteEmailProps): {
+  subject: string;
+  html: string;
+} {
+  const roleLabel = role.charAt(0) + role.slice(1).toLowerCase();
+
+  return {
+    subject: `${inviterName} invited you to join ${orgName} on Gotcha`,
+    html: `
+      <div style="${baseStyles}">
+        <h1 style="color: #0f172a; margin-bottom: 24px;">You're Invited!</h1>
+
+        <p>Hey there,</p>
+
+        <p><strong>${escapeHtml(inviterName)}</strong> has invited you to join <strong>${escapeHtml(orgName)}</strong> on Gotcha as a <strong>${escapeHtml(roleLabel)}</strong>.</p>
+
+        <div style="margin-top: 32px;">
+          <a href="${escapeHtml(acceptUrl)}" style="${buttonStyles}">Accept Invitation</a>
+        </div>
+
+        <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
+          This invitation will expire in 7 days. Don't have an account yet? No problem — click the link above and you'll be prompted to create one. You'll be automatically added to the team once you sign up.
+        </p>
+
+        <p style="margin-top: 24px;">
+          Cheers,<br/>
+          The Gotcha Team
+        </p>
+      </div>
+    `,
+  };
+}
+
+export function bugResolutionEmail({
+  reporterName,
+  projectName,
+  bugTitle,
+  message,
+}: BugResolutionEmailProps): { subject: string; html: string } {
+  const displayName = reporterName ? escapeHtml(reporterName) : 'there';
+
+  return {
+    subject: `Your reported issue has been resolved - ${projectName}`,
+    html: `
+      <div style="${baseStyles}">
+        <h1 style="color: #059669; margin-bottom: 24px;">Issue Resolved</h1>
+
+        <p>Hey ${displayName},</p>
+
+        <p>An issue you reported on <strong>${escapeHtml(projectName)}</strong> has been resolved:</p>
+
+        <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46;">${escapeHtml(bugTitle)}</p>
+          <p style="margin: 0; color: #047857; font-size: 14px;">${escapeHtml(message)}</p>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px;">
+          Thank you for taking the time to report this. Your feedback helps make the product better.
+        </p>
+
+        <p style="margin-top: 24px;">
+          Cheers,<br/>
+          The ${escapeHtml(projectName)} Team
         </p>
       </div>
     `,

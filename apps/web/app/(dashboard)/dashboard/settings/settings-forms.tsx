@@ -284,13 +284,13 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="orgName">Organization Name</Label>
+        <Label htmlFor="orgName">Workspace Name</Label>
         <Input
           type="text"
           id="orgName"
           value={formName}
           onChange={(e) => setFormName(e.target.value)}
-          placeholder="Organization name"
+          placeholder="Workspace name"
         />
       </div>
 
@@ -317,7 +317,7 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
 
       {success && (
         <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertDescription>Organization updated successfully!</AlertDescription>
+          <AlertDescription>Workspace updated successfully!</AlertDescription>
         </Alert>
       )}
 
