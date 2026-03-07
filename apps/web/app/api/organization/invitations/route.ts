@@ -4,6 +4,7 @@ import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { sendInviteEmail } from '@/lib/emails/send';
+import { orgManagementLimiter } from '@/lib/rate-limit';
 
 // List pending invitations
 export async function GET() {
@@ -61,6 +62,12 @@ export async function POST(request: Request) {
     }
 
     const { organization, membership } = activeOrg;
+
+    // Rate limit: 20 org management actions per hour
+    const { success: rateLimitOk } = await orgManagementLimiter.limit(`invite:${user.email}`);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
+    }
 
     // Only OWNER and ADMIN can invite
     if (membership.role !== 'OWNER' && membership.role !== 'ADMIN') {

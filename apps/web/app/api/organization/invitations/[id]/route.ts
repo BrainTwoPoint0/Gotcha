@@ -12,11 +12,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeOrg = await getActiveOrganization(user.email!);
+    const activeOrg = await getActiveOrganization(user.email);
     if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }

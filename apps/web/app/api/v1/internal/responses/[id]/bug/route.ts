@@ -5,9 +5,11 @@ import { isOriginAllowed } from '@/lib/origin-check';
 import { fireWebhooks } from '@/lib/webhooks';
 import { sendBugReportEmail } from '@/lib/emails/send';
 
-// Cache the API key lookup
+// Cache the API key lookup with 5-minute TTL
 let cachedApiKey: { projectId: string; organizationId: string; plan: string } | null = null;
 let cachedKeyHash: string | null = null;
+let cachedAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function getInternalApiKey() {
   const apiKeyString = process.env.GOTCHA_SDK_API;
@@ -15,7 +17,7 @@ async function getInternalApiKey() {
 
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
-  if (cachedApiKey && cachedKeyHash === keyHash) return cachedApiKey;
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
@@ -35,6 +37,7 @@ async function getInternalApiKey() {
     const result = { projectId: apiKey.projectId, organizationId: apiKey.project.organizationId, plan };
     cachedApiKey = result;
     cachedKeyHash = keyHash;
+    cachedAt = Date.now();
     return result;
   }
 

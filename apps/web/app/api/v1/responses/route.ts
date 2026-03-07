@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { validateApiKey, apiError, apiSuccess, corsHeaders } from '@/lib/api-auth';
+import { validateApiKey, apiError, apiSuccess, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import {
   checkRateLimit,
   checkIdempotency,
@@ -33,11 +33,12 @@ const voteMap: Record<string, VoteType> = {
 };
 
 export async function POST(request: NextRequest) {
+  const reqOrigin = request.headers.get('origin');
   try {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status);
+      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
     }
 
     const { apiKey } = authResult;
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (!rateLimit.success) {
-      return apiError('RATE_LIMITED', 'Too many requests', 429);
+      return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
     }
 
     if (idempotencyResult?.isDuplicate && idempotencyResult.cachedResponse) {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
         { ...cached, status: 'duplicate' },
         {
           status: 201,
-          headers: { ...corsHeaders, ...rateLimit.headers },
+          headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
         }
       );
     }
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid request body', 400);
+      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid request body', 400, reqOrigin);
     }
 
     const data = validation.data as typeof validation.data & {
@@ -239,20 +240,21 @@ export async function POST(request: NextRequest) {
 
     return Response.json(result, {
       status: 201,
-      headers: { ...corsHeaders, ...rateLimit.headers },
+      headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
     });
   } catch (error) {
     console.error('POST /api/v1/responses error:', error);
-    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
   }
 }
 
 export async function GET(request: NextRequest) {
+  const reqOrigin = request.headers.get('origin');
   try {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status);
+      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
     }
 
     const { apiKey } = authResult;
@@ -272,7 +274,7 @@ export async function GET(request: NextRequest) {
     const validation = listResponsesSchema.safeParse(params);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid query parameters', 400);
+      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid query parameters', 400, reqOrigin);
     }
 
     const { elementId, mode, startDate, endDate, page, limit } = validation.data;
@@ -356,11 +358,11 @@ export async function GET(request: NextRequest) {
           hasMore: page * limit < total,
         },
       },
-      { headers: corsHeaders }
+      { headers: getCorsHeaders(reqOrigin) }
     );
   } catch (error) {
     console.error('GET /api/v1/responses error:', error);
-    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
   }
 }
 

@@ -20,7 +20,9 @@ export default function LoginPage() {
   const [githubLoading, setGithubLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteToken = searchParams.get('invite');
+  // Check for invite via cookie flag (set by accept route) or legacy URL param
+  const hasInviteCookie = typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
+  const inviteToken = searchParams.get('invite') || (hasInviteCookie ? '__cookie__' : null);
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,7 +42,11 @@ export default function LoginPage() {
     }
 
     if (inviteToken) {
-      router.push(`/api/invitations/accept?token=${inviteToken}`);
+      // Accept route reads token from httpOnly cookie (or legacy URL param)
+      const acceptUrl = inviteToken === '__cookie__'
+        ? '/api/invitations/accept'
+        : `/api/invitations/accept?token=${inviteToken}`;
+      router.push(acceptUrl);
     } else {
       router.push('/dashboard');
     }
@@ -55,8 +61,9 @@ export default function LoginPage() {
     const siteUrl = isLocalhost
       ? window.location.origin
       : process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    // For cookie-based invite flow, the auth callback will check for the cookie
     const callbackUrl = inviteToken
-      ? `${siteUrl}/auth/callback?next=/api/invitations/accept?token=${inviteToken}`
+      ? `${siteUrl}/auth/callback?next=/api/invitations/accept${inviteToken !== '__cookie__' ? `?token=${inviteToken}` : ''}`
       : `${siteUrl}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',

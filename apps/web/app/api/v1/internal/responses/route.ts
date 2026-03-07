@@ -29,9 +29,11 @@ const voteMap: Record<string, VoteType> = {
   down: 'DOWN',
 };
 
-// Cache the API key lookup to avoid a DB round-trip on every request
+// Cache the API key lookup with 5-minute TTL
 let cachedApiKey: { projectId: string; organizationId: string; plan: string } | null = null;
 let cachedKeyHash: string | null = null;
+let cachedAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getInternalApiKey() {
   const apiKeyString = process.env.GOTCHA_SDK_API;
@@ -39,8 +41,8 @@ async function getInternalApiKey() {
 
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
-  // Return cached if hash matches (same env var)
-  if (cachedApiKey && cachedKeyHash === keyHash) return cachedApiKey;
+  // Return cached if hash matches and TTL not expired
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
@@ -60,6 +62,7 @@ async function getInternalApiKey() {
     const result = { projectId: apiKey.projectId, organizationId: apiKey.project.organizationId, plan };
     cachedApiKey = result;
     cachedKeyHash = keyHash;
+    cachedAt = Date.now();
     return result;
   }
 

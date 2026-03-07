@@ -1,11 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://gotcha.cx';
-  const token = searchParams.get('token');
+  const cookieStore = await cookies();
+
+  // Read token from cookie (preferred) or URL param (fallback for backward compat)
+  const token = cookieStore.get('gotcha_invite')?.value || searchParams.get('token');
 
   if (!token) {
     return NextResponse.redirect(`${origin}/login?error=invalid_invite`);
@@ -40,8 +44,23 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user?.email) {
-    // Not logged in — redirect to login with invite token so they can come back
-    return NextResponse.redirect(`${origin}/login?invite=${token}`);
+    // Not logged in — store token in httpOnly cookie and redirect to login (no token in URL)
+    const response = NextResponse.redirect(`${origin}/login`);
+    response.cookies.set('gotcha_invite', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60, // 1 hour
+    });
+    response.cookies.set('gotcha_has_invite', '1', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60,
+    });
+    return response;
   }
 
   // Verify the email matches the invitation
@@ -111,5 +130,9 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`);
+  // Clear invite cookies
+  const response = NextResponse.redirect(`${origin}/dashboard`);
+  response.cookies.delete('gotcha_invite');
+  response.cookies.delete('gotcha_has_invite');
+  return response;
 }

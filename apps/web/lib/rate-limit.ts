@@ -54,6 +54,14 @@ export async function checkRateLimit(identifier: string, plan: PlanType = 'free'
   };
 }
 
+// Rate limiter for sensitive org management operations (invitations, member changes)
+export const orgManagementLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, '1 h'),
+  analytics: true,
+  prefix: 'gotcha:ratelimit:org-mgmt',
+});
+
 // Idempotency key storage (5-minute window)
 const idempotencyCache = new Ratelimit({
   redis,

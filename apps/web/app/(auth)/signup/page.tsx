@@ -21,7 +21,8 @@ export default function SignupPage() {
   const [githubLoading, setGithubLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteToken = searchParams.get('invite');
+  const hasInviteCookie = typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
+  const inviteToken = searchParams.get('invite') || (hasInviteCookie ? '__cookie__' : null);
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -52,7 +53,10 @@ export default function SignupPage() {
     }
 
     if (inviteToken) {
-      router.push(`/api/invitations/accept?token=${inviteToken}`);
+      const acceptUrl = inviteToken === '__cookie__'
+        ? '/api/invitations/accept'
+        : `/api/invitations/accept?token=${inviteToken}`;
+      router.push(acceptUrl);
     } else {
       router.push('/dashboard');
     }
@@ -68,7 +72,7 @@ export default function SignupPage() {
       ? window.location.origin
       : process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const callbackUrl = inviteToken
-      ? `${siteUrl}/auth/callback?next=/api/invitations/accept?token=${inviteToken}`
+      ? `${siteUrl}/auth/callback?next=/api/invitations/accept${inviteToken !== '__cookie__' ? `?token=${inviteToken}` : ''}`
       : `${siteUrl}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',

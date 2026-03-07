@@ -7,6 +7,8 @@ import { createHash } from 'crypto';
 
 let cachedApiKey: { projectId: string } | null = null;
 let cachedKeyHash: string | null = null;
+let cachedAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function getInternalApiKey() {
   const apiKeyString = process.env.GOTCHA_SDK_API;
@@ -14,7 +16,7 @@ async function getInternalApiKey() {
 
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
-  if (cachedApiKey && cachedKeyHash === keyHash) return cachedApiKey;
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
@@ -24,6 +26,7 @@ async function getInternalApiKey() {
   if (apiKey) {
     cachedApiKey = apiKey;
     cachedKeyHash = keyHash;
+    cachedAt = Date.now();
   }
 
   return apiKey;

@@ -1,17 +1,18 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ResponseMode } from '@prisma/client';
-import { validateApiKey, apiError, corsHeaders } from '@/lib/api-auth';
+import { validateApiKey, apiError, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import { calculateNPS } from '@/lib/nps';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ elementId: string }> }
 ) {
+  const reqOrigin = request.headers.get('origin');
   try {
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status);
+      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
     }
 
     const { apiKey } = authResult;
@@ -75,10 +76,10 @@ export async function GET(
       npsScore: npsResult?.score ?? null,
     };
 
-    return Response.json(result, { headers: corsHeaders });
+    return Response.json(result, { headers: getCorsHeaders(reqOrigin) });
   } catch (error) {
     console.error('GET /api/v1/scores/[elementId] error:', error);
-    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
   }
 }
 

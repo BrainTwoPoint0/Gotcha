@@ -95,6 +95,12 @@ export async function GET(request: Request) {
         }
       }
 
+      // Check for pending invite cookie — redirect to accept if present
+      const inviteCookie = cookieStore.get('gotcha_invite')?.value;
+      if (inviteCookie && next === '/dashboard') {
+        return NextResponse.redirect(`${origin}/api/invitations/accept`);
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

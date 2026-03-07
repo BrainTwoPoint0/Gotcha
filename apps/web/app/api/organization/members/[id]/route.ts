@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { orgManagementLimiter } from '@/lib/rate-limit';
 
 // Update member role
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     // Only OWNER can change roles
     if (membership.role !== 'OWNER') {
       return NextResponse.json({ error: 'Only the owner can change roles' }, { status: 403 });
+    }
+
+    const { success: rateLimitOk } = await orgManagementLimiter.limit(`member:${user.email}`);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
     const body = await request.json();
@@ -88,6 +94,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     // Only OWNER can remove members
     if (membership.role !== 'OWNER') {
       return NextResponse.json({ error: 'Only the owner can remove members' }, { status: 403 });
+    }
+
+    const { success: rateLimitOk } = await orgManagementLimiter.limit(`member:${user.email}`);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
     const targetMember = await prisma.organizationMember.findFirst({
