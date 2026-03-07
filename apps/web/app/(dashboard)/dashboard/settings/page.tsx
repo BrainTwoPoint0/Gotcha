@@ -61,9 +61,8 @@ export default async function SettingsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
           <DashboardFeedback
             elementId="settings-page"
-            mode="vote"
-            promptText="Is the setup process clear?"
-            voteLabels={{ up: 'Yes', down: 'No' }}
+            mode="feedback"
+            promptText="How clear are these settings?"
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
             userProfile={{
@@ -71,6 +70,8 @@ export default async function SettingsPage() {
               role: dbUser?.role ?? undefined,
               industry: dbUser?.industry ?? undefined,
               useCase: dbUser?.useCase ?? undefined,
+              plan: subscription?.plan || 'FREE',
+              onboarded: !!dbUser?.onboardedAt,
             }}
           />
         </div>
@@ -172,7 +173,7 @@ export default async function SettingsPage() {
                   popular
                 />
               </div>
-              <PlanActions currentPlan={subscription?.plan || 'FREE'} hasStripeSubscription={!!subscription?.stripeCustomerId} />
+              <PlanActions currentPlan={subscription?.plan || 'FREE'} hasStripeSubscription={!!subscription?.stripeSubId} />
             </div>
           </CardContent>
         </Card>

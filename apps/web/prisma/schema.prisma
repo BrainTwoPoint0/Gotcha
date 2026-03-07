@@ -319,8 +319,9 @@ model Subscription {
   stripeSubId      String?
   plan             Plan      @default(FREE)
   status           SubStatus @default(ACTIVE)
-  currentPeriodEnd DateTime?
-  createdAt        DateTime  @default(now())
+  cancelAtPeriodEnd Boolean   @default(false)
+  currentPeriodEnd  DateTime?
+  createdAt         DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   // Usage tracking

@@ -64,7 +64,9 @@ export async function getActiveOrganization(userEmail: string): Promise<ActiveOr
   }
 
   const organization = membership.organization;
-  const isPro = organization.subscription?.plan === 'PRO';
+  const sub = organization.subscription;
+  const isPro =
+    sub?.plan === 'PRO' && (sub?.status === 'ACTIVE' || sub?.status === 'TRIALING');
 
   return {
     organization: {

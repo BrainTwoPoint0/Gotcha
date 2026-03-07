@@ -69,22 +69,32 @@ export async function POST(request: Request) {
         });
 
         if (sub) {
-          const status =
-            subscription.status === 'active'
-              ? 'ACTIVE'
-              : subscription.status === 'past_due'
-                ? 'PAST_DUE'
-                : subscription.status === 'trialing'
-                  ? 'TRIALING'
-                  : 'CANCELED';
+          const statusMap: Record<string, 'ACTIVE' | 'PAST_DUE' | 'TRIALING' | 'CANCELED'> = {
+            active: 'ACTIVE',
+            past_due: 'PAST_DUE',
+            trialing: 'TRIALING',
+            canceled: 'CANCELED',
+            unpaid: 'PAST_DUE',
+            incomplete: 'PAST_DUE',
+            incomplete_expired: 'CANCELED',
+            paused: 'CANCELED',
+          };
+
+          const status = statusMap[subscription.status] || 'CANCELED';
 
           const periodEnd = (subscription as unknown as { current_period_end: number })
             .current_period_end;
+
+          const cancelAtPeriodEnd = (
+            subscription as unknown as { cancel_at_period_end: boolean }
+          ).cancel_at_period_end;
 
           await prisma.subscription.update({
             where: { id: sub.id },
             data: {
               status,
+              stripePriceId: subscription.items.data[0]?.price.id ?? sub.stripePriceId,
+              cancelAtPeriodEnd: cancelAtPeriodEnd ?? false,
               currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
             },
           });
@@ -108,6 +118,8 @@ export async function POST(request: Request) {
               status: 'CANCELED',
               stripeSubId: null,
               stripePriceId: null,
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: null,
             },
           });
         }

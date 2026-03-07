@@ -6,5 +6,5 @@ export function shouldBlockCheckout(
   subscription: { plan: string; status: string } | null | undefined
 ): boolean {
   if (!subscription) return false;
-  return subscription.plan === 'PRO' && subscription.status === 'ACTIVE';
+  return subscription.plan === 'PRO' && subscription.status !== 'CANCELED';
 }
