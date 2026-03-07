@@ -30,6 +30,11 @@ export async function GET(request: Request) {
     const format = searchParams.get('format') || 'csv';
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const elementId = searchParams.get('elementId');
+    const status = searchParams.get('status');
+    const tag = searchParams.get('tag');
+    const mode = searchParams.get('mode');
+    const projectId = searchParams.get('projectId');
 
     // Validate date formats
     const isValidDate = (d: string) => !isNaN(new Date(d).getTime());
@@ -41,17 +46,38 @@ export async function GET(request: Request) {
     }
 
     // Build where clause
-    const where = {
-      project: { organizationId: organization.id },
-      ...(startDate || endDate
-        ? {
-            createdAt: {
-              ...(startDate && { gte: new Date(startDate) }),
-              ...(endDate && { lte: new Date(`${endDate}T23:59:59.999Z`) }),
-            },
-          }
-        : {}),
+    const where: Record<string, unknown> = {
+      project: {
+        organizationId: organization.id,
+        ...(projectId ? { id: projectId } : {}),
+      },
     };
+
+    if (startDate || endDate) {
+      where.createdAt = {
+        ...(startDate && { gte: new Date(startDate) }),
+        ...(endDate && { lte: new Date(`${endDate}T23:59:59.999Z`) }),
+      };
+    }
+
+    if (elementId) {
+      where.elementIdRaw = elementId;
+    }
+
+    if (status) {
+      const statuses = status.split(',').filter(Boolean);
+      if (statuses.length > 0) {
+        where.status = { in: statuses };
+      }
+    }
+
+    if (tag) {
+      where.tags = { has: tag };
+    }
+
+    if (mode) {
+      where.mode = mode.toUpperCase();
+    }
 
     // Fetch responses
     const responses = await prisma.response.findMany({
@@ -66,16 +92,23 @@ export async function GET(request: Request) {
     });
 
     if (format === 'json') {
-      // JSON export
       const data = responses.map((r) => ({
         id: r.id,
         project: r.project.name,
+        projectSlug: r.project.slug,
+        element: r.elementIdRaw,
         mode: r.mode,
         content: r.content,
         title: r.title,
         rating: r.rating,
         vote: r.vote,
-        element: r.elementIdRaw,
+        pollSelected: r.pollSelected,
+        status: r.status,
+        tags: r.tags,
+        isBug: r.isBug,
+        userId: r.endUserId,
+        userMeta: r.endUserMeta,
+        url: r.url,
         createdAt: r.createdAt.toISOString(),
       }));
 
@@ -91,23 +124,43 @@ export async function GET(request: Request) {
     const headers = [
       'ID',
       'Project',
-      'Type',
+      'Element',
+      'Mode',
       'Content',
       'Title',
       'Rating',
       'Vote',
-      'Element',
+      'Poll Selected',
+      'Status',
+      'Tags',
+      'Is Bug',
+      'User ID',
+      'User Meta',
+      'URL',
       'Date',
     ];
     const rows = responses.map((r) => [
       escapeCsvField(r.id),
       escapeCsvField(r.project.name),
+      escapeCsvField(r.elementIdRaw),
       escapeCsvField(r.mode),
       escapeCsvField(r.content || ''),
       escapeCsvField(r.title || ''),
       escapeCsvField(r.rating?.toString() || ''),
       escapeCsvField(r.vote || ''),
-      escapeCsvField(r.elementIdRaw),
+      escapeCsvField(
+        Array.isArray(r.pollSelected) ? r.pollSelected.join('; ') : ''
+      ),
+      escapeCsvField(r.status),
+      escapeCsvField(r.tags.join('; ')),
+      escapeCsvField(r.isBug ? 'Yes' : ''),
+      escapeCsvField(r.endUserId || ''),
+      escapeCsvField(
+        r.endUserMeta && typeof r.endUserMeta === 'object' && Object.keys(r.endUserMeta).length > 0
+          ? JSON.stringify(r.endUserMeta)
+          : ''
+      ),
+      escapeCsvField(r.url || ''),
       escapeCsvField(r.createdAt.toISOString()),
     ]);
 

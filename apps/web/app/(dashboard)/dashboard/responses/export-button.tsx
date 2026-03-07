@@ -24,13 +24,15 @@ export function ExportButton({ isPro }: ExportButtonProps) {
     setIsExporting(true);
 
     try {
+      // Forward all active filters to the export API
       const params = new URLSearchParams();
       params.set('format', format);
 
-      const startDate = searchParams.get('startDate');
-      const endDate = searchParams.get('endDate');
-      if (startDate) params.set('startDate', startDate);
-      if (endDate) params.set('endDate', endDate);
+      const forwardKeys = ['startDate', 'endDate', 'elementId', 'status', 'tag', 'mode', 'projectId'];
+      for (const key of forwardKeys) {
+        const value = searchParams.get(key);
+        if (value) params.set(key, value);
+      }
 
       const response = await fetch(`/api/export/responses?${params.toString()}`);
 
