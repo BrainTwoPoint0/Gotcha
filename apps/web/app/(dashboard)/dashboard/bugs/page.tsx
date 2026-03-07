@@ -93,11 +93,11 @@ export default async function BugsPage({ searchParams }: PageProps) {
               mode="poll"
               promptText="Which bug tracking features matter most to you?"
               options={[
-                'Ticket management',
-                'Email alerts for new bugs',
-                'Slack/Discord notifications',
-                'Reporter communication',
-                'Priority & status tracking',
+                'Auto-assign to team members',
+                'GitHub / Linear integration',
+                'SLA tracking',
+                'Duplicate detection',
+                'Screenshots & recordings',
               ]}
               allowMultiple
               userEmail={dbUser?.email}
@@ -107,6 +107,7 @@ export default async function BugsPage({ searchParams }: PageProps) {
                 role: dbUser?.role ?? undefined,
                 industry: dbUser?.industry ?? undefined,
                 useCase: dbUser?.useCase ?? undefined,
+                plan: 'FREE',
               }}
             />
           </div>
@@ -176,15 +177,16 @@ export default async function BugsPage({ searchParams }: PageProps) {
           <DashboardFeedback
             elementId="bugs-list-page"
             mode="poll"
-            promptText="What would improve bug tracking?"
+            promptText="What slows down your bug workflow?"
             options={[
-              'Search & filter bugs',
-              'Bulk actions',
-              'Assign bugs to team members',
-              'Custom statuses',
-              'SLA / due dates',
+              'Finding specific bugs',
+              'Updating multiple bugs at once',
+              'Knowing who is responsible',
+              'Tracking resolution time',
+              'Getting notified of changes',
             ]}
             allowMultiple
+            onePerUser={false}
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
             userProfile={{
@@ -192,6 +194,7 @@ export default async function BugsPage({ searchParams }: PageProps) {
               role: dbUser?.role ?? undefined,
               industry: dbUser?.industry ?? undefined,
               useCase: dbUser?.useCase ?? undefined,
+              plan: 'PRO',
             }}
           />
         </div>

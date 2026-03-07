@@ -184,7 +184,8 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               elementId="responses-page"
               mode="poll"
               promptText="What would make this page more useful?"
-              options={['Better filtering', 'Response tagging', 'Bulk actions', 'Search responses']}
+              options={['Full-text search', 'Bulk status changes', 'Saved filter presets', 'Response annotations', 'Auto-categorization']}
+              onePerUser={false}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{
@@ -192,6 +193,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
                 role: dbUser?.role ?? undefined,
                 industry: dbUser?.industry ?? undefined,
                 useCase: dbUser?.useCase ?? undefined,
+                plan: isPro ? 'PRO' : 'FREE',
               }}
             />
           </div>

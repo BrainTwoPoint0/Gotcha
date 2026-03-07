@@ -130,10 +130,10 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <DashboardFeedback
-              elementId="dashboard-overview"
-              mode="vote"
-              promptText="Is this dashboard useful?"
-              voteLabels={{ up: 'Yes', down: 'No' }}
+              elementId="dashboard-nps"
+              mode="nps"
+              onePerUser={false}
+              promptText="How likely are you to recommend Gotcha to a colleague?"
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{
@@ -141,6 +141,12 @@ export default async function DashboardPage() {
                 role: dbUser?.role ?? undefined,
                 industry: dbUser?.industry ?? undefined,
                 useCase: dbUser?.useCase ?? undefined,
+                plan: activeOrg?.isPro ? 'PRO' : 'FREE',
+                accountAgeDays: dbUser?.createdAt
+                  ? Math.floor((Date.now() - dbUser.createdAt.getTime()) / 86400000)
+                  : undefined,
+                onboarded: !!dbUser?.onboardedAt,
+                totalResponses,
               }}
             />
           </div>
@@ -218,6 +224,22 @@ export default async function DashboardPage() {
                 <p className="text-sm mt-1">
                   Create a project and integrate the SDK to start collecting feedback.
                 </p>
+                <div className="mt-4">
+                  <DashboardFeedback
+                    elementId="empty-state-responses"
+                    mode="vote"
+                    promptText="Do you know how to start collecting responses?"
+                    voteLabels={{ up: 'Yes', down: 'Need help' }}
+                    userEmail={dbUser?.email}
+                    userName={dbUser?.name ?? undefined}
+                    userProfile={{
+                      companySize: dbUser?.companySize ?? undefined,
+                      role: dbUser?.role ?? undefined,
+                      plan: activeOrg?.isPro ? 'PRO' : 'FREE',
+                      onboarded: !!dbUser?.onboardedAt,
+                    }}
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -316,6 +338,7 @@ export default async function DashboardPage() {
             apiKey={undefined}
           />
         )}
+
       </div>
     );
   } catch (error) {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Gotcha } from 'gotcha-feedback';
 import {
   LineChart,
   Line,
@@ -381,19 +380,7 @@ export function AnalyticsCharts({
       {avgRatingData.length > 0 && (
         <Card>
           <CardHeader className="pb-2 px-4 sm:px-6">
-            <div className="flex items-center gap-2">
               <CardTitle className="text-base sm:text-lg">Average Rating Over Time</CardTitle>
-              <Gotcha
-                elementId="analytics-avg-rating"
-                mode="poll"
-                options={['Insightful', 'Not useful']}
-                position="inline"
-                theme="light"
-                showOnHover={false}
-                size="sm"
-                promptText="Is this chart insightful?"
-              />
-            </div>
           </CardHeader>
           <CardContent className="px-2 sm:px-6 pb-4">
             <div className="h-52 sm:h-64 w-full">

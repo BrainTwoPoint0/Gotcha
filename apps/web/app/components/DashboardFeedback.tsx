@@ -12,11 +12,16 @@ interface DashboardFeedbackProps {
     role?: string;
     industry?: string;
     useCase?: string;
+    plan?: string;
+    accountAgeDays?: number;
+    onboarded?: boolean;
+    totalResponses?: number;
   };
-  mode?: 'feedback' | 'vote' | 'poll';
+  mode?: 'feedback' | 'vote' | 'poll' | 'nps';
   voteLabels?: { up: string; down: string };
   options?: string[];
   allowMultiple?: boolean;
+  npsQuestion?: string;
   /** When true, shows submitted state and allows review/edit instead of new submission (default: true for dashboard) */
   onePerUser?: boolean;
 }
@@ -31,6 +36,7 @@ export function DashboardFeedback({
   voteLabels,
   options,
   allowMultiple,
+  npsQuestion,
   onePerUser = true,
 }: DashboardFeedbackProps) {
   return (
@@ -45,6 +51,7 @@ export function DashboardFeedback({
       voteLabels={voteLabels}
       options={options}
       allowMultiple={allowMultiple}
+      npsQuestion={npsQuestion}
       {...(onePerUser !== undefined ? { onePerUser } : {})}
       user={
         userEmail

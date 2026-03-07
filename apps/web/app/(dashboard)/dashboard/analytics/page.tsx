@@ -47,13 +47,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
             <DashboardFeedback
-              elementId="analytics-page"
+              elementId="analytics-priorities-free"
               mode="poll"
               promptText="What analytics matter most to you?"
               options={[
                 'Sentiment trends',
                 'Response heatmaps',
-                'User segments',
+                'NPS tracking',
+                'Export / download reports',
                 'Comparison reports',
               ]}
               userEmail={dbUser?.email}
@@ -63,6 +64,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
                 role: dbUser?.role ?? undefined,
                 industry: dbUser?.industry ?? undefined,
                 useCase: dbUser?.useCase ?? undefined,
+                plan: 'FREE',
               }}
             />
           </div>
@@ -696,7 +698,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <DashboardFeedback
-            elementId="analytics-page-pro"
+            elementId="analytics-priorities-pro"
             mode="poll"
             promptText="What analytics would be most valuable?"
             options={[
@@ -706,6 +708,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
               'Segment comparison',
               'AI summaries',
             ]}
+            onePerUser={false}
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
             userProfile={{
@@ -713,6 +716,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
               role: dbUser?.role ?? undefined,
               industry: dbUser?.industry ?? undefined,
               useCase: dbUser?.useCase ?? undefined,
+              plan: 'PRO',
             }}
           />
         </div>

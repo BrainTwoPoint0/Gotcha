@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Gotcha } from 'gotcha-feedback';
 import {
   Select,
   SelectContent,
@@ -236,19 +235,7 @@ export function SegmentCharts({
           {/* Response Volume by Segment */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Response Volume by Segment</CardTitle>
-                <Gotcha
-                  elementId="segments-volume-chart"
-                  mode="poll"
-                  options={['Keep', 'Remove']}
-                  position="inline"
-                  theme="light"
-                  showOnHover={false}
-                  size="sm"
-                  promptText="Should we keep this chart?"
-                />
-              </div>
+              <CardTitle>Response Volume by Segment</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
@@ -282,16 +269,6 @@ export function SegmentCharts({
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <CardTitle>Avg Rating by Segment</CardTitle>
-                    <Gotcha
-                      elementId="segments-rating-chart"
-                      mode="poll"
-                      options={['Keep', 'Remove']}
-                      position="inline"
-                      theme="light"
-                      showOnHover={false}
-                      size="sm"
-                      promptText="Should we keep this chart?"
-                    />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -323,16 +300,6 @@ export function SegmentCharts({
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <CardTitle>Positive Rate by Segment</CardTitle>
-                    <Gotcha
-                      elementId="segments-sentiment-chart"
-                      mode="poll"
-                      options={['Keep', 'Remove']}
-                      position="inline"
-                      theme="light"
-                      showOnHover={false}
-                      size="sm"
-                      promptText="Should we keep this chart?"
-                    />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -403,16 +370,6 @@ export function SegmentCharts({
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle>Segment Comparison</CardTitle>
-                <Gotcha
-                  elementId="segments-comparison-table"
-                  mode="poll"
-                  options={['Keep', 'Remove']}
-                  position="inline"
-                  theme="light"
-                  showOnHover={false}
-                  size="sm"
-                  promptText="Should we keep this table?"
-                />
               </div>
             </CardHeader>
             <CardContent>

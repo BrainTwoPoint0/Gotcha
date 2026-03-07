@@ -102,9 +102,8 @@ export default async function BugDetailPage({ params }: PageProps) {
           <h1 className="text-xl font-bold text-gray-900">{bug.title}</h1>
           <DashboardFeedback
             elementId="bug-detail-page"
-            mode="vote"
-            promptText="Is this bug detail view useful?"
-            voteLabels={{ up: 'Yes', down: 'No' }}
+            mode="feedback"
+            promptText="Rate this bug detail view"
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
             userProfile={{
@@ -112,6 +111,7 @@ export default async function BugDetailPage({ params }: PageProps) {
               role: dbUser?.role ?? undefined,
               industry: dbUser?.industry ?? undefined,
               useCase: dbUser?.useCase ?? undefined,
+              plan: 'PRO',
             }}
           />
         </div>

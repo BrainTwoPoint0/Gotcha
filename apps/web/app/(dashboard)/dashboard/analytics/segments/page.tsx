@@ -37,8 +37,10 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
             <DashboardFeedback
-              elementId="segments-page"
-              promptText="How can we improve segmentation?"
+              elementId="segments-gate"
+              mode="poll"
+              promptText="What would you use segmentation for?"
+              options={['Compare feedback by plan tier', 'Analyze by user role', 'Regional breakdown', 'Compare team sizes']}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{
@@ -46,6 +48,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
                 role: dbUser?.role ?? undefined,
                 industry: dbUser?.industry ?? undefined,
                 useCase: dbUser?.useCase ?? undefined,
+                plan: 'FREE',
               }}
             />
           </div>
@@ -274,8 +277,8 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
           <DashboardFeedback
-            elementId="segments-page"
-            promptText="How can we improve segmentation?"
+            elementId="segments-page-pro"
+            promptText="Rate the segmentation tools"
             userEmail={dbUser?.email}
             userName={dbUser?.name ?? undefined}
             userProfile={{
@@ -283,6 +286,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
               role: dbUser?.role ?? undefined,
               industry: dbUser?.industry ?? undefined,
               useCase: dbUser?.useCase ?? undefined,
+              plan: 'PRO',
             }}
           />
         </div>
