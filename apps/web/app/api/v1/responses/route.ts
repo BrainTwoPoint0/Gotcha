@@ -97,28 +97,21 @@ export async function POST(request: NextRequest) {
     // DB writes (element lookup, response creation, usage tracking)
     const asyncWrite = async () => {
       try {
-        // Get or create element
-        let elementDbId: string | null = null;
-        const existingElement = await prisma.element.findUnique({
+        // Get or create element (upsert to avoid race conditions)
+        const element = await prisma.element.upsert({
           where: {
             projectId_elementId: {
               projectId: apiKey.projectId,
               elementId: data.elementId,
             },
           },
+          update: {},
+          create: {
+            projectId: apiKey.projectId,
+            elementId: data.elementId,
+          },
         });
-
-        if (existingElement) {
-          elementDbId = existingElement.id;
-        } else {
-          const newElement = await prisma.element.create({
-            data: {
-              projectId: apiKey.projectId,
-              elementId: data.elementId,
-            },
-          });
-          elementDbId = newElement.id;
-        }
+        const elementDbId = element.id;
 
         // Atomically reset (if new month) and increment usage counter
         await atomicIncrementUsage(apiKey.organizationId);

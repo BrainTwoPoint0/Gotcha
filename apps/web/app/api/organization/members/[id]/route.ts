@@ -12,11 +12,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeOrg = await getActiveOrganization(user.email!);
+    const activeOrg = await getActiveOrganization(user.email);
     if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json();
     const { role } = body;
 
-    const allowedRoles = ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] as const;
+    const allowedRoles = ['ADMIN', 'MEMBER', 'VIEWER'] as const;
     if (!role || !allowedRoles.includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
@@ -74,11 +74,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeOrg = await getActiveOrganization(user.email!);
+    const activeOrg = await getActiveOrganization(user.email);
     if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }

@@ -24,7 +24,7 @@ async function getAuthOrg() {
 
   if (!dbUser) return null;
 
-  return { userId: dbUser.id, organization: activeOrg.organization, isPro: activeOrg.isPro };
+  return { userId: dbUser.id, organization: activeOrg.organization, isPro: activeOrg.isPro, role: activeOrg.membership.role };
 }
 
 export async function GET(
@@ -84,6 +84,9 @@ export async function PATCH(
     if (!auth.isPro) {
       return NextResponse.json({ error: 'Bug tracking requires a Pro plan' }, { status: 403 });
     }
+    if (auth.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot modify bugs' }, { status: 403 });
+    }
 
     const projectIds = (auth.organization.projects || []).map((p) => p.id);
 
@@ -120,6 +123,9 @@ export async function PATCH(
     }
 
     if (body.resolutionNote !== undefined) {
+      if (typeof body.resolutionNote !== 'string' || body.resolutionNote.length > 5000) {
+        return NextResponse.json({ error: 'Resolution note must be a string under 5000 characters' }, { status: 400 });
+      }
       updates.resolutionNote = body.resolutionNote;
     }
 

@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://gotcha.cx';
   const token = searchParams.get('token');
 
   if (!token) {
@@ -83,19 +84,32 @@ export async function GET(request: Request) {
   }
 
   // Add user to organization and mark invite as accepted
-  await prisma.$transaction([
-    prisma.organizationMember.create({
-      data: {
-        organizationId: invitation.organizationId,
-        userId: dbUser.id,
-        role: invitation.role,
-      },
-    }),
-    prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED' },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.organizationMember.create({
+        data: {
+          organizationId: invitation.organizationId,
+          userId: dbUser.id,
+          role: invitation.role,
+        },
+      }),
+      prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      }),
+    ]);
+  } catch (err: unknown) {
+    // Handle race condition: membership already created by concurrent request
+    const isUniqueViolation = err instanceof Error && err.message.includes('Unique constraint');
+    if (isUniqueViolation) {
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      });
+    } else {
+      throw err;
+    }
+  }
 
   return NextResponse.redirect(`${origin}/dashboard`);
 }

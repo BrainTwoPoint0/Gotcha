@@ -13,11 +13,11 @@ export async function GET() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeOrg = await getActiveOrganization(user.email!);
+    const activeOrg = await getActiveOrganization(user.email);
     if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
@@ -51,11 +51,11 @@ export async function POST(request: Request) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeOrg = await getActiveOrganization(user.email!);
+    const activeOrg = await getActiveOrganization(user.email);
     if (!activeOrg) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
@@ -68,14 +68,19 @@ export async function POST(request: Request) {
     }
 
     const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
+      where: { email: user.email },
     });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     const body = await request.json();
     const { email, role } = body;
 
     // Validate email
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
     }
 
@@ -129,7 +134,7 @@ export async function POST(request: Request) {
         email: normalizedEmail,
         role: role || 'MEMBER',
         token,
-        invitedById: dbUser!.id,
+        invitedById: dbUser.id,
         expiresAt,
       },
     });
@@ -137,7 +142,7 @@ export async function POST(request: Request) {
     // Send invite email
     sendInviteEmail({
       email: normalizedEmail,
-      inviterName: dbUser!.name || user.email!,
+      inviterName: dbUser.name || user.email,
       orgName: organization.name,
       role: role || 'MEMBER',
       token,

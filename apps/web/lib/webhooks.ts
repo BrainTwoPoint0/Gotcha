@@ -4,6 +4,35 @@ import { prisma } from '@/lib/prisma';
 const TIMEOUT_MS = 10_000;
 const MAX_FAILURES = 10;
 
+// SSRF protection: block requests to private/internal IP ranges
+function isPrivateUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    const hostname = url.hostname.toLowerCase();
+
+    // Block localhost variants
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '0.0.0.0') {
+      return true;
+    }
+
+    // Block private IP ranges
+    const parts = hostname.split('.').map(Number);
+    if (parts.length === 4 && parts.every((p) => !isNaN(p))) {
+      if (parts[0] === 10) return true; // 10.0.0.0/8
+      if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true; // 172.16.0.0/12
+      if (parts[0] === 192 && parts[1] === 168) return true; // 192.168.0.0/16
+      if (parts[0] === 169 && parts[1] === 254) return true; // 169.254.0.0/16 (AWS metadata)
+    }
+
+    // Block non-http(s) schemes
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return true;
+
+    return false;
+  } catch {
+    return true; // Invalid URL = block
+  }
+}
+
 export function generateSignature(secret: string, payload: string): string {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
@@ -207,6 +236,12 @@ async function deliverWebhook(
   payload: Record<string, unknown>,
   timestamp: string
 ) {
+  // SSRF check
+  if (isPrivateUrl(webhook.url)) {
+    console.warn(`Blocked webhook delivery to private URL: ${webhook.url}`);
+    return;
+  }
+
   let body: string;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 

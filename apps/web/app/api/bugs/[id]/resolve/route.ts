@@ -27,7 +27,12 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organization, isPro } = activeOrg;
+    const { organization, isPro, membership } = activeOrg;
+
+    // Role check
+    if (membership.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot resolve bugs' }, { status: 403 });
+    }
 
     // Pro gate
     if (!isPro) {
@@ -58,8 +63,18 @@ export async function POST(
     let reporterMessage: string | undefined;
     try {
       const body = await request.json();
-      resolutionNote = body.resolutionNote;
-      reporterMessage = body.reporterMessage;
+      if (body.resolutionNote !== undefined) {
+        if (typeof body.resolutionNote !== 'string' || body.resolutionNote.length > 5000) {
+          return NextResponse.json({ error: 'Resolution note must be a string under 5000 characters' }, { status: 400 });
+        }
+        resolutionNote = body.resolutionNote;
+      }
+      if (body.reporterMessage !== undefined) {
+        if (typeof body.reporterMessage !== 'string' || body.reporterMessage.length > 2000) {
+          return NextResponse.json({ error: 'Reporter message must be a string under 2000 characters' }, { status: 400 });
+        }
+        reporterMessage = body.reporterMessage;
+      }
     } catch {
       // No body is fine
     }

@@ -12,7 +12,7 @@ import { sendBugReportEmail } from '@/lib/emails/send';
  * Uses server-side API key - nothing exposed to browser.
  */
 
-type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB';
+type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB' | 'NPS';
 type VoteType = 'UP' | 'DOWN';
 
 const modeMap: Record<string, ResponseMode> = {
@@ -21,6 +21,7 @@ const modeMap: Record<string, ResponseMode> = {
   poll: 'POLL',
   'feature-request': 'FEATURE_REQUEST',
   ab: 'AB',
+  nps: 'NPS',
 };
 
 const voteMap: Record<string, VoteType> = {
@@ -123,28 +124,21 @@ export async function POST(request: NextRequest) {
     // DB writes happen async (fire-and-forget), same pattern as external API
     const asyncWrite = async () => {
       try {
-        // Get or create element
-        let elementDbId: string;
-        const existingElement = await prisma.element.findUnique({
+        // Get or create element (upsert to avoid race conditions)
+        const element = await prisma.element.upsert({
           where: {
             projectId_elementId: {
               projectId: apiKey.projectId,
               elementId: data.elementId,
             },
           },
+          update: {},
+          create: {
+            projectId: apiKey.projectId,
+            elementId: data.elementId,
+          },
         });
-
-        if (existingElement) {
-          elementDbId = existingElement.id;
-        } else {
-          const newElement = await prisma.element.create({
-            data: {
-              projectId: apiKey.projectId,
-              elementId: data.elementId,
-            },
-          });
-          elementDbId = newElement.id;
-        }
+        const elementDbId = element.id;
 
         // Create response
         await prisma.response.create({

@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     const bugs = await prisma.bugTicket.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 200,
       include: {
         response: {
           select: {
