@@ -17,6 +17,7 @@ interface SubmitData {
   rating?: number;
   vote?: VoteType;
   pollSelected?: string[];
+  isBug?: boolean;
 }
 
 export function useSubmit(options: UseSubmitOptions) {
@@ -94,9 +95,22 @@ export function useSubmit(options: UseSubmitOptions) {
             vote: data.vote,
             pollOptions: options.pollOptions,
             pollSelected: data.pollSelected,
+            isBug: data.isBug,
             user: { ...defaultUser, ...options.user },
           });
         }
+
+        // Update existingResponse so isEditing flips to true after first submit
+        setExistingResponse({
+          id: response.id,
+          mode: options.mode,
+          content: data.content ?? null,
+          title: data.title ?? null,
+          rating: data.rating ?? null,
+          vote: data.vote ?? null,
+          pollSelected: data.pollSelected ?? null,
+          createdAt: response.createdAt,
+        });
 
         options.onSuccess?.(response);
         return response;

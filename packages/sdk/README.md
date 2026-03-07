@@ -41,6 +41,9 @@ function FeatureCard() {
 - **Feedback Mode** - Star rating + text input
 - **Vote Mode** - Thumbs up/down with customizable labels
 - **Poll Mode** - Custom options (single or multi-select)
+- **NPS Mode** - 0-10 Net Promoter Score with optional follow-up
+- **Score Component** - Embeddable `<GotchaScore />` to display aggregate ratings inline
+- **Bug Flagging** - Let users flag feedback as issues/bugs with a single toggle
 - **User Segmentation** - Analyze feedback by custom user attributes
 - **Edit Support** - Users can update their previous submissions
 - **Customizable** - Themes, sizes, positions
@@ -65,7 +68,7 @@ function FeatureCard() {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `elementId` | `string` | Required | Unique identifier for this element |
-| `mode` | `'feedback' \| 'vote' \| 'poll'` | `'feedback'` | Feedback mode |
+| `mode` | `'feedback' \| 'vote' \| 'poll' \| 'nps'` | `'feedback'` | Feedback mode |
 | `position` | `'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left' \| 'inline'` | `'top-right'` | Button position |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | Color theme |
@@ -76,6 +79,13 @@ function FeatureCard() {
 | `voteLabels` | `{ up: string, down: string }` | `{ up: 'Like', down: 'Dislike' }` | Custom vote button labels |
 | `options` | `string[]` | - | Poll options (2-6 items, required for poll mode) |
 | `allowMultiple` | `boolean` | `false` | Allow selecting multiple poll options |
+| `npsQuestion` | `string` | `'How likely are you to recommend us?'` | Custom NPS question |
+| `npsFollowUp` | `boolean` | `true` | Show follow-up textarea after NPS score |
+| `npsFollowUpPlaceholder` | `string` | - | Placeholder for NPS follow-up textarea |
+| `npsLowLabel` | `string` | `'Not likely'` | Label for low end of NPS scale |
+| `npsHighLabel` | `string` | `'Very likely'` | Label for high end of NPS scale |
+| `enableBugFlag` | `boolean` | `false` | Show "Report an issue" toggle in feedback form |
+| `bugFlagLabel` | `string` | `'Report an issue'` | Custom label for the bug flag toggle |
 | `user` | `object` | - | User metadata for segmentation |
 | `onSubmit` | `function` | - | Callback after submission |
 | `onOpen` | `function` | - | Callback when modal opens |
@@ -133,6 +143,40 @@ function FeatureCard() {
   options={["Analytics", "Segments", "Exports", "API"]}
   allowMultiple
   promptText="Which features matter most?"
+/>
+```
+
+### NPS Mode
+
+```tsx
+<Gotcha
+  elementId="nps-survey"
+  mode="nps"
+  npsQuestion="How likely are you to recommend us?"
+  npsLowLabel="Not likely"
+  npsHighLabel="Very likely"
+/>
+```
+
+### Bug Flagging
+
+Add a "Report an issue" toggle to any feedback form. When toggled on, the submission is automatically flagged as a bug and creates a ticket in your dashboard.
+
+```tsx
+<Gotcha
+  elementId="checkout"
+  mode="feedback"
+  enableBugFlag
+/>
+```
+
+```tsx
+// Custom label for non-technical users
+<Gotcha
+  elementId="portal"
+  mode="feedback"
+  enableBugFlag
+  bugFlagLabel="Something isn't working"
 />
 ```
 
@@ -310,12 +354,41 @@ When you provide a `user.id`, users can update their previous feedback instead o
 
 The modal will show "Update" instead of "Submit" when editing, and previous values will be pre-filled.
 
+## GotchaScore Component
+
+Display aggregate feedback scores inline — star ratings, vote percentages, or raw numbers.
+
+```tsx
+import { GotchaScore } from 'gotcha-feedback';
+
+// Star rating display
+<GotchaScore elementId="feature-card" variant="stars" />
+
+// Compact pill (star + number)
+<GotchaScore elementId="feature-card" variant="compact" />
+
+// Vote percentage bar
+<GotchaScore elementId="pricing" variant="votes" />
+
+// Plain number
+<GotchaScore elementId="feature-card" variant="number" />
+```
+
+### GotchaScore Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `elementId` | `string` | Required | Element to show score for |
+| `variant` | `'stars' \| 'number' \| 'compact' \| 'votes'` | `'stars'` | Display variant |
+| `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color theme |
+| `refreshInterval` | `number` | - | Auto-refresh interval in ms |
+
 ## TypeScript
 
 The package includes full TypeScript definitions:
 
 ```tsx
-import type { GotchaProps, GotchaProviderProps } from 'gotcha-feedback';
+import type { GotchaProps, GotchaProviderProps, ScoreData } from 'gotcha-feedback';
 ```
 
 ## Requirements

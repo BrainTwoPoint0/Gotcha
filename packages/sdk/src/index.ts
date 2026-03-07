@@ -1,6 +1,7 @@
 // Components
 export { GotchaProvider } from './components/GotchaProvider';
 export { Gotcha } from './components/Gotcha';
+export { GotchaScore } from './components/GotchaScore';
 
 // Hooks
 export { useGotcha } from './hooks/useGotcha';
@@ -17,8 +18,10 @@ export type {
   GotchaStyles,
   GotchaResponse,
   GotchaError,
+  ScoreData,
 } from './types';
 
 // Props type
 export type { GotchaProps } from './components/Gotcha';
 export type { GotchaProviderProps } from './components/GotchaProvider';
+export type { GotchaScoreProps } from './components/GotchaScore';

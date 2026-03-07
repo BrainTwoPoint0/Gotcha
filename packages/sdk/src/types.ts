@@ -2,7 +2,7 @@
 // RESPONSE MODES
 // ============================================
 
-export type ResponseMode = 'feedback' | 'vote' | 'poll';
+export type ResponseMode = 'feedback' | 'vote' | 'poll' | 'nps';
 
 export type VoteType = 'up' | 'down';
 
@@ -47,6 +47,7 @@ export interface SubmitResponsePayload {
   vote?: VoteType;
   pollOptions?: string[];
   pollSelected?: string[];
+  isBug?: boolean;
   user?: GotchaUser;
   context?: {
     url?: string;
@@ -91,3 +92,17 @@ export type ErrorCode =
   | 'INVALID_REQUEST'
   | 'USER_NOT_FOUND'
   | 'INTERNAL_ERROR';
+
+// ============================================
+// SCORE DATA
+// ============================================
+
+export interface ScoreData {
+  elementId: string;
+  averageRating: number | null;
+  totalResponses: number;
+  ratingCount: number;
+  voteCount: { up: number; down: number };
+  positiveRate: number | null;
+  npsScore: number | null;
+}

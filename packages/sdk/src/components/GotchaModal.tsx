@@ -4,6 +4,7 @@ import { cn } from '../utils/cn';
 import { FeedbackMode } from './modes/FeedbackMode';
 import { VoteMode } from './modes/VoteMode';
 import { PollMode } from './modes/PollMode';
+import { NpsMode } from './modes/NpsMode';
 
 export interface GotchaModalProps {
   mode: ResponseMode;
@@ -30,8 +31,17 @@ export interface GotchaModalProps {
   // Poll mode
   options?: string[];
   allowMultiple?: boolean;
+  // NPS mode
+  npsQuestion?: string;
+  npsFollowUp?: boolean;
+  npsFollowUpPlaceholder?: string;
+  npsLowLabel?: string;
+  npsHighLabel?: string;
+  // Bug flagging
+  enableBugFlag?: boolean;
+  bugFlagLabel?: string;
   // Handlers
-  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[] }) => void;
+  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => void;
   onClose: () => void;
   // Position info from parent
   anchorRect?: DOMRect;
@@ -55,6 +65,13 @@ export function GotchaModal({
   voteLabels,
   options,
   allowMultiple = false,
+  npsQuestion,
+  npsFollowUp = true,
+  npsFollowUpPlaceholder,
+  npsLowLabel,
+  npsHighLabel,
+  enableBugFlag = false,
+  bugFlagLabel,
   onSubmit,
   onClose,
   anchorRect,
@@ -136,10 +153,13 @@ export function GotchaModal({
     ? 'What do you think?'
     : mode === 'poll'
     ? 'Cast your vote'
+    : mode === 'nps'
+    ? (npsQuestion || 'How likely are you to recommend us?')
     : 'What do you think of this feature?';
 
   // Responsive sizing - on mobile, use fixed positioning centered on screen
   const modalPadding = isMobile ? 20 : 16;
+  const modalWidth = mode === 'nps' ? 420 : 320;
 
   const layeredShadow = isDark
     ? '0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.2)'
@@ -152,7 +172,7 @@ export function GotchaModal({
         left: '50%',
         top: '50%',
         width: 'calc(100vw - 32px)',
-        maxWidth: 320,
+        maxWidth: modalWidth,
         padding: modalPadding,
         borderRadius: 12,
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
@@ -172,7 +192,7 @@ export function GotchaModal({
         // Desktop: absolute position relative to button
         position: 'absolute',
         left: '50%',
-        width: 320,
+        width: modalWidth,
         padding: modalPadding,
         borderRadius: 10,
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
@@ -336,6 +356,8 @@ export function GotchaModal({
               isEditing={isEditing}
               showText={showText}
               showRating={showRating}
+              enableBugFlag={enableBugFlag}
+              bugFlagLabel={bugFlagLabel}
             />
           )}
           {mode === 'vote' && (
@@ -346,6 +368,24 @@ export function GotchaModal({
               initialVote={existingResponse?.vote || undefined}
               isEditing={isEditing}
               labels={voteLabels}
+            />
+          )}
+          {mode === 'nps' && (
+            <NpsMode
+              theme={resolvedTheme}
+              submitText={submitText}
+              isLoading={isLoading}
+              onSubmit={onSubmit}
+              showFollowUp={npsFollowUp}
+              followUpPlaceholder={npsFollowUpPlaceholder}
+              lowLabel={npsLowLabel}
+              highLabel={npsHighLabel}
+              customStyles={customStyles}
+              initialValues={existingResponse ? {
+                rating: existingResponse.rating,
+                content: existingResponse.content,
+              } : undefined}
+              isEditing={isEditing}
             />
           )}
           {mode === 'poll' && options && options.length > 0 && (

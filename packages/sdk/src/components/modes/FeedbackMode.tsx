@@ -8,7 +8,7 @@ interface FeedbackModeProps {
   placeholder?: string;
   submitText: string;
   isLoading: boolean;
-  onSubmit: (data: { content?: string; rating?: number }) => void;
+  onSubmit: (data: { content?: string; rating?: number; isBug?: boolean }) => void;
   customStyles?: GotchaStyles;
   initialValues?: {
     content?: string | null;
@@ -19,6 +19,10 @@ interface FeedbackModeProps {
   showText?: boolean;
   /** Show the star rating (default: true) */
   showRating?: boolean;
+  /** Show "Report an issue" toggle (default: false) */
+  enableBugFlag?: boolean;
+  /** Custom label for bug flag toggle (default: "Report an issue") */
+  bugFlagLabel?: string;
 }
 
 export function FeedbackMode({
@@ -32,9 +36,12 @@ export function FeedbackMode({
   isEditing = false,
   showText = true,
   showRating = true,
+  enableBugFlag = false,
+  bugFlagLabel,
 }: FeedbackModeProps) {
   const [content, setContent] = useState(initialValues?.content || '');
   const [rating, setRating] = useState<number | null>(initialValues?.rating ?? null);
+  const [isBug, setIsBug] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
@@ -66,6 +73,7 @@ export function FeedbackMode({
     onSubmit({
       content: showText && content.trim() ? content.trim() : undefined,
       rating: showRating && rating !== null ? rating : undefined,
+      isBug: isBug || undefined,
     });
   };
 
@@ -133,6 +141,102 @@ export function FeedbackMode({
             e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
           }}
         />
+      )}
+
+      {/* Bug flag toggle */}
+      {enableBugFlag && (
+        <button
+          type="button"
+          onClick={() => setIsBug(!isBug)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            width: '100%',
+            marginTop: 10,
+            padding: '7px 10px',
+            border: `1px solid ${
+              isBug
+                ? (isDark ? 'rgba(245,158,11,0.3)' : 'rgba(217,119,6,0.25)')
+                : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')
+            }`,
+            borderRadius: 7,
+            backgroundColor: isBug
+              ? (isDark ? 'rgba(245,158,11,0.08)' : 'rgba(251,191,36,0.08)')
+              : 'transparent',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            if (!isBug) {
+              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isBug) {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }
+          }}
+        >
+          {/* Bug icon */}
+          <svg
+            width={14}
+            height={14}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={isBug ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#6b7280' : '#9ca3af')}
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0, transition: 'stroke 0.2s' }}
+          >
+            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: isBug ? 500 : 400,
+              color: isBug
+                ? (isDark ? '#fbbf24' : '#b45309')
+                : (isDark ? '#6b7280' : '#9ca3af'),
+              transition: 'color 0.2s',
+              letterSpacing: '0.01em',
+            }}
+          >
+            {isBug ? 'Issue reported' : (bugFlagLabel || 'Report an issue')}
+          </span>
+          {/* Toggle indicator */}
+          <div
+            style={{
+              marginLeft: 'auto',
+              width: 28,
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: isBug
+                ? (isDark ? '#f59e0b' : '#d97706')
+                : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+              position: 'relative',
+              transition: 'background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 2,
+                left: isBug ? 14 : 2,
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: isBug
+                  ? '#ffffff'
+                  : (isDark ? '#4b5563' : '#d1d5db'),
+                transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+              }}
+            />
+          </div>
+        </button>
       )}
 
       {/* Submit button */}

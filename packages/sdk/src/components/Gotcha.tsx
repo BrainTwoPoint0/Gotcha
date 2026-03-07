@@ -47,6 +47,18 @@ export interface GotchaProps {
   /** Show results after voting */
   showResults?: boolean;
 
+  // NPS mode specific
+  /** Custom NPS question (default: "How likely are you to recommend us?") */
+  npsQuestion?: string;
+  /** Show follow-up textarea after score selection (default: true) */
+  npsFollowUp?: boolean;
+  /** Placeholder for NPS follow-up textarea */
+  npsFollowUpPlaceholder?: string;
+  /** Label for low end of NPS scale (default: "Not likely") */
+  npsLowLabel?: string;
+  /** Label for high end of NPS scale (default: "Very likely") */
+  npsHighLabel?: string;
+
   // Appearance
   /** Button position relative to parent */
   position?: Position;
@@ -73,6 +85,16 @@ export interface GotchaProps {
   /** Post-submission message */
   thankYouMessage?: string;
 
+  // Bug flagging
+  /** Show "Report an issue" toggle in feedback form (default: false) */
+  enableBugFlag?: boolean;
+  /** Custom label for the bug flag toggle (default: "Report an issue") */
+  bugFlagLabel?: string;
+
+  // Deduplication
+  /** When true and user has already responded, show submitted state and allow review/edit instead of new submission */
+  onePerUser?: boolean;
+
   // Callbacks
   /** Called after successful submission */
   onSubmit?: (response: GotchaResponse) => void;
@@ -94,6 +116,14 @@ export function Gotcha({
   options,
   allowMultiple = false,
   showResults = true,
+  npsQuestion,
+  npsFollowUp = true,
+  npsFollowUpPlaceholder,
+  npsLowLabel,
+  npsHighLabel,
+  enableBugFlag = false,
+  bugFlagLabel,
+  onePerUser = false,
   position = DEFAULTS.POSITION,
   size = DEFAULTS.SIZE,
   theme = DEFAULTS.THEME,
@@ -110,7 +140,7 @@ export function Gotcha({
   onClose,
   onError,
 }: GotchaProps) {
-  const { disabled, activeModalId, openModal, closeModal } = useGotchaContext();
+  const { disabled, activeModalId, openModal, closeModal, client } = useGotchaContext();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isParentHovered, setIsParentHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
@@ -156,7 +186,6 @@ export function Gotcha({
     onSuccess: (response) => {
       setIsSubmitted(true);
       onSubmit?.(response);
-      // Auto-close after 1.5 seconds
       setTimeout(() => {
         closeModal();
         setIsSubmitted(false);
@@ -183,11 +212,14 @@ export function Gotcha({
   }, [closeModal, onClose]);
 
   const handleSubmit = useCallback(
-    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[] }) => {
+    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => {
       submit(data);
     },
     [submit]
   );
+
+  // Resolve submit text — show "Update" when editing in onePerUser mode
+  const effectiveSubmitText = isEditing ? 'Update' : submitText;
 
   // Don't render if disabled or not visible
   if (disabled || !visible) return null;
@@ -229,7 +261,7 @@ export function Gotcha({
           customStyles={customStyles}
           promptText={promptText}
           placeholder={placeholder}
-          submitText={submitText}
+          submitText={effectiveSubmitText}
           thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
           isLoading={isLoading}
           isSubmitted={isSubmitted}
@@ -241,6 +273,13 @@ export function Gotcha({
           voteLabels={voteLabels}
           options={options}
           allowMultiple={allowMultiple}
+          npsQuestion={npsQuestion}
+          npsFollowUp={npsFollowUp}
+          npsFollowUpPlaceholder={npsFollowUpPlaceholder}
+          npsLowLabel={npsLowLabel}
+          npsHighLabel={npsHighLabel}
+          enableBugFlag={enableBugFlag}
+          bugFlagLabel={bugFlagLabel}
           onSubmit={handleSubmit}
           onClose={handleClose}
           anchorRect={anchorRect || undefined}
@@ -266,7 +305,7 @@ export function Gotcha({
               customStyles={customStyles}
               promptText={promptText}
               placeholder={placeholder}
-              submitText={submitText}
+              submitText={effectiveSubmitText}
               thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
               isLoading={isLoading}
               isSubmitted={isSubmitted}
@@ -278,6 +317,11 @@ export function Gotcha({
               voteLabels={voteLabels}
               options={options}
               allowMultiple={allowMultiple}
+              npsQuestion={npsQuestion}
+              npsFollowUp={npsFollowUp}
+              npsFollowUpPlaceholder={npsFollowUpPlaceholder}
+              enableBugFlag={enableBugFlag}
+              bugFlagLabel={bugFlagLabel}
               onSubmit={handleSubmit}
               onClose={handleClose}
               anchorRect={anchorRect || undefined}

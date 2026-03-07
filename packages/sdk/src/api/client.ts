@@ -1,5 +1,5 @@
 import { API_BASE_URL, RETRY_CONFIG } from '../constants';
-import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType } from '../types';
+import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType, ScoreData } from '../types';
 import { getAnonymousId } from '../utils/anonymous';
 
 interface ApiClientConfig {
@@ -142,6 +142,8 @@ export function createApiClient(config: ApiClientConfig) {
           url: typeof window !== 'undefined' ? window.location.href : undefined,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
         },
+        // Only include isBug if true
+        ...(payload.isBug ? { isBug: true } : {}),
       };
 
       return request<GotchaResponse>('POST', '/responses', fullPayload);
@@ -236,6 +238,80 @@ export function createApiClient(config: ApiClientConfig) {
       }
 
       return data as GotchaResponse;
+    },
+
+    /**
+     * Get aggregate score data for an element
+     */
+    async getScore(elementId: string): Promise<ScoreData> {
+      const url = `${baseUrl}/scores/${encodeURIComponent(elementId)}`;
+
+      if (debug) {
+        console.log(`[Gotcha] GET /scores/${elementId}`);
+      }
+
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'GET',
+          headers,
+        },
+        DEFAULT_RETRY_CONFIG,
+        debug
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = data.error as GotchaError;
+        if (debug) {
+          console.error(`[Gotcha] Error: ${error.code} - ${error.message}`);
+        }
+        throw error;
+      }
+
+      if (debug) {
+        console.log(`[Gotcha] Score:`, data);
+      }
+
+      return data as ScoreData;
+    },
+
+    /**
+     * Flag a response as a bug report
+     */
+    async flagAsBug(responseId: string): Promise<{ ticketId: string; status: string }> {
+      const url = `${baseUrl}/responses/${encodeURIComponent(responseId)}/bug`;
+
+      if (debug) {
+        console.log(`[Gotcha] POST /responses/${responseId}/bug`);
+      }
+
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'POST',
+          headers,
+        },
+        DEFAULT_RETRY_CONFIG,
+        debug
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = data.error as GotchaError;
+        if (debug) {
+          console.error(`[Gotcha] Error: ${error.code} - ${error.message}`);
+        }
+        throw error;
+      }
+
+      if (debug) {
+        console.log(`[Gotcha] Bug flagged:`, data);
+      }
+
+      return data as { ticketId: string; status: string };
     },
 
     /**
