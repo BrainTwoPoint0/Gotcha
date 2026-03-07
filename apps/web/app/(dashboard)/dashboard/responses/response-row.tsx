@@ -29,6 +29,10 @@ const MODE_CONFIG: Record<string, { label: string; className: string }> = {
     label: 'A/B',
     className: 'bg-rose-50/80 text-rose-700 border-rose-200/60',
   },
+  NPS: {
+    label: 'NPS',
+    className: 'bg-teal-50/80 text-teal-700 border-teal-200/60',
+  },
 };
 
 interface ResponseRowProps {
@@ -219,7 +223,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
             className="overflow-hidden transition-all duration-200 ease-out"
             style={{ maxHeight: expanded ? `${height + 32}px` : '0px' }}
           >
-            <div className="px-6 py-4 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
+            <div className="px-3 py-3 sm:px-6 sm:py-4 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
               <div className="max-w-2xl space-y-3">
                 {/* Rating detail */}
                 {response.rating && (
@@ -289,7 +293,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 <Separator className="my-2" />
 
                 {/* Metadata row */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <div className="flex items-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-300">
                       <path d="M6 3V6L8 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
@@ -299,8 +303,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                       {formatDateLong(new Date(response.createdAt))}
                     </span>
                   </div>
-                  <span className="text-gray-200">·</span>
-                  <code className="text-[11px] text-gray-400 font-mono">{response.elementIdRaw}</code>
+                  <code className="text-[11px] text-gray-400 font-mono break-all">{response.elementIdRaw}</code>
                 </div>
 
                 {/* Tags */}

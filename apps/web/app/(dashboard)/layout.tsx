@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Footer } from '../components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MobileMoreMenu } from './mobile-more-menu';
+import { WorkspaceSwitcher } from './workspace-switcher';
+import { getActiveOrganization, getUserWorkspaces } from '@/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -15,15 +18,32 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login');
   }
 
+  // Get active workspace and all workspaces for the switcher
+  const [activeOrg, workspaces] = await Promise.all([
+    getActiveOrganization(user.email!),
+    getUserWorkspaces(user.email!),
+  ]);
+  const isPro = activeOrg?.isPro ?? false;
+  const proBadge = isPro ? undefined : 'Pro';
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Top Navigation */}
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-30">
         <div className="h-full px-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-xl font-bold text-gray-900">
               Gotcha
             </Link>
+            {activeOrg && workspaces.length > 0 && (
+              <>
+                <span className="text-gray-300">/</span>
+                <WorkspaceSwitcher
+                  workspaces={workspaces}
+                  activeId={activeOrg.organization.id}
+                />
+              </>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 hidden sm:inline">{user.email}</span>
@@ -48,11 +68,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <NavLink href="/dashboard/responses" icon={MessageIcon}>
             All Responses
           </NavLink>
-          <NavLink href="/dashboard/analytics" icon={ChartIcon} badge="Pro">
+          <NavLink href="/dashboard/analytics" icon={ChartIcon} badge={proBadge}>
             Analytics
           </NavLink>
-          <NavLink href="/dashboard/analytics/segments" icon={SegmentIcon} badge="Pro">
+          <NavLink href="/dashboard/analytics/segments" icon={SegmentIcon} badge={proBadge}>
             Segments
+          </NavLink>
+          <NavLink href="/dashboard/bugs" icon={BugIcon} badge={proBadge}>
+            Bugs
           </NavLink>
           <NavLink href="/dashboard/settings" icon={SettingsIcon}>
             Settings
@@ -62,18 +85,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-30">
-        <div className="h-full grid grid-cols-5">
+        <div className="h-full grid grid-cols-4">
           <MobileNavLink href="/dashboard" icon={HomeIcon} label="Home" />
-          <MobileNavLink href="/dashboard/projects" icon={FolderIcon} label="Projects" />
           <MobileNavLink href="/dashboard/responses" icon={MessageIcon} label="Responses" />
           <MobileNavLink href="/dashboard/analytics" icon={ChartIcon} label="Analytics" />
-          <MobileNavLink href="/dashboard/settings" icon={SettingsIcon} label="Settings" />
+          <MobileMoreMenu
+            items={[
+              { href: '/dashboard/projects', label: 'Projects', icon: <FolderIcon className="w-5 h-5" /> },
+              { href: '/dashboard/bugs', label: 'Bugs', icon: <BugIcon className="w-5 h-5" /> },
+              { href: '/dashboard/analytics/segments', label: 'Segments', icon: <SegmentIcon className="w-5 h-5" /> },
+              { href: '/dashboard/settings', label: 'Settings', icon: <SettingsIcon className="w-5 h-5" /> },
+            ]}
+          />
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="pt-16 pb-20 md:pb-0 md:pl-64 min-h-screen flex flex-col">
-        <div className="p-4 md:p-8 flex-1">{children}</div>
+        <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
         <Footer />
       </main>
     </div>
@@ -121,8 +150,8 @@ function MobileNavLink({
       href={href}
       className="flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-gray-900"
     >
-      <Icon className="w-5 h-5" />
-      <span className="text-xs">{label}</span>
+      <Icon className="w-[18px] h-[18px]" />
+      <span className="text-[10px] leading-tight">{label}</span>
     </Link>
   );
 }
@@ -249,6 +278,24 @@ function SegmentIcon({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+      />
+    </svg>
+  );
+}
+
+function BugIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
       />
     </svg>
   );

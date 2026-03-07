@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveOrganization } from '@/lib/auth';
 import { ResponsesFilter } from './responses-filter';
 import { Pagination } from './pagination';
 import { ExportButton } from './export-button';
@@ -56,23 +57,12 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const dbUser = user
     ? await prisma.user.findUnique({
         where: { email: user.email! },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: {
-                  subscription: true,
-                },
-              },
-            },
-          },
-        },
       })
     : null;
 
-  const organization = dbUser?.memberships[0]?.organization;
-  const subscription = organization?.subscription;
-  const isPro = subscription?.plan === 'PRO';
+  const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
+  const organization = activeOrg?.organization;
+  const isPro = activeOrg?.isPro ?? false;
 
   // Parse pagination
   const page = Math.max(1, parseInt(params.page || '1', 10));
@@ -260,14 +250,14 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           </p>
         </Card>
       ) : (
-        <Card>
+        <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="table-fixed w-full">
+            <Table className="table-fixed w-full min-w-0">
               <colgroup>
-                <col className="w-[60%] sm:w-[30%]" />
+                <col className="w-[70%] sm:w-[30%]" />
                 <col className="hidden sm:table-column sm:w-[15%]" />
                 <col className="hidden sm:table-column sm:w-[10%]" />
-                <col className="w-[40%] sm:w-[10%]" />
+                <col className="w-[30%] sm:w-[10%]" />
                 <col className="hidden md:table-column md:w-[20%]" />
                 <col className="hidden sm:table-column sm:w-[15%]" />
               </colgroup>
