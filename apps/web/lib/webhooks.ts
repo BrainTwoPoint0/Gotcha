@@ -5,7 +5,7 @@ const TIMEOUT_MS = 10_000;
 const MAX_FAILURES = 10;
 
 // SSRF protection: block requests to private/internal IP ranges
-function isPrivateUrl(urlString: string): boolean {
+export function isPrivateUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
     const hostname = url.hostname.toLowerCase();

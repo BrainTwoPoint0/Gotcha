@@ -28,7 +28,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organization, isPro } = activeOrg;
+    const { organization, isPro, membership } = activeOrg;
+
+    if (membership.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot modify tags' }, { status: 403 });
+    }
 
     // PRO only
     if (!isPro) {

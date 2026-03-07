@@ -27,7 +27,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organization } = activeOrg;
+    const { organization, membership } = activeOrg;
+
+    if (membership.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot update response status' }, { status: 403 });
+    }
 
     // Validate body
     const body = await request.json();

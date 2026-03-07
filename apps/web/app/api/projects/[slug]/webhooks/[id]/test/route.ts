@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
-import { generateSignature, formatSlackPayload, formatDiscordPayload } from '@/lib/webhooks';
+import { generateSignature, formatSlackPayload, formatDiscordPayload, isPrivateUrl } from '@/lib/webhooks';
 
 export async function POST(
   request: NextRequest,
@@ -25,6 +25,10 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (activeOrg.membership.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot test webhooks' }, { status: 403 });
+    }
+
     const project = await prisma.project.findFirst({
       where: { slug, organizationId: activeOrg.organization.id },
     });
@@ -39,6 +43,10 @@ export async function POST(
 
     if (!webhook) {
       return NextResponse.json({ error: 'Webhook not found' }, { status: 404 });
+    }
+
+    if (isPrivateUrl(webhook.url)) {
+      return NextResponse.json({ error: 'Webhook URL points to a private/internal address' }, { status: 400 });
     }
 
     const testPayload = {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
+import { isPrivateUrl } from '@/lib/webhooks';
 import { z } from 'zod';
 
 const updateWebhookSchema = z.object({
@@ -34,7 +35,7 @@ async function getOrgProjectWebhook(request: NextRequest, slug: string, webhookI
 
   if (!webhook) return null;
 
-  return { organization: activeOrg.organization, project, webhook };
+  return { organization: activeOrg.organization, project, webhook, role: activeOrg.membership.role };
 }
 
 export async function PATCH(
@@ -49,6 +50,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    if (result.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot modify webhooks' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = updateWebhookSchema.safeParse(body);
 
@@ -60,6 +65,10 @@ export async function PATCH(
     }
 
     const data = validation.data;
+
+    if (data.url && isPrivateUrl(data.url)) {
+      return NextResponse.json({ error: 'Webhook URL cannot point to a private/internal address' }, { status: 400 });
+    }
 
     // If re-enabling, reset failure count
     const updates: Record<string, unknown> = { ...data };
@@ -100,6 +109,10 @@ export async function DELETE(
 
     if (!result) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    if (result.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot delete webhooks' }, { status: 403 });
     }
 
     await prisma.webhook.delete({ where: { id } });

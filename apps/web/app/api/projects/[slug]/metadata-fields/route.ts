@@ -37,7 +37,8 @@ async function getUserOrganization(request: NextRequest) {
   }
 
   const activeOrg = await getActiveOrganization(user.email);
-  return activeOrg?.organization || null;
+  if (!activeOrg) return null;
+  return { ...activeOrg.organization, role: activeOrg.membership.role };
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -76,6 +77,10 @@ export async function POST(
 
     if (!organization) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (organization.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot create metadata fields' }, { status: 403 });
     }
 
     const project = await getProjectFromSlug(slug, organization.id);
@@ -136,6 +141,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (organization.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot modify metadata fields' }, { status: 403 });
+    }
+
     const project = await getProjectFromSlug(slug, organization.id);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -193,6 +202,10 @@ export async function DELETE(
 
     if (!organization) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (organization.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot delete metadata fields' }, { status: 403 });
     }
 
     const project = await getProjectFromSlug(slug, organization.id);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
-import { generateSecret } from '@/lib/webhooks';
+import { generateSecret, isPrivateUrl } from '@/lib/webhooks';
 import { z } from 'zod';
 
 const VALID_EVENTS = ['response.created'];
@@ -31,7 +31,7 @@ async function getOrgAndProject(request: NextRequest, slug: string) {
 
   if (!project) return null;
 
-  return { organization: activeOrg.organization, project, isPro: activeOrg.isPro };
+  return { organization: activeOrg.organization, project, isPro: activeOrg.isPro, role: activeOrg.membership.role };
 }
 
 export async function GET(
@@ -90,6 +90,10 @@ export async function POST(
       return NextResponse.json({ error: 'PRO plan required' }, { status: 403 });
     }
 
+    if (result.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot create webhooks' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = createWebhookSchema.safeParse(body);
 
@@ -98,6 +102,10 @@ export async function POST(
         { error: validation.error.issues[0]?.message || 'Invalid request' },
         { status: 400 }
       );
+    }
+
+    if (isPrivateUrl(validation.data.url)) {
+      return NextResponse.json({ error: 'Webhook URL cannot point to a private/internal address' }, { status: 400 });
     }
 
     const webhookType = validation.data.type;
