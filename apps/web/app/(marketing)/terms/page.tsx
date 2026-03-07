@@ -9,7 +9,7 @@ export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Terms of Service</h1>
-      <p className="text-sm text-gray-500 mb-8">Last updated: February 21, 2026</p>
+      <p className="text-sm text-gray-500 mb-8">Last updated: March 7, 2026</p>
 
       <div className="prose prose-gray max-w-none">
         <h2>1. Acceptance of Terms</h2>
@@ -22,8 +22,9 @@ export default function TermsPage() {
         <h2>2. Description of Service</h2>
         <p>
           Gotcha provides a contextual feedback SDK for React applications and an associated
-          dashboard for viewing and analyzing feedback responses. The Service includes the
-          gotcha-feedback npm package and the gotcha.cx web application.
+          dashboard for viewing and analyzing feedback responses, NPS scores, and bug reports.
+          The Service includes the gotcha-feedback npm package, the gotcha.cx web application,
+          team collaboration features, webhook integrations, and data export/deletion APIs.
         </p>
 
         <h2>3. Accounts</h2>
@@ -77,14 +78,38 @@ export default function TermsPage() {
           been compromised.
         </p>
 
-        <h2>8. Availability and Support</h2>
+        <h2>8. Teams &amp; Organizations</h2>
+        <p>
+          Organization owners are responsible for the actions of all members they invite.
+          You may assign roles (Owner, Admin, Member, Viewer) to control access levels.
+          Owners are responsible for managing team membership and revoking access when
+          appropriate.
+        </p>
+
+        <h2>9. Webhooks</h2>
+        <p>
+          You may configure webhooks to deliver feedback data to external endpoints. You are
+          solely responsible for the security, availability, and compliance of those endpoints.
+          We are not liable for data delivered to webhook URLs you configure. We reserve the
+          right to block webhook delivery to URLs that pose a security risk.
+        </p>
+
+        <h2>10. Data Export &amp; Deletion</h2>
+        <p>
+          We provide API endpoints for exporting and deleting end-user feedback data scoped
+          to individual projects. You are responsible for using these APIs to fulfill data
+          subject requests from your own end users in compliance with applicable data
+          protection laws.
+        </p>
+
+        <h2>11. Availability and Support</h2>
         <p>
           We strive to maintain high availability but do not guarantee uninterrupted access. We may
           perform maintenance that temporarily affects the Service. We provide support via email on
           a best-effort basis.
         </p>
 
-        <h2>9. Limitation of Liability</h2>
+        <h2>12. Limitation of Liability</h2>
         <p>
           To the maximum extent permitted by law, Gotcha shall not be liable for any indirect,
           incidental, special, consequential, or punitive damages, or any loss of profits or
@@ -93,27 +118,27 @@ export default function TermsPage() {
           preceding the claim.
         </p>
 
-        <h2>10. Indemnification</h2>
+        <h2>13. Indemnification</h2>
         <p>
           You agree to indemnify and hold harmless Gotcha from any claims, damages, or expenses
           arising from your use of the Service or your violation of these Terms.
         </p>
 
-        <h2>11. Termination</h2>
+        <h2>14. Termination</h2>
         <p>
           We may suspend or terminate your access to the Service at any time for violations of these
           Terms. Upon termination, your right to use the Service ceases immediately. We will make
           your data available for export for 30 days after termination.
         </p>
 
-        <h2>12. Changes to Terms</h2>
+        <h2>15. Changes to Terms</h2>
         <p>
           We may update these Terms from time to time. We will notify you of material changes by
           posting the updated terms on this page. Continued use of the Service after changes
           constitutes acceptance of the new terms.
         </p>
 
-        <h2>13. Contact Us</h2>
+        <h2>16. Contact Us</h2>
         <p>
           If you have questions about these Terms, contact us at{' '}
           <a href="mailto:info@braintwopoint0.com">info@braintwopoint0.com</a>.
