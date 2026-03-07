@@ -96,6 +96,87 @@ export function formatDiscordPayload(
   };
 }
 
+// --- Bug-specific formatters ---
+
+export function formatSlackBugPayload(
+  event: string,
+  payload: Record<string, unknown>
+): Record<string, unknown> {
+  const isResolved = event === 'bug.resolved';
+  const title = String(payload.title || 'Untitled bug');
+  const elementId = payload.elementId || 'unknown';
+
+  const fields: string[] = [];
+  fields.push(`*Element:* \`${elementId}\``);
+  if (payload.priority) fields.push(`*Priority:* ${String(payload.priority)}`);
+  if (payload.status) fields.push(`*Status:* ${String(payload.status)}`);
+  if (payload.pageUrl) fields.push(`*Page:* ${String(payload.pageUrl)}`);
+
+  if (isResolved && payload.resolutionNote) {
+    fields.push(`*Resolution:* ${String(payload.resolutionNote)}`);
+  }
+
+  const emoji = isResolved ? ':white_check_mark:' : ':warning:';
+  const heading = isResolved ? 'Bug resolved' : 'New bug reported';
+
+  return {
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `${emoji} *${heading}*\n*${title}*`,
+        },
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: fields.join('\n'),
+        },
+      },
+    ],
+  };
+}
+
+export function formatDiscordBugPayload(
+  event: string,
+  payload: Record<string, unknown>
+): Record<string, unknown> {
+  const isResolved = event === 'bug.resolved';
+  const title = String(payload.title || 'Untitled bug');
+  const elementId = payload.elementId || 'unknown';
+
+  const embedFields: { name: string; value: string; inline: boolean }[] = [
+    { name: 'Element', value: `\`${elementId}\``, inline: true },
+  ];
+
+  if (payload.priority) {
+    embedFields.push({ name: 'Priority', value: String(payload.priority), inline: true });
+  }
+  if (payload.status) {
+    embedFields.push({ name: 'Status', value: String(payload.status), inline: true });
+  }
+  if (payload.pageUrl) {
+    embedFields.push({ name: 'Page', value: String(payload.pageUrl), inline: false });
+  }
+  if (isResolved && payload.resolutionNote) {
+    embedFields.push({ name: 'Resolution', value: String(payload.resolutionNote), inline: false });
+  }
+
+  return {
+    embeds: [
+      {
+        title: isResolved ? `Bug resolved: ${title}` : `New bug: ${title}`,
+        color: isResolved ? 0x16a34a : 0xf59e0b, // green or amber
+        fields: embedFields,
+        timestamp: new Date().toISOString(),
+        footer: { text: 'Gotcha' },
+      },
+    ],
+  };
+}
+
 // --- Delivery ---
 
 export async function fireWebhooks(
@@ -129,10 +210,20 @@ async function deliverWebhook(
   let body: string;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
+  const isBugEvent = event.startsWith('bug.');
+
   if (webhook.type === 'slack') {
-    body = JSON.stringify(formatSlackPayload(event, payload));
+    body = JSON.stringify(
+      isBugEvent
+        ? formatSlackBugPayload(event, payload)
+        : formatSlackPayload(event, payload)
+    );
   } else if (webhook.type === 'discord') {
-    body = JSON.stringify(formatDiscordPayload(event, payload));
+    body = JSON.stringify(
+      isBugEvent
+        ? formatDiscordBugPayload(event, payload)
+        : formatDiscordPayload(event, payload)
+    );
   } else {
     // custom — raw payload + HMAC signature
     body = JSON.stringify(payload);

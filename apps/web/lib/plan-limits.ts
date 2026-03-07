@@ -52,3 +52,8 @@ export function isOverProjectLimit(plan: string, projectCount: number): boolean 
   if (plan === 'PRO') return false;
   return projectCount >= getProjectLimit(plan);
 }
+
+// Bug feature gating — Pro-only features
+export function canAccessBugFeatures(plan: string): boolean {
+  return plan === 'PRO';
+}

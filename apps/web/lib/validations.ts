@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Response modes
-export const responseModeSchema = z.enum(['feedback', 'vote', 'poll', 'feature-request', 'ab']);
+export const responseModeSchema = z.enum(['feedback', 'vote', 'poll', 'feature-request', 'ab', 'nps']);
 
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);
@@ -36,12 +36,15 @@ export const submitResponseSchema = z
     // Content fields
     content: z.string().max(10000).optional(),
     title: z.string().max(500).optional(),
-    rating: z.number().int().min(1).max(10).optional(),
+    rating: z.number().int().min(0).max(10).optional(),
     vote: voteTypeSchema.optional(),
 
     // Poll specific
     pollOptions: z.array(z.string()).min(2).max(6).optional(),
     pollSelected: z.array(z.string().max(500)).max(6).optional(),
+
+    // Bug flag
+    isBug: z.boolean().optional(),
 
     // User data
     user: userSchema.optional(),
