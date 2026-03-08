@@ -13,7 +13,7 @@ const voteMap: Record<string, VoteType> = {
 const updateResponseSchema = z.object({
   content: z.string().max(10000).optional(),
   title: z.string().max(500).optional(),
-  rating: z.number().min(1).max(5).optional(),
+  rating: z.number().min(0).max(10).optional(),
   vote: z.enum(['up', 'down']).optional(),
   pollSelected: z.array(z.string().max(500)).max(6).optional(),
 });
@@ -99,6 +99,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       POLL: 'poll',
       FEATURE_REQUEST: 'feature-request',
       AB: 'ab',
+      NPS: 'nps',
     };
 
     return Response.json(
@@ -165,6 +166,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       POLL: 'poll',
       FEATURE_REQUEST: 'feature-request',
       AB: 'ab',
+      NPS: 'nps',
     };
 
     return Response.json(

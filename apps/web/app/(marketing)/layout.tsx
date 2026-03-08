@@ -13,7 +13,7 @@ const jsonLd = {
         'A developer-first contextual feedback SDK for React. Add feedback buttons to any UI component with a single line of code.',
       url: 'https://gotcha.cx',
       downloadUrl: 'https://www.npmjs.com/package/gotcha-feedback',
-      softwareVersion: '1.0.19',
+      softwareVersion: '1.1.0',
       author: {
         '@type': 'Organization',
         name: 'Gotcha',
@@ -39,10 +39,16 @@ const jsonLd = {
         'Contextual feedback tied to UI elements',
         'Star ratings and text feedback',
         'Thumbs up/down voting',
-        'Real-time dashboard',
-        'Domain allowlisting for API security',
+        'NPS surveys (0-10 scale)',
+        'Custom polls with single or multi-select',
+        'Bug flagging and tracking',
+        'Team workspaces with roles',
+        'Webhooks (Slack, Discord, custom)',
+        'Export to CSV and JSON',
+        'Real-time analytics dashboard',
+        'User segmentation',
         'TypeScript support',
-        'GDPR compliant',
+        'GDPR compliant with data export and deletion API',
       ],
     },
     {
@@ -53,7 +59,7 @@ const jsonLd = {
           name: 'What is Gotcha?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Gotcha is a React SDK that lets developers add contextual feedback buttons to any UI component. Users can provide star ratings and text feedback directly on the elements they are interacting with.',
+            text: 'Gotcha is a React SDK that lets developers add contextual feedback to any UI component. Collect star ratings, votes, NPS scores, poll responses, and bug reports directly on the elements users interact with.',
           },
         },
         {
@@ -69,7 +75,7 @@ const jsonLd = {
           name: 'What feedback modes does Gotcha support?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Gotcha supports two modes: feedback mode (1-5 star rating with optional text) and vote mode (thumbs up/down with optional comment).',
+            text: 'Gotcha supports four feedback modes: feedback (star ratings with optional text), vote (thumbs up/down), poll (custom multiple-choice), and NPS (0-10 scale with follow-up). Bug flagging can be enabled on any mode.',
           },
         },
         {

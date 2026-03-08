@@ -29,13 +29,6 @@ export const DEFAULTS = {
   THANK_YOU_MESSAGE: 'Thanks for your feedback!',
 } as const;
 
-// Size mappings (desktop/mobile in pixels)
-export const SIZE_MAP = {
-  sm: { desktop: 24, mobile: 44 },
-  md: { desktop: 32, mobile: 44 },
-  lg: { desktop: 40, mobile: 48 },
-} as const;
-
 // Retry config
 export const RETRY_CONFIG = {
   MAX_RETRIES: 2,

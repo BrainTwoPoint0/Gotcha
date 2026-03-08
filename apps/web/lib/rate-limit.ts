@@ -15,23 +15,11 @@ export const rateLimiters = {
     analytics: true,
     prefix: 'gotcha:ratelimit:free',
   }),
-  starter: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(120, '1 m'),
-    analytics: true,
-    prefix: 'gotcha:ratelimit:starter',
-  }),
   pro: new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(300, '1 m'),
     analytics: true,
     prefix: 'gotcha:ratelimit:pro',
-  }),
-  enterprise: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(1000, '1 m'),
-    analytics: true,
-    prefix: 'gotcha:ratelimit:enterprise',
   }),
 };
 
@@ -46,8 +34,7 @@ export async function checkRateLimit(identifier: string, plan: PlanType = 'free'
     remaining,
     resetAt: new Date(reset),
     headers: {
-      'X-RateLimit-Limit':
-        plan === 'free' ? '60' : plan === 'starter' ? '120' : plan === 'pro' ? '300' : '1000',
+      'X-RateLimit-Limit': plan === 'free' ? '60' : '300',
       'X-RateLimit-Remaining': remaining.toString(),
       'X-RateLimit-Reset': reset.toString(),
     },

@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       POLL: 'poll',
       FEATURE_REQUEST: 'feature-request',
       AB: 'ab',
+      NPS: 'nps',
     };
 
     return Response.json(

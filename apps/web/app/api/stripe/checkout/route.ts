@@ -20,7 +20,15 @@ export async function POST(request: NextRequest) {
     if (!activeOrg) {
       return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
-    const { organization } = activeOrg;
+    const { organization, membership } = activeOrg;
+
+    // Only OWNER and ADMIN can manage billing
+    if (membership.role !== 'OWNER' && membership.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Only owners and admins can manage billing' },
+        { status: 403 }
+      );
+    }
 
     // Fetch full subscription (including stripeCustomerId)
     const subscription = await prisma.subscription.findUnique({

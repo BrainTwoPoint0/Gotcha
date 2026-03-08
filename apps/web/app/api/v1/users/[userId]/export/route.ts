@@ -13,6 +13,7 @@ const modeMap: Record<string, string> = {
   POLL: 'poll',
   FEATURE_REQUEST: 'feature-request',
   AB: 'ab',
+  NPS: 'nps',
 };
 
 // GET /api/v1/users/:userId/export - Export all user data (GDPR right to data portability)

@@ -80,7 +80,7 @@ export default function HomePage() {
               <ul className="space-y-3 text-gray-600">
                 <li>From $0/month</li>
                 <li>5 minutes to integrate</li>
-                <li>NPS, bug tracking, and 5 feedback modes</li>
+                <li>NPS, bug tracking, and 4 feedback modes</li>
                 <li>Webhooks to Slack, Discord & more</li>
                 <li>Team workspaces, export, and analytics</li>
               </ul>

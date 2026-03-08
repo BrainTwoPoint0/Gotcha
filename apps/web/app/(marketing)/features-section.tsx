@@ -21,7 +21,7 @@ const features = [
   {
     title: 'Ratings, Votes, NPS, Polls & Bugs',
     description:
-      'Star ratings, thumbs up/down, NPS scores, custom polls, and bug reports. Five modes to match any use case.',
+      'Star ratings, thumbs up/down, NPS scores, custom polls, and bug reports. Four modes plus bug flagging.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -81,7 +81,7 @@ const features = [
   {
     title: 'Built for How You Already Work',
     description:
-      'TypeScript, React hooks, customizable themes, and full API access. ~15KB minified.',
+      'TypeScript, React hooks, customizable themes, and full API access. ~11KB gzipped.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path

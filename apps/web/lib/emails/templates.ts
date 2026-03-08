@@ -23,13 +23,6 @@ interface UsageWarningEmailProps {
   percentage: number;
 }
 
-interface ResponseAlertEmailProps {
-  name: string;
-  projectName: string;
-  responseType: string;
-  content: string | null;
-}
-
 interface BugReportEmailProps {
   name: string;
   projectName: string;
@@ -173,50 +166,6 @@ export function usageWarningEmail({ name, current, limit, percentage }: UsageWar
         <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
           Pro gives you unlimited responses for just $29/month.
         </p>
-
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The Gotcha Team
-        </p>
-      </div>
-    `,
-  };
-}
-
-export function responseAlertEmail({
-  name,
-  projectName,
-  responseType,
-  content,
-}: ResponseAlertEmailProps): { subject: string; html: string } {
-  const displayName = name || 'there';
-  const typeLabel = responseType.toLowerCase().replace('_', ' ');
-
-  return {
-    subject: `New ${typeLabel} on ${projectName}`,
-    html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #0f172a; margin-bottom: 24px;">New Feedback Received</h1>
-
-        <p>Hey ${escapeHtml(displayName)},</p>
-
-        <p>You received a new <strong>${escapeHtml(typeLabel)}</strong> on <strong>${escapeHtml(projectName)}</strong>:</p>
-
-        ${
-          content
-            ? `
-          <div style="background: #f8fafc; border-left: 4px solid #334155; padding: 16px; margin: 24px 0;">
-            <p style="margin: 0; color: #334155;">"${escapeHtml(content)}"</p>
-          </div>
-        `
-            : `
-          <p style="color: #6b7280; font-style: italic;">No text content provided</p>
-        `
-        }
-
-        <div style="margin-top: 32px;">
-          <a href="https://gotcha.cx/dashboard/responses" style="${buttonStyles}">View All Responses</a>
-        </div>
 
         <p style="margin-top: 24px;">
           Cheers,<br/>

@@ -1,9 +1,4 @@
-import {
-  welcomeEmail,
-  proActivatedEmail,
-  usageWarningEmail,
-  responseAlertEmail,
-} from '@/lib/emails/templates';
+import { welcomeEmail, proActivatedEmail, usageWarningEmail } from '@/lib/emails/templates';
 
 describe('Email Templates', () => {
   describe('welcomeEmail', () => {
@@ -110,67 +105,6 @@ describe('Email Templates', () => {
       });
 
       expect(result.html).toContain("won't be recorded");
-    });
-  });
-
-  describe('responseAlertEmail', () => {
-    it('should generate response alert with content', () => {
-      const result = responseAlertEmail({
-        name: 'Alice',
-        projectName: 'My App',
-        responseType: 'FEEDBACK',
-        content: 'Great feature!',
-      });
-
-      expect(result.subject).toBe('New feedback on My App');
-      expect(result.html).toContain('Hey Alice');
-      expect(result.html).toContain('My App');
-      expect(result.html).toContain('Great feature!');
-    });
-
-    it('should use fallback when name is empty', () => {
-      const result = responseAlertEmail({
-        name: '',
-        projectName: 'Test Project',
-        responseType: 'VOTE',
-        content: null,
-      });
-
-      expect(result.html).toContain('Hey there');
-    });
-
-    it('should format response type correctly', () => {
-      const result = responseAlertEmail({
-        name: 'Test',
-        projectName: 'App',
-        responseType: 'FEATURE_REQUEST',
-        content: 'Need dark mode',
-      });
-
-      expect(result.subject).toBe('New feature request on App');
-      expect(result.html).toContain('feature request');
-    });
-
-    it('should handle null content', () => {
-      const result = responseAlertEmail({
-        name: 'Test',
-        projectName: 'App',
-        responseType: 'VOTE',
-        content: null,
-      });
-
-      expect(result.html).toContain('No text content provided');
-    });
-
-    it('should include view responses link', () => {
-      const result = responseAlertEmail({
-        name: 'Test',
-        projectName: 'App',
-        responseType: 'FEEDBACK',
-        content: 'Test',
-      });
-
-      expect(result.html).toContain('https://gotcha.cx/dashboard/responses');
     });
   });
 });

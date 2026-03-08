@@ -41,7 +41,7 @@ export default function TermsPage() {
           </li>
           <li>
             <strong>Pro plan:</strong> Unlimited responses, unlimited projects, advanced analytics —
-            $29/month or $290/year
+            $29/month or $288/year ($24/month billed annually)
           </li>
         </ul>
         <p>

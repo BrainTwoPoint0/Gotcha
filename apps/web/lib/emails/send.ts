@@ -4,7 +4,6 @@ import {
   welcomeEmail,
   proActivatedEmail,
   usageWarningEmail,
-  responseAlertEmail,
   bugReportEmail,
   bugResolutionEmail,
   inviteEmail,
@@ -13,13 +12,6 @@ import {
 interface User {
   email: string;
   name: string | null;
-}
-
-interface ResponseData {
-  mode: string;
-  content: string | null;
-  title: string | null;
-  projectId: string;
 }
 
 interface BugData {
@@ -128,43 +120,6 @@ export async function sendUsageWarningEmail(
     console.log(`Usage warning email sent to ${owner.email}`);
   } catch (error) {
     console.error('Failed to send usage warning email:', error);
-  }
-}
-
-export async function sendResponseAlertEmail(
-  organizationId: string,
-  response: ResponseData
-): Promise<void> {
-  try {
-    const owner = await getOrganizationOwner(organizationId);
-    if (!owner) {
-      console.error('No owner found for organization:', organizationId);
-      return;
-    }
-
-    // Get project name
-    const project = await prisma.project.findUnique({
-      where: { id: response.projectId },
-      select: { name: true },
-    });
-
-    const { subject, html } = responseAlertEmail({
-      name: owner.name || '',
-      projectName: project?.name || 'Unknown Project',
-      responseType: response.mode,
-      content: response.content || response.title,
-    });
-
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: owner.email,
-      subject,
-      html,
-    });
-
-    console.log(`Response alert email sent to ${owner.email}`);
-  } catch (error) {
-    console.error('Failed to send response alert email:', error);
   }
 }
 

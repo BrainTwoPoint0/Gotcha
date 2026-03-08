@@ -49,7 +49,7 @@ function FeatureCard() {
 - **Customizable** - Themes, sizes, positions
 - **Accessible** - Full keyboard navigation and screen reader support
 - **Animated** - Smooth enter/exit animations with CSS transitions
-- **Lightweight** - ~15KB minified
+- **Lightweight** - ~11KB gzipped
 
 ## Props
 
