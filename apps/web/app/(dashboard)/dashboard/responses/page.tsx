@@ -258,15 +258,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="table-fixed w-full min-w-0">
-              <colgroup>
-                <col className="w-[70%] sm:w-[30%]" />
-                <col className="hidden sm:table-column sm:w-[15%]" />
-                <col className="hidden sm:table-column sm:w-[10%]" />
-                <col className="w-[30%] sm:w-[10%]" />
-                <col className="hidden md:table-column md:w-[20%]" />
-                <col className="hidden sm:table-column sm:w-[15%]" />
-              </colgroup>
+            <Table className="w-full min-w-[700px]">
               <TableHeader>
                 <TableRow className="border-b border-gray-200/80">
                   <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">

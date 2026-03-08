@@ -186,7 +186,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         {/* Project */}
         <TableCell
-          className={`hidden sm:table-cell text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {response.project.name}
         </TableCell>
@@ -211,15 +211,15 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         </TableCell>
 
         {/* Element */}
-        <TableCell className={`hidden md:table-cell pl-6 ${isGated ? 'blur-sm select-none' : ''}`}>
-          <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
+        <TableCell className={`hidden md:table-cell pl-6 max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}>
+          <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded truncate block max-w-full">
             {response.elementIdRaw}
           </code>
         </TableCell>
 
         {/* Date */}
         <TableCell
-          className={`hidden sm:table-cell text-sm tabular-nums text-gray-400 ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {formatDate(new Date(response.createdAt))}
         </TableCell>
