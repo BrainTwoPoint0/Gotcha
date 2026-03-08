@@ -78,6 +78,20 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Multiple selections allowed</p>
               </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  NPS Mode
+                  <Gotcha
+                    elementId="mode-test-nps"
+                    mode="nps"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="How likely are you to recommend us?"
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">0-10 Net Promoter Score</p>
+              </div>
             </div>
           </section>
 
@@ -294,6 +308,24 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-slate-200 text-sm">
                   Unlimited projects, priority support, advanced analytics
+                </p>
+              </div>
+
+              {/* NPS example */}
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  NPS Survey
+                  <Gotcha
+                    elementId="example-nps"
+                    mode="nps"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="How likely are you to recommend this product?"
+                  />
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Track Net Promoter Score at any touchpoint in your app.
                 </p>
               </div>
 

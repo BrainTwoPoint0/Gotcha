@@ -6,36 +6,33 @@ import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
 
 const programs = [
   {
-    name: 'Gotcha for Education',
+    name: 'Education',
     icon: '🎓',
-    description: 'For students & universities',
+    description: 'Students & universities',
     benefits: [
-      'Pro features at 50% off',
-      'Special pricing for .edu emails',
-      'Perfect for capstone projects & theses',
-      'Admin dashboard for universities',
+      'Validate thesis projects with real user feedback',
+      'Run usability studies on class assignments',
+      'Collect NPS from beta testers before demo day',
     ],
   },
   {
-    name: 'Gotcha for Startups',
+    name: 'Startups',
     icon: '🚀',
-    description: 'For accelerators & incubators',
+    description: 'Early-stage teams',
     benefits: [
-      '3 months of Pro free',
-      'Cohort dashboard for accelerators',
-      'Investor-ready feedback reports',
-      'Priority onboarding support',
+      'Measure product-market fit with NPS scores',
+      'Prioritize your roadmap with actual user votes',
+      'Export feedback data to share with investors',
     ],
   },
   {
-    name: 'Gotcha for Investors',
-    icon: '📊',
-    description: 'Portfolio-wide visibility',
+    name: 'Product Teams',
+    icon: '🏢',
+    description: 'Growing organizations',
     benefits: [
-      'Custom portfolio pricing',
-      'Dashboard across all portfolio companies',
-      'Aggregated sentiment & feedback trends',
-      'Early warning signals for product issues',
+      'Track satisfaction across features as a team',
+      'Route bug reports and feedback to Slack',
+      'Segment feedback by user type for insights',
     ],
   },
 ];
@@ -91,10 +88,9 @@ export default function PricingPage() {
       <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Special Programs</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Who uses Gotcha?</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Special pricing for students, startups, and investors. Program managers get visibility
-              into their entire cohort.
+              From solo founders to product teams — here&apos;s how people use Gotcha.
             </p>
           </div>
 
@@ -128,12 +124,12 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="mailto:info@braintwopoint0.com"
+                <Link
+                  href="/signup"
                   className="block text-center py-2 px-4 rounded-lg font-medium bg-gray-100 text-gray-900 hover:bg-gray-200 transition"
                 >
-                  Contact Us
-                </a>
+                  Get Started
+                </Link>
               </SpotlightCard>
             ))}
           </div>
@@ -269,9 +265,9 @@ function App() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">What counts as a response?</h3>
               <p className="text-gray-600">
-                A response is any feedback submission from your users - whether it&apos;s a star
-                rating, thumbs up/down vote, poll selection, or written feedback. Each unique
-                submission counts as one response.
+                A response is any feedback submission from your users — whether it&apos;s a star
+                rating, thumbs up/down vote, poll selection, NPS score, bug report, or written
+                feedback. Each unique submission counts as one response.
               </p>
             </div>
             <div>

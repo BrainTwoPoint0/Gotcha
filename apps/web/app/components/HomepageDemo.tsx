@@ -1,6 +1,7 @@
 'use client';
 
 import { Gotcha } from 'gotcha-feedback';
+import Link from 'next/link';
 
 const demos = [
   {
@@ -57,6 +58,11 @@ export function HomepageDemo() {
               <p className="text-sm text-gray-500 text-center">{demo.description}</p>
             </div>
           ))}
+        </div>
+        <div className="text-center mt-8">
+          <Link href="/demo" className="text-slate-600 hover:text-slate-700 font-medium">
+            Plus NPS, bug reports & more →
+          </Link>
         </div>
       </div>
     </section>

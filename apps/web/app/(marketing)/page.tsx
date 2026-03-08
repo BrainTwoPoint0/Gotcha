@@ -31,15 +31,15 @@ export default function HomePage() {
   <App />
 </GotchaProvider>
 
-// Add feedback to any component
-<FeatureCard>
-  <Gotcha elementId="new-feature" />
-</FeatureCard>`}</code>
+// Star ratings, votes, NPS, polls, or bug reports
+<Gotcha elementId="new-feature" />
+<Gotcha elementId="checkout" mode="nps" />
+<Gotcha elementId="search" mode="vote" />`}</code>
             </pre>
           </div>
           <div className="text-center mt-6">
             <Link href="/demo" className="text-slate-400 hover:text-slate-300 font-medium">
-              See it in action →
+              Try the full playground →
             </Link>
           </div>
         </div>
@@ -80,9 +80,9 @@ export default function HomePage() {
               <ul className="space-y-3 text-gray-600">
                 <li>From $0/month</li>
                 <li>5 minutes to integrate</li>
-                <li>We handle maintenance</li>
-                <li>Full analytics included</li>
-                <li>Constantly improving</li>
+                <li>NPS, bug tracking, and 5 feedback modes</li>
+                <li>Webhooks to Slack, Discord & more</li>
+                <li>Team workspaces, export, and analytics</li>
               </ul>
             </div>
           </div>
