@@ -189,7 +189,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         </TableCell>
 
         {/* Element */}
-        <TableCell className={`hidden md:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell className={`hidden md:table-cell pl-6 ${isGated ? 'blur-sm select-none' : ''}`}>
           <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
             {response.elementIdRaw}
           </code>
