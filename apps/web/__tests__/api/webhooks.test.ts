@@ -109,10 +109,7 @@ describe('Webhook Logic', () => {
       const signature = generateSignature(secret, payload);
 
       // Verify it matches manual computation
-      const expected = crypto
-        .createHmac('sha256', secret)
-        .update(payload)
-        .digest('hex');
+      const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
       expect(signature).toBe(expected);
     });
 
@@ -144,15 +141,9 @@ describe('Webhook Logic', () => {
       const signature = generateSignature(secret, payload);
 
       // Simulate receiver verifying
-      const receiverComputed = crypto
-        .createHmac('sha256', secret)
-        .update(payload)
-        .digest('hex');
+      const receiverComputed = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
-      const isValid = crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(receiverComputed)
-      );
+      const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(receiverComputed));
       expect(isValid).toBe(true);
     });
   });
@@ -272,9 +263,7 @@ describe('Webhook Logic', () => {
       ];
 
       const event = 'response.created';
-      const matching = webhooks.filter(
-        (w) => w.active && w.events.includes(event)
-      );
+      const matching = webhooks.filter((w) => w.active && w.events.includes(event));
 
       expect(matching).toHaveLength(1);
       expect(matching[0].id).toBe('1');
@@ -287,9 +276,7 @@ describe('Webhook Logic', () => {
       ];
 
       const event = 'response.created';
-      const matching = webhooks.filter(
-        (w) => w.active && w.events.includes(event)
-      );
+      const matching = webhooks.filter((w) => w.active && w.events.includes(event));
 
       expect(matching).toHaveLength(1);
       expect(matching[0].id).toBe('2');

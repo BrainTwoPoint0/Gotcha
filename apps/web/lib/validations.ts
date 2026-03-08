@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 // Response modes
-export const responseModeSchema = z.enum(['feedback', 'vote', 'poll', 'feature-request', 'ab', 'nps']);
+export const responseModeSchema = z.enum([
+  'feedback',
+  'vote',
+  'poll',
+  'feature-request',
+  'ab',
+  'nps',
+]);
 
 // Vote types
 export const voteTypeSchema = z.enum(['up', 'down']);

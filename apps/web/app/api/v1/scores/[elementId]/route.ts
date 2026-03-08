@@ -12,7 +12,12 @@ export async function GET(
   try {
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
+      return apiError(
+        authResult.error.code,
+        authResult.error.message,
+        authResult.error.status,
+        reqOrigin
+      );
     }
 
     const { apiKey } = authResult;

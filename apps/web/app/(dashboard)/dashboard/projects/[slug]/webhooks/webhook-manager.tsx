@@ -34,10 +34,22 @@ function SlackIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 2447.6 2452.5" xmlns="http://www.w3.org/2000/svg">
       <g clipRule="evenodd" fillRule="evenodd">
-        <path d="m897.4 0c-135.3.1-244.8 109.9-244.7 245.2-.1 135.3 109.5 245.1 244.8 245.2h244.8v-245.1c.1-135.3-109.5-245.1-244.9-245.3.1 0 .1 0 0 0m0 654h-652.6c-135.3.1-244.9 109.9-244.8 245.2-.2 135.3 109.4 245.1 244.7 245.3h652.7c135.3-.1 244.9-109.9 244.8-245.2.1-135.4-109.5-245.2-244.8-245.3z" fill="#36c5f0"/>
-        <path d="m2447.6 899.2c.1-135.3-109.5-245.1-244.8-245.2-135.3.1-244.9 109.9-244.8 245.2v245.3h244.8c135.3-.1 244.9-109.9 244.8-245.3zm-652.7 0v-654c.1-135.2-109.4-245-244.7-245.2-135.3.1-244.9 109.9-244.8 245.2v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.3z" fill="#2eb67d"/>
-        <path d="m1550.1 2452.5c135.3-.1 244.9-109.9 244.8-245.2.1-135.3-109.5-245.1-244.8-245.2h-244.8v245.2c-.1 135.2 109.5 245 244.8 245.2zm0-654.1h652.7c135.3-.1 244.9-109.9 244.8-245.2.2-135.3-109.4-245.1-244.7-245.3h-652.7c-135.3.1-244.9 109.9-244.8 245.2-.1 135.4 109.4 245.2 244.7 245.3z" fill="#ecb22e"/>
-        <path d="m0 1553.2c-.1 135.3 109.5 245.1 244.8 245.2 135.3-.1 244.9-109.9 244.8-245.2v-245.2h-244.8c-135.3.1-244.9 109.9-244.8 245.2zm652.7 0v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.2v-653.9c.2-135.3-109.4-245.1-244.7-245.3-135.4 0-244.9 109.8-244.8 245.1 0 0 0 .1 0 0" fill="#e01e5a"/>
+        <path
+          d="m897.4 0c-135.3.1-244.8 109.9-244.7 245.2-.1 135.3 109.5 245.1 244.8 245.2h244.8v-245.1c.1-135.3-109.5-245.1-244.9-245.3.1 0 .1 0 0 0m0 654h-652.6c-135.3.1-244.9 109.9-244.8 245.2-.2 135.3 109.4 245.1 244.7 245.3h652.7c135.3-.1 244.9-109.9 244.8-245.2.1-135.4-109.5-245.2-244.8-245.3z"
+          fill="#36c5f0"
+        />
+        <path
+          d="m2447.6 899.2c.1-135.3-109.5-245.1-244.8-245.2-135.3.1-244.9 109.9-244.8 245.2v245.3h244.8c135.3-.1 244.9-109.9 244.8-245.3zm-652.7 0v-654c.1-135.2-109.4-245-244.7-245.2-135.3.1-244.9 109.9-244.8 245.2v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.3z"
+          fill="#2eb67d"
+        />
+        <path
+          d="m1550.1 2452.5c135.3-.1 244.9-109.9 244.8-245.2.1-135.3-109.5-245.1-244.8-245.2h-244.8v245.2c-.1 135.2 109.5 245 244.8 245.2zm0-654.1h652.7c135.3-.1 244.9-109.9 244.8-245.2.2-135.3-109.4-245.1-244.7-245.3h-652.7c-135.3.1-244.9 109.9-244.8 245.2-.1 135.4 109.4 245.2 244.7 245.3z"
+          fill="#ecb22e"
+        />
+        <path
+          d="m0 1553.2c-.1 135.3 109.5 245.1 244.8 245.2 135.3-.1 244.9-109.9 244.8-245.2v-245.2h-244.8c-135.3.1-244.9 109.9-244.8 245.2zm652.7 0v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.2v-653.9c.2-135.3-109.4-245.1-244.7-245.3-135.4 0-244.9 109.8-244.8 245.1 0 0 0 .1 0 0"
+          fill="#e01e5a"
+        />
       </g>
     </svg>
   );
@@ -45,15 +57,31 @@ function SlackIcon({ className }: { className?: string }) {
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 127.14 96.36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2.03a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2.03a68.68 68.68 0 0 1-10.87 5.19 77.3 77.3 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53.05s5-12.68 11.45-12.68S54 46.07 53.89 53.05c0 6.95-5.11 12.64-11.44 12.64Zm42.24 0C78.41 65.69 73.25 60 73.25 53.05s5-12.68 11.44-12.68S96.23 46.07 96.12 53.05c0 6.95-5.07 12.64-11.43 12.64Z" fill="#5865F2"/>
+    <svg
+      className={className}
+      viewBox="0 0 127.14 96.36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2.03a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2.03a68.68 68.68 0 0 1-10.87 5.19 77.3 77.3 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53.05s5-12.68 11.45-12.68S54 46.07 53.89 53.05c0 6.95-5.11 12.64-11.44 12.64Zm42.24 0C78.41 65.69 73.25 60 73.25 53.05s5-12.68 11.44-12.68S96.23 46.07 96.12 53.05c0 6.95-5.07 12.64-11.43 12.64Z"
+        fill="#5865F2"
+      />
     </svg>
   );
 }
 
 function WebhookIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
     </svg>
   );
@@ -94,7 +122,9 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const [newDescription, setNewDescription] = useState('');
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<Record<string, { success: boolean; statusCode: number | null; error: string | null } | null>>({});
+  const [testResults, setTestResults] = useState<
+    Record<string, { success: boolean; statusCode: number | null; error: string | null } | null>
+  >({});
 
   useEffect(() => {
     const handler = () => setShowAdd(true);
@@ -196,7 +226,9 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
       return <Badge variant="secondary">Disabled</Badge>;
     }
     if (webhook.failureCount > 0) {
-      return <Badge className="bg-amber-100 text-amber-800">Failing ({webhook.failureCount})</Badge>;
+      return (
+        <Badge className="bg-amber-100 text-amber-800">Failing ({webhook.failureCount})</Badge>
+      );
     }
     return <Badge className="bg-green-100 text-green-800">Active</Badge>;
   };
@@ -243,7 +275,9 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                   className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors"
                 >
                   <Icon className="w-8 h-8 text-gray-700" />
-                  <span className="text-sm font-medium text-gray-900">{TYPE_CONFIG[type].label}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {TYPE_CONFIG[type].label}
+                  </span>
                 </button>
               );
             })}
@@ -259,7 +293,12 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
           <div className="flex items-center gap-2">
             <button onClick={() => setNewType(null)} className="text-gray-400 hover:text-gray-600">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <h3 className="font-medium text-gray-900">
@@ -268,7 +307,11 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
           </div>
           <div className="space-y-1">
             <label className="text-sm text-gray-600">
-              {newType === 'slack' ? 'Slack Webhook URL' : newType === 'discord' ? 'Discord Webhook URL' : 'Endpoint URL'}
+              {newType === 'slack'
+                ? 'Slack Webhook URL'
+                : newType === 'discord'
+                  ? 'Discord Webhook URL'
+                  : 'Endpoint URL'}
             </label>
             <Input
               type="url"
@@ -291,9 +334,17 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
           </p>
           <div className="flex gap-2">
             <Button onClick={createWebhook} disabled={!newUrl || loading === 'create'}>
-              {loading === 'create' ? 'Creating...' : `Create ${TYPE_CONFIG[newType].label} Integration`}
+              {loading === 'create'
+                ? 'Creating...'
+                : `Create ${TYPE_CONFIG[newType].label} Integration`}
             </Button>
-            <Button variant="ghost" onClick={() => { setShowAdd(false); setNewType(null); }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowAdd(false);
+                setNewType(null);
+              }}
+            >
               Cancel
             </Button>
           </div>
@@ -332,17 +383,13 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                     </div>
                     <code className="text-sm text-gray-600 break-all">{webhook.url}</code>
                     <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
-                      <span>
-                        Events: {webhook.events.join(', ')}
-                      </span>
+                      <span>Events: {webhook.events.join(', ')}</span>
                       {webhook.lastTriggeredAt && (
                         <span>
                           Last triggered: {new Date(webhook.lastTriggeredAt).toLocaleDateString()}
                         </span>
                       )}
-                      {webhook.lastStatusCode && (
-                        <span>Last status: {webhook.lastStatusCode}</span>
-                      )}
+                      {webhook.lastStatusCode && <span>Last status: {webhook.lastStatusCode}</span>}
                     </div>
 
                     {/* Test result */}

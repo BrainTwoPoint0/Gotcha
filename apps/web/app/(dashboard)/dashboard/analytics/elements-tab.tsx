@@ -19,8 +19,8 @@ interface ElementBenchmark {
   total: number;
   avgRating: number | null;
   positiveRate: number | null;
-  ratingDelta: number | null;    // vs overall average
-  positiveDelta: number | null;  // vs overall average
+  ratingDelta: number | null; // vs overall average
+  positiveDelta: number | null; // vs overall average
 }
 
 interface Anomaly {
@@ -122,7 +122,15 @@ export function ElementsTab({
     router.push(`/dashboard/analytics?${params.toString()}`);
   };
 
-  const SortHeader = ({ label, sortKey, align = 'right' }: { label: string; sortKey: SortKey; align?: string }) => (
+  const SortHeader = ({
+    label,
+    sortKey,
+    align = 'right',
+  }: {
+    label: string;
+    sortKey: SortKey;
+    align?: string;
+  }) => (
     <TableHead
       className={`text-xs font-medium uppercase tracking-wider text-gray-400 cursor-pointer select-none hover:text-gray-600 transition-colors ${align === 'right' ? 'text-right' : ''}`}
       onClick={() => handleSort(sortKey)}
@@ -154,13 +162,13 @@ export function ElementsTab({
                     <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded text-gray-600 truncate max-w-[200px] sm:max-w-none">
                       {anomaly.elementId}
                     </code>
-                    <span className={`text-[10px] uppercase font-semibold tracking-wider ${style.label}`}>
+                    <span
+                      className={`text-[10px] uppercase font-semibold tracking-wider ${style.label}`}
+                    >
                       {anomaly.severity}
                     </span>
                   </div>
-                  <p className={`text-sm mt-0.5 ${style.text}`}>
-                    {anomaly.description}
-                  </p>
+                  <p className={`text-sm mt-0.5 ${style.text}`}>{anomaly.description}</p>
                 </div>
               </div>
             );
@@ -172,11 +180,13 @@ export function ElementsTab({
       {overallAvgRating !== null && (
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-500">
           <span>
-            Overall avg rating: <span className="font-medium text-gray-900">{overallAvgRating.toFixed(1)}/5</span>
+            Overall avg rating:{' '}
+            <span className="font-medium text-gray-900">{overallAvgRating.toFixed(1)}/5</span>
           </span>
           {overallPositiveRate !== null && (
             <span>
-              Overall positive rate: <span className="font-medium text-gray-900">{overallPositiveRate}%</span>
+              Overall positive rate:{' '}
+              <span className="font-medium text-gray-900">{overallPositiveRate}%</span>
             </span>
           )}
         </div>
@@ -238,13 +248,17 @@ export function ElementsTab({
                       <TableCell className="text-right tabular-nums text-sm text-gray-900">
                         {el.avgRating !== null ? `${el.avgRating}/5` : '-'}
                       </TableCell>
-                      <TableCell className={`text-right tabular-nums text-sm font-medium ${deltaColor(el.ratingDelta)}`}>
+                      <TableCell
+                        className={`text-right tabular-nums text-sm font-medium ${deltaColor(el.ratingDelta)}`}
+                      >
                         {formatDelta(el.ratingDelta)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm text-gray-900">
                         {el.positiveRate !== null ? `${el.positiveRate}%` : '-'}
                       </TableCell>
-                      <TableCell className={`text-right tabular-nums text-sm font-medium ${deltaPctColor(el.positiveDelta)}`}>
+                      <TableCell
+                        className={`text-right tabular-nums text-sm font-medium ${deltaPctColor(el.positiveDelta)}`}
+                      >
                         {formatDelta(el.positiveDelta, 'pp')}
                       </TableCell>
                     </TableRow>

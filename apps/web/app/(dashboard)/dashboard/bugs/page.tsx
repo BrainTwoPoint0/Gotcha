@@ -19,12 +19,36 @@ export const dynamic = 'force-dynamic';
 
 // Linear-style desaturated badge configs
 const STATUS_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
-  OPEN: { label: 'Open', className: 'bg-red-50/80 text-red-700 border-red-200/60', dot: 'bg-red-500' },
-  INVESTIGATING: { label: 'Investigating', className: 'bg-amber-50/80 text-amber-700 border-amber-200/60', dot: 'bg-amber-500' },
-  FIXING: { label: 'Fixing', className: 'bg-blue-50/80 text-blue-700 border-blue-200/60', dot: 'bg-blue-500' },
-  RESOLVED: { label: 'Resolved', className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60', dot: 'bg-emerald-500' },
-  CLOSED: { label: 'Closed', className: 'bg-gray-50 text-gray-500 border-gray-200/60', dot: 'bg-gray-400' },
-  WONT_FIX: { label: "Won't Fix", className: 'bg-gray-50 text-gray-500 border-gray-200/60', dot: 'bg-gray-400' },
+  OPEN: {
+    label: 'Open',
+    className: 'bg-red-50/80 text-red-700 border-red-200/60',
+    dot: 'bg-red-500',
+  },
+  INVESTIGATING: {
+    label: 'Investigating',
+    className: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
+    dot: 'bg-amber-500',
+  },
+  FIXING: {
+    label: 'Fixing',
+    className: 'bg-blue-50/80 text-blue-700 border-blue-200/60',
+    dot: 'bg-blue-500',
+  },
+  RESOLVED: {
+    label: 'Resolved',
+    className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
+    dot: 'bg-emerald-500',
+  },
+  CLOSED: {
+    label: 'Closed',
+    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
+    dot: 'bg-gray-400',
+  },
+  WONT_FIX: {
+    label: "Won't Fix",
+    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
+    dot: 'bg-gray-400',
+  },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
@@ -65,21 +89,29 @@ export default async function BugsPage({ searchParams }: PageProps) {
       <div>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Bug Tickets</h1>
-          <p className="text-gray-600">
-            Track and manage bug reports from user feedback
-          </p>
+          <p className="text-gray-600">Track and manage bug reports from user feedback</p>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
           <div className="mx-auto w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            <svg
+              className="w-8 h-8 text-amber-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+              />
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Unlock Bug Tracking</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Upgrade to Pro to access bug tracking with ticket management, email notifications,
-            and Slack/Discord integration.
+            Upgrade to Pro to access bug tracking with ticket management, email notifications, and
+            Slack/Discord integration.
           </p>
           <Link
             href="/dashboard/settings"
@@ -165,7 +197,11 @@ export default async function BugsPage({ searchParams }: PageProps) {
   const tabs = [
     { key: 'active', label: 'Active', count: activeCount },
     { key: 'RESOLVED', label: 'Resolved', count: countMap['RESOLVED'] || 0 },
-    { key: 'CLOSED', label: 'Closed', count: (countMap['CLOSED'] || 0) + (countMap['WONT_FIX'] || 0) },
+    {
+      key: 'CLOSED',
+      label: 'Closed',
+      count: (countMap['CLOSED'] || 0) + (countMap['WONT_FIX'] || 0),
+    },
     { key: 'all', label: 'All', count: totalCount },
   ];
 
@@ -198,9 +234,7 @@ export default async function BugsPage({ searchParams }: PageProps) {
             }}
           />
         </div>
-        <p className="text-gray-600">
-          Track and manage bug reports from user feedback
-        </p>
+        <p className="text-gray-600">Track and manage bug reports from user feedback</p>
       </div>
 
       {/* Status Tabs */}
@@ -216,9 +250,11 @@ export default async function BugsPage({ searchParams }: PageProps) {
             }`}
           >
             {tab.label}
-            <span className={`ml-1.5 text-xs ${
-              statusFilter === tab.key ? 'text-gray-500' : 'text-gray-300'
-            }`}>
+            <span
+              className={`ml-1.5 text-xs ${
+                statusFilter === tab.key ? 'text-gray-500' : 'text-gray-300'
+              }`}
+            >
               {tab.count}
             </span>
           </Link>
@@ -259,12 +295,24 @@ export default async function BugsPage({ searchParams }: PageProps) {
               </colgroup>
               <TableHeader>
                 <TableRow className="border-b border-gray-200/80">
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Title</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Element</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Status</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Priority</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Project</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-right">Date</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Title
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Element
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Priority
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Project
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-right">
+                    Date
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -273,7 +321,10 @@ export default async function BugsPage({ searchParams }: PageProps) {
                   const priority = PRIORITY_CONFIG[bug.priority] || PRIORITY_CONFIG.MEDIUM;
 
                   return (
-                    <TableRow key={bug.id} className="group transition-colors duration-100 hover:bg-gray-50/50">
+                    <TableRow
+                      key={bug.id}
+                      className="group transition-colors duration-100 hover:bg-gray-50/50"
+                    >
                       <TableCell>
                         <Link
                           href={`/dashboard/bugs/${bug.id}`}
@@ -318,7 +369,7 @@ export default async function BugsPage({ searchParams }: PageProps) {
   );
 }
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function formatDate(date: Date): string {
   const m = MONTHS[date.getMonth()];

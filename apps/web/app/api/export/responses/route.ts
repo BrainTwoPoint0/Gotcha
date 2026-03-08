@@ -148,9 +148,7 @@ export async function GET(request: Request) {
       escapeCsvField(r.title || ''),
       escapeCsvField(r.rating?.toString() || ''),
       escapeCsvField(r.vote || ''),
-      escapeCsvField(
-        Array.isArray(r.pollSelected) ? r.pollSelected.join('; ') : ''
-      ),
+      escapeCsvField(Array.isArray(r.pollSelected) ? r.pollSelected.join('; ') : ''),
       escapeCsvField(r.status),
       escapeCsvField(r.tags.join('; ')),
       escapeCsvField(r.isBug ? 'Yes' : ''),

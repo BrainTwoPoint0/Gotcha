@@ -28,7 +28,15 @@ export function ExportButton({ isPro }: ExportButtonProps) {
       const params = new URLSearchParams();
       params.set('format', format);
 
-      const forwardKeys = ['startDate', 'endDate', 'elementId', 'status', 'tag', 'mode', 'projectId'];
+      const forwardKeys = [
+        'startDate',
+        'endDate',
+        'elementId',
+        'status',
+        'tag',
+        'mode',
+        'projectId',
+      ];
       for (const key of forwardKeys) {
         const value = searchParams.get(key);
         if (value) params.set(key, value);

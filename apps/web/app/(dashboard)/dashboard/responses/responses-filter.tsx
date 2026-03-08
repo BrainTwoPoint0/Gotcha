@@ -35,7 +35,11 @@ interface ResponsesFilterProps {
   availableTags?: { tag: string; count: number }[];
 }
 
-export function ResponsesFilter({ elements = [], currentStatus, availableTags = [] }: ResponsesFilterProps) {
+export function ResponsesFilter({
+  elements = [],
+  currentStatus,
+  availableTags = [],
+}: ResponsesFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -50,9 +54,10 @@ export function ResponsesFilter({ elements = [], currentStatus, availableTags = 
   const [tagHighlight, setTagHighlight] = useState(-1);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
-  const tagSuggestions = tag.trim() && tagFocused
-    ? availableTags.filter((t) => t.tag.startsWith(tag.trim().toLowerCase())).slice(0, 6)
-    : [];
+  const tagSuggestions =
+    tag.trim() && tagFocused
+      ? availableTags.filter((t) => t.tag.startsWith(tag.trim().toLowerCase())).slice(0, 6)
+      : [];
 
   const handleFilter = () => {
     const params = new URLSearchParams();
@@ -75,13 +80,16 @@ export function ResponsesFilter({ elements = [], currentStatus, availableTags = 
   };
 
   const toggleStatus = (s: string) => {
-    setStatuses((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
+    setStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   };
 
-  const hasFilters = startDate || endDate || elementId || tag ||
-    (statuses.length !== DEFAULT_STATUSES.length || !DEFAULT_STATUSES.every((s) => statuses.includes(s)));
+  const hasFilters =
+    startDate ||
+    endDate ||
+    elementId ||
+    tag ||
+    statuses.length !== DEFAULT_STATUSES.length ||
+    !DEFAULT_STATUSES.every((s) => statuses.includes(s));
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
@@ -114,9 +122,10 @@ export function ResponsesFilter({ elements = [], currentStatus, availableTags = 
                 className={`
                   px-2.5 h-9 text-xs font-medium rounded-md border
                   transition-all duration-100
-                  ${active
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-400 border-gray-200 hover:text-gray-600 hover:border-gray-300'
+                  ${
+                    active
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-400 border-gray-200 hover:text-gray-600 hover:border-gray-300'
                   }
                 `}
               >

@@ -173,24 +173,31 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   // Overview tab data
   let overviewData = null;
   if (activeTab === 'overview') {
-    const [modeCountsRaw, ratingAgg, voteCountsRaw, dailyTrendRaw, elementPerfRaw, pollResponses, npsRatings] =
-      await Promise.all([
-        prisma.response.groupBy({
-          by: ['mode'],
-          where,
-          _count: { mode: true },
-        }),
-        prisma.response.aggregate({
-          where: { ...where, rating: { not: null } },
-          _avg: { rating: true },
-          _count: { rating: true },
-        }),
-        prisma.response.groupBy({
-          by: ['vote'],
-          where: { ...where, vote: { not: null } },
-          _count: { vote: true },
-        }),
-        prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
+    const [
+      modeCountsRaw,
+      ratingAgg,
+      voteCountsRaw,
+      dailyTrendRaw,
+      elementPerfRaw,
+      pollResponses,
+      npsRatings,
+    ] = await Promise.all([
+      prisma.response.groupBy({
+        by: ['mode'],
+        where,
+        _count: { mode: true },
+      }),
+      prisma.response.aggregate({
+        where: { ...where, rating: { not: null } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      prisma.response.groupBy({
+        by: ['vote'],
+        where: { ...where, vote: { not: null } },
+        _count: { vote: true },
+      }),
+      prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
         SELECT DATE("createdAt") as day, COUNT(*) as count
         FROM "Response"
         WHERE "projectId" IN (
@@ -203,29 +210,29 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         GROUP BY DATE("createdAt")
         ORDER BY day
       `.catch(() => [] as Array<{ day: string; count: bigint }>),
-        prisma.response.groupBy({
-          by: ['elementIdRaw'],
-          where,
-          _count: { elementIdRaw: true },
-          _avg: { rating: true },
-          orderBy: { _count: { elementIdRaw: 'desc' } },
-          take: 10,
-        }),
-        prisma.response.findMany({
-          where: { ...where, mode: 'POLL' },
-          take: 10000,
-          select: {
-            elementIdRaw: true,
-            pollOptions: true,
-            pollSelected: true,
-          },
-        }),
-        prisma.response.findMany({
-          where: { ...where, mode: 'NPS', rating: { not: null } },
-          select: { rating: true },
-          take: 10000,
-        }),
-      ]);
+      prisma.response.groupBy({
+        by: ['elementIdRaw'],
+        where,
+        _count: { elementIdRaw: true },
+        _avg: { rating: true },
+        orderBy: { _count: { elementIdRaw: 'desc' } },
+        take: 10,
+      }),
+      prisma.response.findMany({
+        where: { ...where, mode: 'POLL' },
+        take: 10000,
+        select: {
+          elementIdRaw: true,
+          pollOptions: true,
+          pollSelected: true,
+        },
+      }),
+      prisma.response.findMany({
+        where: { ...where, mode: 'NPS', rating: { not: null } },
+        select: { rating: true },
+        take: 10000,
+      }),
+    ]);
 
     const totalResponses = modeCountsRaw.reduce((sum, m) => sum + m._count.mode, 0);
 
@@ -344,42 +351,46 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   let elementsTabData = null;
   if (activeTab === 'elements') {
     // Get ALL elements (not just top 10) with counts + ratings
-    const [allElementsRaw, allElementVotesRaw, overallRatingAgg, overallVotesRaw] = await Promise.all([
-      prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where,
-        _count: { elementIdRaw: true },
-        _avg: { rating: true },
-        orderBy: { _count: { elementIdRaw: 'desc' } },
-      }),
-      prisma.response.groupBy({
-        by: ['elementIdRaw', 'vote'],
-        where: { ...where, vote: { not: null } },
-        _count: { vote: true },
-      }),
-      prisma.response.aggregate({
-        where: { ...where, rating: { not: null } },
-        _avg: { rating: true },
-      }),
-      prisma.response.groupBy({
-        by: ['vote'],
-        where: { ...where, vote: { not: null } },
-        _count: { vote: true },
-      }),
-    ]);
+    const [allElementsRaw, allElementVotesRaw, overallRatingAgg, overallVotesRaw] =
+      await Promise.all([
+        prisma.response.groupBy({
+          by: ['elementIdRaw'],
+          where,
+          _count: { elementIdRaw: true },
+          _avg: { rating: true },
+          orderBy: { _count: { elementIdRaw: 'desc' } },
+        }),
+        prisma.response.groupBy({
+          by: ['elementIdRaw', 'vote'],
+          where: { ...where, vote: { not: null } },
+          _count: { vote: true },
+        }),
+        prisma.response.aggregate({
+          where: { ...where, rating: { not: null } },
+          _avg: { rating: true },
+        }),
+        prisma.response.groupBy({
+          by: ['vote'],
+          where: { ...where, vote: { not: null } },
+          _count: { vote: true },
+        }),
+      ]);
 
     // Overall averages
     const overallAvgRating = overallRatingAgg._avg.rating
       ? Number(overallRatingAgg._avg.rating.toFixed(1))
       : null;
 
-    let overallUp = 0, overallDown = 0;
+    let overallUp = 0,
+      overallDown = 0;
     overallVotesRaw.forEach((v) => {
       if (v.vote === 'UP') overallUp = v._count.vote;
       if (v.vote === 'DOWN') overallDown = v._count.vote;
     });
     const overallPositiveRate =
-      overallUp + overallDown > 0 ? Math.round((overallUp / (overallUp + overallDown)) * 100) : null;
+      overallUp + overallDown > 0
+        ? Math.round((overallUp / (overallUp + overallDown)) * 100)
+        : null;
 
     // Per-element vote map
     const elVoteMap: Record<string, { up: number; down: number }> = {};
@@ -400,12 +411,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         total: e._count.elementIdRaw,
         avgRating,
         positiveRate,
-        ratingDelta: avgRating !== null && overallAvgRating !== null
-          ? Number((avgRating - overallAvgRating).toFixed(1))
-          : null,
-        positiveDelta: positiveRate !== null && overallPositiveRate !== null
-          ? positiveRate - overallPositiveRate
-          : null,
+        ratingDelta:
+          avgRating !== null && overallAvgRating !== null
+            ? Number((avgRating - overallAvgRating).toFixed(1))
+            : null,
+        positiveDelta:
+          positiveRate !== null && overallPositiveRate !== null
+            ? positiveRate - overallPositiveRate
+            : null,
       };
     });
 
@@ -424,34 +437,39 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       },
     };
 
-    const [recentByElement, baselineByElement, recentVotesByElement, baselineVotesByElement] = await Promise.all([
-      // Last 7 days per element
-      prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where: { ...baseWhere, createdAt: { gte: sevenDaysAgo, lte: now } },
-        _count: { elementIdRaw: true },
-        _avg: { rating: true },
-      }),
-      // Prior 30 days per element (day -37 to day -7)
-      prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where: { ...baseWhere, createdAt: { gte: thirtySevenDaysAgo, lt: sevenDaysAgo } },
-        _count: { elementIdRaw: true },
-        _avg: { rating: true },
-      }),
-      // Recent votes
-      prisma.response.groupBy({
-        by: ['elementIdRaw', 'vote'],
-        where: { ...baseWhere, createdAt: { gte: sevenDaysAgo, lte: now }, vote: { not: null } },
-        _count: { vote: true },
-      }),
-      // Baseline votes
-      prisma.response.groupBy({
-        by: ['elementIdRaw', 'vote'],
-        where: { ...baseWhere, createdAt: { gte: thirtySevenDaysAgo, lt: sevenDaysAgo }, vote: { not: null } },
-        _count: { vote: true },
-      }),
-    ]);
+    const [recentByElement, baselineByElement, recentVotesByElement, baselineVotesByElement] =
+      await Promise.all([
+        // Last 7 days per element
+        prisma.response.groupBy({
+          by: ['elementIdRaw'],
+          where: { ...baseWhere, createdAt: { gte: sevenDaysAgo, lte: now } },
+          _count: { elementIdRaw: true },
+          _avg: { rating: true },
+        }),
+        // Prior 30 days per element (day -37 to day -7)
+        prisma.response.groupBy({
+          by: ['elementIdRaw'],
+          where: { ...baseWhere, createdAt: { gte: thirtySevenDaysAgo, lt: sevenDaysAgo } },
+          _count: { elementIdRaw: true },
+          _avg: { rating: true },
+        }),
+        // Recent votes
+        prisma.response.groupBy({
+          by: ['elementIdRaw', 'vote'],
+          where: { ...baseWhere, createdAt: { gte: sevenDaysAgo, lte: now }, vote: { not: null } },
+          _count: { vote: true },
+        }),
+        // Baseline votes
+        prisma.response.groupBy({
+          by: ['elementIdRaw', 'vote'],
+          where: {
+            ...baseWhere,
+            createdAt: { gte: thirtySevenDaysAgo, lt: sevenDaysAgo },
+            vote: { not: null },
+          },
+          _count: { vote: true },
+        }),
+      ]);
 
     // Build maps
     const recentMap: Record<string, { count: number; avgRating: number | null }> = {};
@@ -497,7 +515,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     const anomalies: Anomaly[] = [];
 
     // Check each element that has baseline data
-    const allElementIds = Array.from(new Set([...Object.keys(recentMap), ...Object.keys(baselineMap)]));
+    const allElementIds = Array.from(
+      new Set([...Object.keys(recentMap), ...Object.keys(baselineMap)])
+    );
 
     for (const elId of allElementIds) {
       const recent = recentMap[elId];
@@ -542,7 +562,12 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       }
 
       // Rating drop
-      if (recent?.avgRating !== null && baseline.avgRating !== null && recent?.avgRating !== undefined && baseline.avgRating !== undefined) {
+      if (
+        recent?.avgRating !== null &&
+        baseline.avgRating !== null &&
+        recent?.avgRating !== undefined &&
+        baseline.avgRating !== undefined
+      ) {
         const ratingDrop = baseline.avgRating - recent.avgRating;
         if (ratingDrop > 1.0) {
           anomalies.push({
@@ -632,9 +657,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     `.catch(() => []);
 
     // NPS per day (separate query since NPS calc is special)
-    const npsRaw = await prisma.$queryRaw<
-      Array<{ day: string; ratings: number[] }>
-    >`
+    const npsRaw = await prisma.$queryRaw<Array<{ day: string; ratings: number[] }>>`
       SELECT
         DATE("createdAt") as day,
         array_agg("rating") as ratings
@@ -654,17 +677,19 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
     const npsMap: Record<string, number> = {};
     npsRaw.forEach((row) => {
-      const key = typeof row.day === 'string'
-        ? row.day.split('T')[0]
-        : new Date(row.day).toISOString().split('T')[0];
+      const key =
+        typeof row.day === 'string'
+          ? row.day.split('T')[0]
+          : new Date(row.day).toISOString().split('T')[0];
       const result = calculateNPS(row.ratings);
       if (result) npsMap[key] = result.score;
     });
 
     trendsTabData = trendsRaw.map((row) => {
-      const key = typeof row.day === 'string'
-        ? row.day.split('T')[0]
-        : new Date(row.day).toISOString().split('T')[0];
+      const key =
+        typeof row.day === 'string'
+          ? row.day.split('T')[0]
+          : new Date(row.day).toISOString().split('T')[0];
 
       const upCount = Number(row.up_count);
       const downCount = Number(row.down_count);
@@ -682,8 +707,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
   // ── Summary stats (shared) ─────────────────────────────────────
   // Quick count for the header — cheap query
-  const totalResponses = overviewData?.totalResponses ??
-    await prisma.response.count({ where });
+  const totalResponses = overviewData?.totalResponses ?? (await prisma.response.count({ where }));
 
   // ── Tabs config ────────────────────────────────────────────────
   const tabs = [
@@ -779,11 +803,21 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <StatCard label="Total Responses" value={overviewData.totalResponses.toString()} />
-            <StatCard label="Avg Rating" value={overviewData.avgRating ? `${overviewData.avgRating}/5` : '-'} />
-            <StatCard label="Positive Rate" value={overviewData.positiveRate !== null ? `${overviewData.positiveRate}%` : '-'} />
+            <StatCard
+              label="Avg Rating"
+              value={overviewData.avgRating ? `${overviewData.avgRating}/5` : '-'}
+            />
+            <StatCard
+              label="Positive Rate"
+              value={overviewData.positiveRate !== null ? `${overviewData.positiveRate}%` : '-'}
+            />
             <StatCard
               label="Most Common"
-              value={overviewData.modeData.length > 0 ? overviewData.modeData.sort((a, b) => b.value - a.value)[0].name : '-'}
+              value={
+                overviewData.modeData.length > 0
+                  ? overviewData.modeData.sort((a, b) => b.value - a.value)[0].name
+                  : '-'
+              }
             />
           </div>
 
@@ -808,9 +842,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         />
       )}
 
-      {activeTab === 'trends' && trendsTabData && (
-        <TrendsTab data={trendsTabData} />
-      )}
+      {activeTab === 'trends' && trendsTabData && <TrendsTab data={trendsTabData} />}
     </div>
   );
 }

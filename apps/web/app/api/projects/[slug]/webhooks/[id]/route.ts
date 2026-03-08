@@ -7,7 +7,10 @@ import { z } from 'zod';
 
 const updateWebhookSchema = z.object({
   url: z.string().url().optional(),
-  events: z.array(z.enum(['response.created'])).min(1).optional(),
+  events: z
+    .array(z.enum(['response.created']))
+    .min(1)
+    .optional(),
   active: z.boolean().optional(),
   description: z.string().max(200).optional(),
 });
@@ -35,7 +38,12 @@ async function getOrgProjectWebhook(request: NextRequest, slug: string, webhookI
 
   if (!webhook) return null;
 
-  return { organization: activeOrg.organization, project, webhook, role: activeOrg.membership.role };
+  return {
+    organization: activeOrg.organization,
+    project,
+    webhook,
+    role: activeOrg.membership.role,
+  };
 }
 
 export async function PATCH(
@@ -67,7 +75,10 @@ export async function PATCH(
     const data = validation.data;
 
     if (data.url && isPrivateUrl(data.url)) {
-      return NextResponse.json({ error: 'Webhook URL cannot point to a private/internal address' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Webhook URL cannot point to a private/internal address' },
+        { status: 400 }
+      );
     }
 
     // If re-enabling, reset failure count

@@ -101,17 +101,33 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
           <div className={`flex items-center gap-2.5 ${isGated ? 'blur-sm select-none' : ''}`}>
             {/* Vote indicator */}
             {response.vote && (
-              <div className={`
+              <div
+                className={`
                 flex items-center justify-center w-6 h-6 rounded-full shrink-0
-                ${response.vote === 'UP'
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : 'bg-red-50 text-red-500'}
-              `}>
+                ${
+                  response.vote === 'UP'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-red-50 text-red-500'
+                }
+              `}
+              >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   {response.vote === 'UP' ? (
-                    <path d="M7 3L7 11M7 3L4 6M7 3L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M7 3L7 11M7 3L4 6M7 3L10 6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   ) : (
-                    <path d="M7 11L7 3M7 11L4 8M7 11L10 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M7 11L7 3M7 11L4 8M7 11L10 8"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   )}
                 </svg>
               </div>
@@ -136,9 +152,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
             {/* Preview text */}
             {preview && (
-              <span className="text-sm text-gray-700 truncate leading-tight">
-                {preview}
-              </span>
+              <span className="text-sm text-gray-700 truncate leading-tight">{preview}</span>
             )}
             {!preview && !response.rating && !response.vote && (
               <span className="text-sm text-gray-400">—</span>
@@ -158,14 +172,22 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                   ${expanded ? 'rotate-180 text-gray-500' : ''}
                 `}
               >
-                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M4.5 6.5L8 10L11.5 6.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             )}
           </div>
         </TableCell>
 
         {/* Project */}
-        <TableCell className={`hidden sm:table-cell text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell
+          className={`hidden sm:table-cell text-sm text-gray-500 ${isGated ? 'blur-sm select-none' : ''}`}
+        >
           {response.project.name}
         </TableCell>
 
@@ -196,7 +218,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         </TableCell>
 
         {/* Date */}
-        <TableCell className={`hidden sm:table-cell text-sm tabular-nums text-gray-400 ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell
+          className={`hidden sm:table-cell text-sm tabular-nums text-gray-400 ${isGated ? 'blur-sm select-none' : ''}`}
+        >
           {formatDate(new Date(response.createdAt))}
         </TableCell>
 
@@ -228,7 +252,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Rating detail */}
                 {response.rating && (
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">Rating</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
+                      Rating
+                    </span>
                     <div className="flex items-center gap-2">
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }, (_, i) => (
@@ -251,10 +277,14 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Vote detail */}
                 {response.vote && (
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">Vote</span>
-                    <span className={`text-sm font-medium ${
-                      response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
-                    }`}>
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
+                      Vote
+                    </span>
+                    <span
+                      className={`text-sm font-medium ${
+                        response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
+                      }`}
+                    >
                       {response.vote === 'UP' ? 'Upvote' : 'Downvote'}
                     </span>
                   </div>
@@ -263,10 +293,16 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Poll selections */}
                 {Array.isArray(response.pollSelected) && response.pollSelected.length > 0 && (
                   <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">Selected</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
+                      Selected
+                    </span>
                     <div className="flex flex-wrap gap-1.5">
                       {response.pollSelected.map((opt: string) => (
-                        <Badge key={opt} variant="outline" className="bg-violet-50/60 text-violet-700 border-violet-200/60 text-xs font-normal">
+                        <Badge
+                          key={opt}
+                          variant="outline"
+                          className="bg-violet-50/60 text-violet-700 border-violet-200/60 text-xs font-normal"
+                        >
                           {opt}
                         </Badge>
                       ))}
@@ -277,7 +313,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Title */}
                 {response.title && (
                   <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">Title</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
+                      Title
+                    </span>
                     <span className="text-sm text-gray-800 font-medium">{response.title}</span>
                   </div>
                 )}
@@ -285,8 +323,12 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Content */}
                 {response.content && (
                   <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">Content</span>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{response.content}</p>
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
+                      Content
+                    </span>
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {response.content}
+                    </p>
                   </div>
                 )}
 
@@ -295,15 +337,28 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                 {/* Metadata row */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <div className="flex items-center gap-1.5">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-300">
-                      <path d="M6 3V6L8 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className="text-gray-300"
+                    >
+                      <path
+                        d="M6 3V6L8 7.5"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                      />
                       <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1" />
                     </svg>
                     <span className="text-[11px] text-gray-400">
                       {formatDateLong(new Date(response.createdAt))}
                     </span>
                   </div>
-                  <code className="text-[11px] text-gray-400 font-mono break-all">{response.elementIdRaw}</code>
+                  <code className="text-[11px] text-gray-400 font-mono break-all">
+                    {response.elementIdRaw}
+                  </code>
                 </div>
 
                 {/* Tags */}
@@ -322,8 +377,8 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
   );
 }
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** Compact date formatter — "Mar 4, 2:30 PM" (locale-independent to avoid hydration mismatch) */
 function formatDate(date: Date): string {

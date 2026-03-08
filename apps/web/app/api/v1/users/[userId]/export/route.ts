@@ -24,7 +24,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
+      return apiError(
+        authResult.error.code,
+        authResult.error.message,
+        authResult.error.status,
+        reqOrigin
+      );
     }
 
     const { apiKey } = authResult;
@@ -92,12 +97,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       createdAt: r.createdAt.toISOString(),
     }));
 
-    return Response.json({
-      userId,
-      exportedAt: new Date().toISOString(),
-      responses: exportedResponses,
-      metadata: allMetadata,
-    }, { headers: getCorsHeaders(reqOrigin) });
+    return Response.json(
+      {
+        userId,
+        exportedAt: new Date().toISOString(),
+        responses: exportedResponses,
+        metadata: allMetadata,
+      },
+      { headers: getCorsHeaders(reqOrigin) }
+    );
   } catch (error) {
     console.error('GET /api/v1/users/:userId/export error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);

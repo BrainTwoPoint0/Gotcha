@@ -22,9 +22,9 @@ export default function TermsPage() {
         <h2>2. Description of Service</h2>
         <p>
           Gotcha provides a contextual feedback SDK for React applications and an associated
-          dashboard for viewing and analyzing feedback responses, NPS scores, and bug reports.
-          The Service includes the gotcha-feedback npm package, the gotcha.cx web application,
-          team collaboration features, webhook integrations, and data export/deletion APIs.
+          dashboard for viewing and analyzing feedback responses, NPS scores, and bug reports. The
+          Service includes the gotcha-feedback npm package, the gotcha.cx web application, team
+          collaboration features, webhook integrations, and data export/deletion APIs.
         </p>
 
         <h2>3. Accounts</h2>
@@ -80,26 +80,24 @@ export default function TermsPage() {
 
         <h2>8. Teams &amp; Organizations</h2>
         <p>
-          Organization owners are responsible for the actions of all members they invite.
-          You may assign roles (Owner, Admin, Member, Viewer) to control access levels.
-          Owners are responsible for managing team membership and revoking access when
-          appropriate.
+          Organization owners are responsible for the actions of all members they invite. You may
+          assign roles (Owner, Admin, Member, Viewer) to control access levels. Owners are
+          responsible for managing team membership and revoking access when appropriate.
         </p>
 
         <h2>9. Webhooks</h2>
         <p>
-          You may configure webhooks to deliver feedback data to external endpoints. You are
-          solely responsible for the security, availability, and compliance of those endpoints.
-          We are not liable for data delivered to webhook URLs you configure. We reserve the
-          right to block webhook delivery to URLs that pose a security risk.
+          You may configure webhooks to deliver feedback data to external endpoints. You are solely
+          responsible for the security, availability, and compliance of those endpoints. We are not
+          liable for data delivered to webhook URLs you configure. We reserve the right to block
+          webhook delivery to URLs that pose a security risk.
         </p>
 
         <h2>10. Data Export &amp; Deletion</h2>
         <p>
-          We provide API endpoints for exporting and deleting end-user feedback data scoped
-          to individual projects. You are responsible for using these APIs to fulfill data
-          subject requests from your own end users in compliance with applicable data
-          protection laws.
+          We provide API endpoints for exporting and deleting end-user feedback data scoped to
+          individual projects. You are responsible for using these APIs to fulfill data subject
+          requests from your own end users in compliance with applicable data protection laws.
         </p>
 
         <h2>11. Availability and Support</h2>

@@ -85,9 +85,8 @@ export async function POST(request: Request) {
           const periodEnd = (subscription as unknown as { current_period_end: number })
             .current_period_end;
 
-          const cancelAtPeriodEnd = (
-            subscription as unknown as { cancel_at_period_end: boolean }
-          ).cancel_at_period_end;
+          const cancelAtPeriodEnd = (subscription as unknown as { cancel_at_period_end: boolean })
+            .cancel_at_period_end;
 
           await prisma.subscription.update({
             where: { id: sub.id },

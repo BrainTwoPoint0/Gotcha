@@ -35,7 +35,12 @@ interface BugActionsProps {
   reporterEmail?: string | null;
 }
 
-export function BugActions({ bugId, currentStatus, currentPriority, reporterEmail }: BugActionsProps) {
+export function BugActions({
+  bugId,
+  currentStatus,
+  currentPriority,
+  reporterEmail,
+}: BugActionsProps) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [priority, setPriority] = useState(currentPriority);
@@ -121,12 +126,7 @@ export function BugActions({ bugId, currentStatus, currentPriority, reporterEmai
         </div>
 
         {hasChanges && (
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full"
-            size="sm"
-          >
+          <Button onClick={handleSave} disabled={isSaving} className="w-full" size="sm">
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         )}
@@ -134,9 +134,7 @@ export function BugActions({ bugId, currentStatus, currentPriority, reporterEmai
         {!isResolved && (
           <>
             <div className="border-t border-gray-100 pt-4">
-              <label className="text-[11px] text-gray-400 block mb-1.5">
-                Internal Note
-              </label>
+              <label className="text-[11px] text-gray-400 block mb-1.5">Internal Note</label>
               <textarea
                 value={resolutionNote}
                 onChange={(e) => setResolutionNote(e.target.value)}
@@ -174,7 +172,13 @@ export function BugActions({ bugId, currentStatus, currentPriority, reporterEmai
               ) : (
                 <span className="flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3.5 7L6 9.5L10.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M3.5 7L6 9.5L10.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   Mark as Resolved
                 </span>

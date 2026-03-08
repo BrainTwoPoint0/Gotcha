@@ -24,25 +24,28 @@ export function WebhookLogs({ projectSlug, webhookId }: WebhookLogsProps) {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
 
-  const fetchLogs = useCallback(async (p: number) => {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/projects/${projectSlug}/webhooks/${webhookId}/logs?page=${p}&limit=10`
-      );
-      const data = await res.json();
-      if (p === 1) {
-        setLogs(data.logs);
-      } else {
-        setLogs((prev) => [...prev, ...data.logs]);
+  const fetchLogs = useCallback(
+    async (p: number) => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/${projectSlug}/webhooks/${webhookId}/logs?page=${p}&limit=10`
+        );
+        const data = await res.json();
+        if (p === 1) {
+          setLogs(data.logs);
+        } else {
+          setLogs((prev) => [...prev, ...data.logs]);
+        }
+        setHasMore(data.pagination.hasMore);
+      } catch (error) {
+        console.error('Failed to fetch logs:', error);
+      } finally {
+        setLoading(false);
       }
-      setHasMore(data.pagination.hasMore);
-    } catch (error) {
-      console.error('Failed to fetch logs:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectSlug, webhookId]);
+    },
+    [projectSlug, webhookId]
+  );
 
   useEffect(() => {
     fetchLogs(1);
@@ -77,28 +80,20 @@ export function WebhookLogs({ projectSlug, webhookId }: WebhookLogsProps) {
         <tbody className="divide-y divide-gray-100">
           {logs.map((log) => (
             <tr key={log.id}>
-              <td className="py-2 text-gray-600">
-                {new Date(log.createdAt).toLocaleString()}
-              </td>
+              <td className="py-2 text-gray-600">{new Date(log.createdAt).toLocaleString()}</td>
               <td className="py-2">
                 <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{log.event}</code>
               </td>
               <td className="py-2">
                 {log.statusCode ? (
-                  <span
-                    className={
-                      log.success ? 'text-green-700' : 'text-red-700'
-                    }
-                  >
+                  <span className={log.success ? 'text-green-700' : 'text-red-700'}>
                     {log.statusCode}
                   </span>
                 ) : (
                   <span className="text-gray-400">—</span>
                 )}
               </td>
-              <td className="py-2 text-gray-600">
-                {log.responseMs ? `${log.responseMs}ms` : '—'}
-              </td>
+              <td className="py-2 text-gray-600">{log.responseMs ? `${log.responseMs}ms` : '—'}</td>
               <td className="py-2">
                 {log.success ? (
                   <span className="text-green-700 text-xs">OK</span>

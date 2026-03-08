@@ -191,7 +191,11 @@ export function AnalyticsCharts({
             <CardContent className="px-2 sm:px-6 pb-4">
               <div className="h-52 sm:h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                  <BarChart data={modeData} layout="vertical" margin={{ top: 5, right: 8, left: 0, bottom: 5 }}>
+                  <BarChart
+                    data={modeData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 8, left: 0, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize }} allowDecimals={false} />
                     <YAxis
@@ -282,7 +286,12 @@ export function AnalyticsCharts({
                 <div
                   className="text-4xl sm:text-5xl font-bold"
                   style={{
-                    color: npsResult.score >= 50 ? '#10B981' : npsResult.score >= 0 ? '#F59E0B' : '#EF4444',
+                    color:
+                      npsResult.score >= 50
+                        ? '#10B981'
+                        : npsResult.score >= 0
+                          ? '#F59E0B'
+                          : '#EF4444',
                   }}
                 >
                   {npsResult.score}
@@ -354,10 +363,19 @@ export function AnalyticsCharts({
               <CardContent className="px-2 sm:px-6 pb-4">
                 <div className="h-52 sm:h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                    <BarChart data={poll.options} layout="vertical" margin={{ top: 5, right: 8, left: 0, bottom: 5 }}>
+                    <BarChart
+                      data={poll.options}
+                      layout="vertical"
+                      margin={{ top: 5, right: 8, left: 0, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
                       <XAxis type="number" tick={{ fontSize }} allowDecimals={false} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize }} width={yAxisWidth} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={{ fontSize }}
+                        width={yAxisWidth}
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#fff',
@@ -380,7 +398,7 @@ export function AnalyticsCharts({
       {avgRatingData.length > 0 && (
         <Card>
           <CardHeader className="pb-2 px-4 sm:px-6">
-              <CardTitle className="text-base sm:text-lg">Average Rating Over Time</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Average Rating Over Time</CardTitle>
           </CardHeader>
           <CardContent className="px-2 sm:px-6 pb-4">
             <div className="h-52 sm:h-64 w-full">

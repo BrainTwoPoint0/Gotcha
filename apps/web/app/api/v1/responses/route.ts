@@ -38,7 +38,12 @@ export async function POST(request: NextRequest) {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
+      return apiError(
+        authResult.error.code,
+        authResult.error.message,
+        authResult.error.status,
+        reqOrigin
+      );
     }
 
     const { apiKey } = authResult;
@@ -72,7 +77,12 @@ export async function POST(request: NextRequest) {
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid request body', 400, reqOrigin);
+      return apiError(
+        'INVALID_REQUEST',
+        firstError?.message || 'Invalid request body',
+        400,
+        reqOrigin
+      );
     }
 
     const data = validation.data as typeof validation.data & {
@@ -254,7 +264,12 @@ export async function GET(request: NextRequest) {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
+      return apiError(
+        authResult.error.code,
+        authResult.error.message,
+        authResult.error.status,
+        reqOrigin
+      );
     }
 
     const { apiKey } = authResult;
@@ -274,7 +289,12 @@ export async function GET(request: NextRequest) {
     const validation = listResponsesSchema.safeParse(params);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
-      return apiError('INVALID_REQUEST', firstError?.message || 'Invalid query parameters', 400, reqOrigin);
+      return apiError(
+        'INVALID_REQUEST',
+        firstError?.message || 'Invalid query parameters',
+        400,
+        reqOrigin
+      );
     }
 
     const { elementId, mode, startDate, endDate, page, limit } = validation.data;

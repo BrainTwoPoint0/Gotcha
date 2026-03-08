@@ -21,7 +21,8 @@ export default function SignupPage() {
   const [githubLoading, setGithubLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasInviteCookie = typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
+  const hasInviteCookie =
+    typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
   const inviteToken = searchParams.get('invite') || (hasInviteCookie ? '__cookie__' : null);
   const supabase = createClient();
 
@@ -53,9 +54,10 @@ export default function SignupPage() {
     }
 
     if (inviteToken) {
-      const acceptUrl = inviteToken === '__cookie__'
-        ? '/api/invitations/accept'
-        : `/api/invitations/accept?token=${inviteToken}`;
+      const acceptUrl =
+        inviteToken === '__cookie__'
+          ? '/api/invitations/accept'
+          : `/api/invitations/accept?token=${inviteToken}`;
       router.push(acceptUrl);
     } else {
       router.push('/dashboard');

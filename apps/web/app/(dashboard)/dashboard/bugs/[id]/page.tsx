@@ -13,12 +13,36 @@ import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 export const dynamic = 'force-dynamic';
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
-  OPEN: { label: 'Open', className: 'bg-red-50/80 text-red-700 border-red-200/60', dot: 'bg-red-500' },
-  INVESTIGATING: { label: 'Investigating', className: 'bg-amber-50/80 text-amber-700 border-amber-200/60', dot: 'bg-amber-500' },
-  FIXING: { label: 'Fixing', className: 'bg-blue-50/80 text-blue-700 border-blue-200/60', dot: 'bg-blue-500' },
-  RESOLVED: { label: 'Resolved', className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60', dot: 'bg-emerald-500' },
-  CLOSED: { label: 'Closed', className: 'bg-gray-50 text-gray-500 border-gray-200/60', dot: 'bg-gray-400' },
-  WONT_FIX: { label: "Won't Fix", className: 'bg-gray-50 text-gray-500 border-gray-200/60', dot: 'bg-gray-400' },
+  OPEN: {
+    label: 'Open',
+    className: 'bg-red-50/80 text-red-700 border-red-200/60',
+    dot: 'bg-red-500',
+  },
+  INVESTIGATING: {
+    label: 'Investigating',
+    className: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
+    dot: 'bg-amber-500',
+  },
+  FIXING: {
+    label: 'Fixing',
+    className: 'bg-blue-50/80 text-blue-700 border-blue-200/60',
+    dot: 'bg-blue-500',
+  },
+  RESOLVED: {
+    label: 'Resolved',
+    className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
+    dot: 'bg-emerald-500',
+  },
+  CLOSED: {
+    label: 'Closed',
+    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
+    dot: 'bg-gray-400',
+  },
+  WONT_FIX: {
+    label: "Won't Fix",
+    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
+    dot: 'bg-gray-400',
+  },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
@@ -90,7 +114,13 @@ export default async function BugDetailPage({ params }: PageProps) {
           className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M8.5 3.5L5 7L8.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M8.5 3.5L5 7L8.5 10.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           Back to Bugs
         </Link>
@@ -137,14 +167,20 @@ export default async function BugDetailPage({ params }: PageProps) {
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
           <Card className="p-5">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">Description</h2>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{bug.description}</p>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">
+              Description
+            </h2>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+              {bug.description}
+            </p>
           </Card>
 
           {/* Original Response */}
           {bug.response && (
             <Card className="p-5">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">Original Response</h2>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">
+                Original Response
+              </h2>
               <div className="space-y-3">
                 {/* Rating stars */}
                 {bug.response.rating != null && (
@@ -173,17 +209,33 @@ export default async function BugDetailPage({ params }: PageProps) {
                 {bug.response.vote && (
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400 w-16">Vote</span>
-                    <div className={`flex items-center gap-1.5 text-sm font-medium ${
-                      bug.response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
-                    }`}>
-                      <div className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 ${
-                        bug.response.vote === 'UP' ? 'bg-emerald-50' : 'bg-red-50'
-                      }`}>
+                    <div
+                      className={`flex items-center gap-1.5 text-sm font-medium ${
+                        bug.response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
+                      }`}
+                    >
+                      <div
+                        className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 ${
+                          bug.response.vote === 'UP' ? 'bg-emerald-50' : 'bg-red-50'
+                        }`}
+                      >
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                           {bug.response.vote === 'UP' ? (
-                            <path d="M7 3L7 11M7 3L4 6M7 3L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path
+                              d="M7 3L7 11M7 3L4 6M7 3L10 6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           ) : (
-                            <path d="M7 11L7 3M7 11L4 8M7 11L10 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path
+                              d="M7 11L7 3M7 11L4 8M7 11L10 8"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           )}
                         </svg>
                       </div>
@@ -197,7 +249,9 @@ export default async function BugDetailPage({ params }: PageProps) {
                   <div>
                     <span className="text-xs text-gray-400 block mb-1.5">Content</span>
                     <div className="bg-gradient-to-b from-gray-50/80 to-white border border-gray-100 rounded-md p-3">
-                      <p className="text-sm text-gray-700 leading-relaxed">{bug.response.content}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {bug.response.content}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -217,7 +271,9 @@ export default async function BugDetailPage({ params }: PageProps) {
           {/* Resolution */}
           {bug.resolutionNote && (
             <Card className="p-5 border-emerald-200/60 bg-emerald-50/30">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-emerald-600 mb-3">Resolution</h2>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-emerald-600 mb-3">
+                Resolution
+              </h2>
               <p className="text-sm text-gray-700 leading-relaxed">{bug.resolutionNote}</p>
               {bug.resolvedAt && (
                 <p className="text-xs text-gray-400 mt-3 tabular-nums">
@@ -241,7 +297,9 @@ export default async function BugDetailPage({ params }: PageProps) {
           {/* Reporter */}
           {(bug.reporterEmail || bug.reporterName || bug.endUserId) && (
             <Card className="p-5">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Reporter</h2>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
+                Reporter
+              </h2>
               <div className="space-y-3.5">
                 {bug.reporterName && (
                   <div>
@@ -258,7 +316,9 @@ export default async function BugDetailPage({ params }: PageProps) {
                 {bug.endUserId && (
                   <div>
                     <span className="text-[11px] text-gray-400 block mb-1">User ID</span>
-                    <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">{bug.endUserId}</code>
+                    <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
+                      {bug.endUserId}
+                    </code>
                   </div>
                 )}
               </div>
@@ -267,11 +327,15 @@ export default async function BugDetailPage({ params }: PageProps) {
 
           {/* Context */}
           <Card className="p-5">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Context</h2>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
+              Context
+            </h2>
             <div className="space-y-3.5">
               <div>
                 <span className="text-[11px] text-gray-400 block mb-1">Element</span>
-                <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">{bug.elementId}</code>
+                <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
+                  {bug.elementId}
+                </code>
               </div>
               {bug.pageUrl && (
                 <div>
@@ -282,12 +346,16 @@ export default async function BugDetailPage({ params }: PageProps) {
               {bug.userAgent && (
                 <div>
                   <span className="text-[11px] text-gray-400 block mb-1">Browser</span>
-                  <span className="text-xs text-gray-600 break-all leading-relaxed">{bug.userAgent}</span>
+                  <span className="text-xs text-gray-600 break-all leading-relaxed">
+                    {bug.userAgent}
+                  </span>
                 </div>
               )}
               <div>
                 <span className="text-[11px] text-gray-400 block mb-1">Created</span>
-                <span className="text-xs tabular-nums text-gray-600">{formatDateLong(bug.createdAt)}</span>
+                <span className="text-xs tabular-nums text-gray-600">
+                  {formatDateLong(bug.createdAt)}
+                </span>
               </div>
             </div>
           </Card>
@@ -297,8 +365,8 @@ export default async function BugDetailPage({ params }: PageProps) {
   );
 }
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function formatDateLong(date: Date): string {
   const day = DAYS[date.getDay()];

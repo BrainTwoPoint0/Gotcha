@@ -16,7 +16,8 @@ async function getInternalApiKey() {
 
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
-  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS)
+    return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },

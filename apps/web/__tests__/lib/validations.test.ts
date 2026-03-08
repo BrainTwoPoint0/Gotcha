@@ -187,12 +187,12 @@ describe('Validation Schemas', () => {
         expect(result.rating).toBe(5);
       });
 
-      it('should reject rating below 1', () => {
+      it('should reject rating below 0', () => {
         expect(() =>
           submitResponseSchema.parse({
             elementId: 'rating-1',
             mode: 'feedback',
-            rating: 0,
+            rating: -1,
           })
         ).toThrow();
       });

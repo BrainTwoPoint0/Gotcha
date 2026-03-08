@@ -62,16 +62,19 @@ export default async function WebhooksPage({ params }: Props) {
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back to {project.name}
         </Link>
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
-            <p className="text-gray-600">
-              Receive real-time notifications when feedback comes in
-            </p>
+            <p className="text-gray-600">Receive real-time notifications when feedback comes in</p>
           </div>
           {isPro && <AddWebhookButton />}
         </div>
@@ -81,7 +84,8 @@ export default async function WebhooksPage({ params }: Props) {
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-2">PRO Feature</h3>
           <p className="text-gray-600 mb-4">
-            Integrations are available on the Pro plan. Connect Slack, Discord, and custom webhooks for real-time notifications.
+            Integrations are available on the Pro plan. Connect Slack, Discord, and custom webhooks
+            for real-time notifications.
           </p>
           <Link
             href="/dashboard/settings"

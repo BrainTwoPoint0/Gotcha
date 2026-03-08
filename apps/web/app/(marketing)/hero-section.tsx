@@ -15,8 +15,8 @@ export function HeroSection() {
             <span className="text-slate-600">your team</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Attach feedback to any component — right where your users experience your features.
-            No surveys. No guessing.
+            Attach feedback to any component — right where your users experience your features. No
+            surveys. No guessing.
           </p>
           <div className="inline-flex items-center gap-3 bg-gray-900 text-gray-100 px-5 py-3 rounded-lg font-mono text-sm mb-4">
             <span className="text-green-400">$</span>

@@ -30,9 +30,7 @@ const parseStatusFilter = (statusParam: string | undefined): ResponseStatus[] | 
   if (!statusParam) return undefined;
   return statusParam
     .split(',')
-    .filter((s): s is ResponseStatus =>
-      (validStatuses as readonly string[]).includes(s)
-    );
+    .filter((s): s is ResponseStatus => (validStatuses as readonly string[]).includes(s));
 };
 
 describe('Response Status API Logic', () => {

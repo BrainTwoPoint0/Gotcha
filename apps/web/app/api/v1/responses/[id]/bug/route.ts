@@ -4,10 +4,7 @@ import { validateApiKey, apiError, apiSuccess, corsHeaders } from '@/lib/api-aut
 import { fireWebhooks } from '@/lib/webhooks';
 import { sendBugReportEmail } from '@/lib/emails/send';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: responseId } = await params;
 
@@ -21,7 +18,11 @@ export async function POST(
 
     // Pro gate — bug flagging is a Pro feature
     if (apiKey.plan !== 'PRO') {
-      return apiError('PLAN_REQUIRED', 'Bug tracking requires a Pro plan. Upgrade at https://gotcha.wtf/dashboard/settings', 403);
+      return apiError(
+        'PLAN_REQUIRED',
+        'Bug tracking requires a Pro plan. Upgrade at https://gotcha.wtf/dashboard/settings',
+        403
+      );
     }
 
     // Find the response (must belong to this project)
@@ -72,8 +73,9 @@ export async function POST(
           userAgent: response.userAgent,
           endUserMeta: response.endUserMeta as object,
           endUserId: response.endUserId,
-          reporterEmail: (response.endUserMeta as Record<string, unknown>)?.email as string || null,
-          reporterName: (response.endUserMeta as Record<string, unknown>)?.name as string || null,
+          reporterEmail:
+            ((response.endUserMeta as Record<string, unknown>)?.email as string) || null,
+          reporterName: ((response.endUserMeta as Record<string, unknown>)?.name as string) || null,
         },
       });
 

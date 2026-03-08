@@ -40,7 +40,12 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
               elementId="segments-gate"
               mode="poll"
               promptText="What would you use segmentation for?"
-              options={['Compare feedback by plan tier', 'Analyze by user role', 'Regional breakdown', 'Compare team sizes']}
+              options={[
+                'Compare feedback by plan tier',
+                'Analyze by user role',
+                'Regional breakdown',
+                'Compare team sizes',
+              ]}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
               userProfile={{
@@ -216,7 +221,10 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
       take: SEGMENT_LIMIT,
     });
 
-    const segments: Record<string, { ratings: number[]; npsRatings: number[]; votes: { up: number; down: number } }> = {};
+    const segments: Record<
+      string,
+      { ratings: number[]; npsRatings: number[]; votes: { up: number; down: number } }
+    > = {};
 
     responses.forEach((r) => {
       const meta = r.endUserMeta as Record<string, unknown>;

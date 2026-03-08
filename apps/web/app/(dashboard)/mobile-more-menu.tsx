@@ -20,7 +20,13 @@ export function MobileMoreMenu({ items }: { items: MoreMenuItem[] }) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-gray-900"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

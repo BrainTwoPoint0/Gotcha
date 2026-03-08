@@ -30,7 +30,13 @@ interface TrendsTabProps {
 
 type Metric = 'avgRating' | 'positiveRate' | 'npsScore';
 
-const METRICS: { key: Metric; label: string; color: string; domain: [number, number]; formatter: (v: number) => string }[] = [
+const METRICS: {
+  key: Metric;
+  label: string;
+  color: string;
+  domain: [number, number];
+  formatter: (v: number) => string;
+}[] = [
   {
     key: 'avgRating',
     label: 'Avg Rating',
@@ -70,9 +76,7 @@ export function TrendsTab({ data }: TrendsTabProps) {
   }
 
   // Filter to metrics that have data
-  const availableMetrics = METRICS.filter((m) =>
-    data.some((d) => d[m.key] !== null)
-  );
+  const availableMetrics = METRICS.filter((m) => data.some((d) => d[m.key] !== null));
 
   if (availableMetrics.length === 0) {
     return (

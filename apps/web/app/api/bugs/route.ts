@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Pro gate
     if (!isPro) {
-      return NextResponse.json(
-        { error: 'Bug tracking requires a Pro plan' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Bug tracking requires a Pro plan' }, { status: 403 });
     }
 
     const projectIds = (organization.projects || []).map((p) => p.id);

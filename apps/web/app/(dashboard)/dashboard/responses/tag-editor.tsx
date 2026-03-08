@@ -24,26 +24,29 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
         .slice(0, 6)
     : [];
 
-  const saveTags = useCallback(async (newTags: string[]) => {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/responses/${responseId}/tags`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tags: newTags }),
-      });
-      if (!res.ok) {
+  const saveTags = useCallback(
+    async (newTags: string[]) => {
+      setSaving(true);
+      try {
+        const res = await fetch(`/api/responses/${responseId}/tags`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tags: newTags }),
+        });
+        if (!res.ok) {
+          setTags(tags);
+          return;
+        }
+        const data = await res.json();
+        setTags(data.tags);
+      } catch {
         setTags(tags);
-        return;
+      } finally {
+        setSaving(false);
       }
-      const data = await res.json();
-      setTags(data.tags);
-    } catch {
-      setTags(tags);
-    } finally {
-      setSaving(false);
-    }
-  }, [responseId, tags]);
+    },
+    [responseId, tags]
+  );
 
   const addTag = () => {
     const tag = inputValue.trim().toLowerCase();
@@ -103,7 +106,9 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
     if (tags.length === 0) return null;
     return (
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">Tags</span>
+        <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
+          Tags
+        </span>
         <div className="flex flex-wrap gap-1.5">
           {tags.map((tag) => (
             <span
@@ -111,7 +116,12 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-sky-50/80 text-sky-700 border border-sky-200/60"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
-                <path d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+                <path
+                  d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  strokeLinejoin="round"
+                />
                 <circle cx="3.5" cy="3.5" r="0.75" fill="currentColor" />
               </svg>
               {tag}
@@ -137,7 +147,12 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
             `}
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
-              <path d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+              <path
+                d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
               <circle cx="3.5" cy="3.5" r="0.75" fill="currentColor" />
             </svg>
             {tag}
@@ -155,7 +170,12 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
               "
             >
               <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                <path d="M2 2L6 6M6 2L2 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M2 2L6 6M6 2L2 6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </span>
@@ -232,7 +252,12 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
             "
           >
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              <path d="M4 1V7M1 4H7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+              <path
+                d="M4 1V7M1 4H7"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
             </svg>
             {tags.length === 0 ? 'add tag' : ''}
           </button>

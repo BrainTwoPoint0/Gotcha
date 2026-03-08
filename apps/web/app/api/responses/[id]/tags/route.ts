@@ -6,10 +6,7 @@ import { getActiveOrganization } from '@/lib/auth';
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 

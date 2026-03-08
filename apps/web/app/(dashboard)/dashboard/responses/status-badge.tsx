@@ -38,11 +38,18 @@ const STATUS_CONFIG = {
     icon: (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
         <circle cx="7" cy="7" r="5.5" stroke="#059669" strokeWidth="1.5" />
-        <path d="M4.5 7L6.5 9L9.5 5" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M4.5 7L6.5 9L9.5 5"
+          stroke="#059669"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
     textClass: 'text-emerald-700',
-    bgClass: 'bg-emerald-50/80 border-emerald-200/60 hover:bg-emerald-100/80 hover:border-emerald-300/60',
+    bgClass:
+      'bg-emerald-50/80 border-emerald-200/60 hover:bg-emerald-100/80 hover:border-emerald-300/60',
   },
   ARCHIVED: {
     label: 'Archived',
@@ -116,8 +123,20 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
         >
           {config.icon}
           <span className="hidden sm:inline-block sm:w-[58px]">{config.label}</span>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-0.5 opacity-40 hidden sm:block">
-            <path d="M3 4L5 6L7 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            className="ml-0.5 opacity-40 hidden sm:block"
+          >
+            <path
+              d="M3 4L5 6L7 4"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </DropdownMenuTrigger>
@@ -140,12 +159,26 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
               `}
             >
               {c.icon}
-              <span className={`text-sm ${isActive ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+              <span
+                className={`text-sm ${isActive ? 'font-medium text-gray-900' : 'text-gray-600'}`}
+              >
                 {c.label}
               </span>
               {isActive && (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto text-gray-400">
-                  <path d="M3.5 7L6 9.5L10.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  className="ml-auto text-gray-400"
+                >
+                  <path
+                    d="M3.5 7L6 9.5L10.5 4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               )}
             </DropdownMenuItem>

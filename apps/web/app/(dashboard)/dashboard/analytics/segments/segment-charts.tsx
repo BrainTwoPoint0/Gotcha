@@ -352,8 +352,11 @@ export function SegmentCharts({
                           <Cell
                             key={`cell-${index}`}
                             fill={
-                              (entry.value ?? 0) >= 50 ? '#10B981' :
-                              (entry.value ?? 0) >= 0 ? '#F59E0B' : '#EF4444'
+                              (entry.value ?? 0) >= 50
+                                ? '#10B981'
+                                : (entry.value ?? 0) >= 0
+                                  ? '#F59E0B'
+                                  : '#EF4444'
                             }
                           />
                         ))}
@@ -397,12 +400,19 @@ export function SegmentCharts({
                           <span
                             className="font-medium"
                             style={{
-                              color: row.npsScore >= 50 ? '#10B981' : row.npsScore >= 0 ? '#F59E0B' : '#EF4444',
+                              color:
+                                row.npsScore >= 50
+                                  ? '#10B981'
+                                  : row.npsScore >= 0
+                                    ? '#F59E0B'
+                                    : '#EF4444',
                             }}
                           >
                             {row.npsScore}
                           </span>
-                        ) : '-'}
+                        ) : (
+                          '-'
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -38,10 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {activeOrg && workspaces.length > 0 && (
               <>
                 <span className="text-gray-300">/</span>
-                <WorkspaceSwitcher
-                  workspaces={workspaces}
-                  activeId={activeOrg.organization.id}
-                />
+                <WorkspaceSwitcher workspaces={workspaces} activeId={activeOrg.organization.id} />
               </>
             )}
           </div>
@@ -91,10 +88,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <MobileNavLink href="/dashboard/analytics" icon={ChartIcon} label="Analytics" />
           <MobileMoreMenu
             items={[
-              { href: '/dashboard/projects', label: 'Projects', icon: <FolderIcon className="w-5 h-5" /> },
+              {
+                href: '/dashboard/projects',
+                label: 'Projects',
+                icon: <FolderIcon className="w-5 h-5" />,
+              },
               { href: '/dashboard/bugs', label: 'Bugs', icon: <BugIcon className="w-5 h-5" /> },
-              { href: '/dashboard/analytics/segments', label: 'Segments', icon: <SegmentIcon className="w-5 h-5" /> },
-              { href: '/dashboard/settings', label: 'Settings', icon: <SettingsIcon className="w-5 h-5" /> },
+              {
+                href: '/dashboard/analytics/segments',
+                label: 'Segments',
+                icon: <SegmentIcon className="w-5 h-5" />,
+              },
+              {
+                href: '/dashboard/settings',
+                label: 'Settings',
+                icon: <SettingsIcon className="w-5 h-5" />,
+              },
             ]}
           />
         </div>

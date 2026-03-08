@@ -26,9 +26,7 @@ export function WorkspaceSwitcher({
     const ws = workspaces[0];
     if (!ws) return null;
     return (
-      <span className="text-sm font-medium text-gray-700 truncate max-w-[160px]">
-        {ws.name}
-      </span>
+      <span className="text-sm font-medium text-gray-700 truncate max-w-[160px]">{ws.name}</span>
     );
   }
 
@@ -86,11 +84,7 @@ export function WorkspaceSwitcher({
       {open && (
         <>
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
 
           {/* Dropdown */}
           <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1 overflow-hidden">
@@ -116,8 +110,20 @@ export function WorkspaceSwitcher({
                   </p>
                 </div>
                 {ws.id === activeId && (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-gray-400">
-                    <path d="M3.5 7L6 9.5L10.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    className="shrink-0 text-gray-400"
+                  >
+                    <path
+                      d="M3.5 7L6 9.5L10.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </button>

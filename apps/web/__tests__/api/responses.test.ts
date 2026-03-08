@@ -65,7 +65,7 @@ describe('Response API Logic', () => {
         const tooLow = submitResponseSchema.safeParse({
           elementId: 'test',
           mode: 'feedback',
-          rating: 0,
+          rating: -1,
         });
         expect(tooLow.success).toBe(false);
 

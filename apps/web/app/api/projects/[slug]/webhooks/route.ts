@@ -31,13 +31,15 @@ async function getOrgAndProject(request: NextRequest, slug: string) {
 
   if (!project) return null;
 
-  return { organization: activeOrg.organization, project, isPro: activeOrg.isPro, role: activeOrg.membership.role };
+  return {
+    organization: activeOrg.organization,
+    project,
+    isPro: activeOrg.isPro,
+    role: activeOrg.membership.role,
+  };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     const result = await getOrgAndProject(request, slug);
@@ -105,7 +107,10 @@ export async function POST(
     }
 
     if (isPrivateUrl(validation.data.url)) {
-      return NextResponse.json({ error: 'Webhook URL cannot point to a private/internal address' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Webhook URL cannot point to a private/internal address' },
+        { status: 400 }
+      );
     }
 
     const webhookType = validation.data.type;
@@ -123,18 +128,21 @@ export async function POST(
     });
 
     // Return secret only on creation for custom type
-    return NextResponse.json({
-      webhook: {
-        id: webhook.id,
-        type: webhook.type,
-        url: webhook.url,
-        ...(webhookType === 'custom' ? { secret } : {}),
-        events: webhook.events,
-        active: webhook.active,
-        description: webhook.description,
-        createdAt: webhook.createdAt,
+    return NextResponse.json(
+      {
+        webhook: {
+          id: webhook.id,
+          type: webhook.type,
+          url: webhook.url,
+          ...(webhookType === 'custom' ? { secret } : {}),
+          events: webhook.events,
+          active: webhook.active,
+          description: webhook.description,
+          createdAt: webhook.createdAt,
+        },
       },
-    }, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
     console.error('POST /api/projects/[slug]/webhooks error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

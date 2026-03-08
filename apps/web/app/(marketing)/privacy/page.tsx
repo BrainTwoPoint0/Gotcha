@@ -28,20 +28,20 @@ export default function PrivacyPage() {
         <h3>Profile &amp; Segmentation Data</h3>
         <p>
           During onboarding or profile updates, we may collect additional information such as
-          company size, job role, industry, and use case. This data is used to improve the
-          product experience and may be attached to feedback responses for segmentation purposes.
+          company size, job role, industry, and use case. This data is used to improve the product
+          experience and may be attached to feedback responses for segmentation purposes.
         </p>
         <h3>Feedback Data</h3>
         <p>
           When end users submit feedback through the Gotcha SDK embedded on your website, we
-          collect: the feedback content (text, ratings, votes, poll responses, NPS scores),
-          bug reports, the element identifier, page URL, user agent, and any user metadata
-          you choose to pass.
+          collect: the feedback content (text, ratings, votes, poll responses, NPS scores), bug
+          reports, the element identifier, page URL, user agent, and any user metadata you choose to
+          pass.
         </p>
         <h3>Team &amp; Invitation Data</h3>
         <p>
-          When you invite team members to your organization, we collect and store the
-          invitee&apos;s email address, the role assigned, and the invitation status.
+          When you invite team members to your organization, we collect and store the invitee&apos;s
+          email address, the role assigned, and the invitation status.
         </p>
         <h3>Usage Data</h3>
         <p>We track response counts per organization for plan limit enforcement.</p>
@@ -80,18 +80,18 @@ export default function PrivacyPage() {
 
         <h2>5. Webhooks &amp; Third-Party Data Delivery</h2>
         <p>
-          You may configure webhooks to send feedback data to external URLs (e.g., Slack,
-          Discord, or custom endpoints). When webhooks are enabled, feedback data is delivered
-          to the URLs you specify. You are responsible for the security and privacy practices
-          of those endpoints. We validate webhook URLs to prevent delivery to private networks.
+          You may configure webhooks to send feedback data to external URLs (e.g., Slack, Discord,
+          or custom endpoints). When webhooks are enabled, feedback data is delivered to the URLs
+          you specify. You are responsible for the security and privacy practices of those
+          endpoints. We validate webhook URLs to prevent delivery to private networks.
         </p>
 
         <h2>6. Cookies</h2>
         <p>
-          We use essential cookies for authentication session management. We also use
-          short-lived httpOnly cookies to securely process team invitation links. We do not
-          use tracking or advertising cookies. The Gotcha SDK does not set any cookies on your
-          end users&apos; browsers.
+          We use essential cookies for authentication session management. We also use short-lived
+          httpOnly cookies to securely process team invitation links. We do not use tracking or
+          advertising cookies. The Gotcha SDK does not set any cookies on your end users&apos;
+          browsers.
         </p>
 
         <h2>7. Data Retention</h2>
@@ -118,9 +118,9 @@ export default function PrivacyPage() {
           <li>Data portability</li>
         </ul>
         <p>
-          Gotcha provides API endpoints for programmatic data export and deletion of end-user
-          data scoped to individual projects. Account holders can use these APIs to fulfill
-          data subject requests from their own users.
+          Gotcha provides API endpoints for programmatic data export and deletion of end-user data
+          scoped to individual projects. Account holders can use these APIs to fulfill data subject
+          requests from their own users.
         </p>
         <p>
           To exercise your own rights, or for requests not covered by the API, contact us at{' '}

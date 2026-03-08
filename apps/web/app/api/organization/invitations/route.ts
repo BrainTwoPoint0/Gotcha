@@ -127,7 +127,10 @@ export async function POST(request: Request) {
     });
 
     if (existingInvite) {
-      return NextResponse.json({ error: 'An invitation has already been sent to this email' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'An invitation has already been sent to this email' },
+        { status: 400 }
+      );
     }
 
     // Create invitation (expires in 7 days)
@@ -155,7 +158,9 @@ export async function POST(request: Request) {
       token,
     }).catch(console.error);
 
-    return NextResponse.json({ invitation: { id: invitation.id, email: invitation.email, role: invitation.role } });
+    return NextResponse.json({
+      invitation: { id: invitation.id, email: invitation.email, role: invitation.role },
+    });
   } catch (error) {
     console.error('Error creating invitation:', error);
     return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });

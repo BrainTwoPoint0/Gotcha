@@ -3,7 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
 
-const VALID_STATUSES = ['OPEN', 'INVESTIGATING', 'FIXING', 'RESOLVED', 'CLOSED', 'WONT_FIX'] as const;
+const VALID_STATUSES = [
+  'OPEN',
+  'INVESTIGATING',
+  'FIXING',
+  'RESOLVED',
+  'CLOSED',
+  'WONT_FIX',
+] as const;
 const VALID_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 
 async function getAuthOrg() {
@@ -24,13 +31,15 @@ async function getAuthOrg() {
 
   if (!dbUser) return null;
 
-  return { userId: dbUser.id, organization: activeOrg.organization, isPro: activeOrg.isPro, role: activeOrg.membership.role };
+  return {
+    userId: dbUser.id,
+    organization: activeOrg.organization,
+    isPro: activeOrg.isPro,
+    role: activeOrg.membership.role,
+  };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const auth = await getAuthOrg();
@@ -73,10 +82,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const auth = await getAuthOrg();
@@ -124,7 +130,10 @@ export async function PATCH(
 
     if (body.resolutionNote !== undefined) {
       if (typeof body.resolutionNote !== 'string' || body.resolutionNote.length > 5000) {
-        return NextResponse.json({ error: 'Resolution note must be a string under 5000 characters' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Resolution note must be a string under 5000 characters' },
+          { status: 400 }
+        );
       }
       updates.resolutionNote = body.resolutionNote;
     }

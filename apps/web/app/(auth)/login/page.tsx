@@ -21,7 +21,8 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Check for invite via cookie flag (set by accept route) or legacy URL param
-  const hasInviteCookie = typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
+  const hasInviteCookie =
+    typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
   const inviteToken = searchParams.get('invite') || (hasInviteCookie ? '__cookie__' : null);
   const supabase = createClient();
 
@@ -43,9 +44,10 @@ export default function LoginPage() {
 
     if (inviteToken) {
       // Accept route reads token from httpOnly cookie (or legacy URL param)
-      const acceptUrl = inviteToken === '__cookie__'
-        ? '/api/invitations/accept'
-        : `/api/invitations/accept?token=${inviteToken}`;
+      const acceptUrl =
+        inviteToken === '__cookie__'
+          ? '/api/invitations/accept'
+          : `/api/invitations/accept?token=${inviteToken}`;
       router.push(acceptUrl);
     } else {
       router.push('/dashboard');
@@ -86,7 +88,10 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-2xl font-semibold">Sign in to your account</h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Or{' '}
-            <Link href={inviteToken ? `/signup?invite=${inviteToken}` : '/signup'} className="font-medium text-primary hover:text-primary/80">
+            <Link
+              href={inviteToken ? `/signup?invite=${inviteToken}` : '/signup'}
+              className="font-medium text-primary hover:text-primary/80"
+            >
               create a new account
             </Link>
           </p>

@@ -5,10 +5,7 @@ import { getActiveOrganization } from '@/lib/auth';
 import { fireWebhooks } from '@/lib/webhooks';
 import { sendBugResolutionEmail } from '@/lib/emails/send';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
@@ -36,10 +33,7 @@ export async function POST(
 
     // Pro gate
     if (!isPro) {
-      return NextResponse.json(
-        { error: 'Bug tracking requires a Pro plan' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Bug tracking requires a Pro plan' }, { status: 403 });
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -65,13 +59,19 @@ export async function POST(
       const body = await request.json();
       if (body.resolutionNote !== undefined) {
         if (typeof body.resolutionNote !== 'string' || body.resolutionNote.length > 5000) {
-          return NextResponse.json({ error: 'Resolution note must be a string under 5000 characters' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'Resolution note must be a string under 5000 characters' },
+            { status: 400 }
+          );
         }
         resolutionNote = body.resolutionNote;
       }
       if (body.reporterMessage !== undefined) {
         if (typeof body.reporterMessage !== 'string' || body.reporterMessage.length > 2000) {
-          return NextResponse.json({ error: 'Reporter message must be a string under 2000 characters' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'Reporter message must be a string under 2000 characters' },
+            { status: 400 }
+          );
         }
         reporterMessage = body.reporterMessage;
       }

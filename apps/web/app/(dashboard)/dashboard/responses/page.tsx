@@ -7,13 +7,7 @@ import { ExportButton } from './export-button';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponseRow } from './response-row';
 
 export const dynamic = 'force-dynamic';
@@ -81,9 +75,9 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const defaultStatuses = ['NEW', 'REVIEWED', 'ADDRESSED'] as const;
   type ResponseStatus = (typeof validStatuses)[number];
   const statusFilter = params.status
-    ? (params.status.split(',').filter((s): s is ResponseStatus =>
-        (validStatuses as readonly string[]).includes(s)
-      ))
+    ? params.status
+        .split(',')
+        .filter((s): s is ResponseStatus => (validStatuses as readonly string[]).includes(s))
     : [...defaultStatuses];
 
   // Build where clause
@@ -184,7 +178,13 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               elementId="responses-page"
               mode="poll"
               promptText="What would make this page more useful?"
-              options={['Full-text search', 'Bulk status changes', 'Saved filter presets', 'Response annotations', 'Auto-categorization']}
+              options={[
+                'Full-text search',
+                'Bulk status changes',
+                'Saved filter presets',
+                'Response annotations',
+                'Auto-categorization',
+              ]}
               onePerUser={false}
               userEmail={dbUser?.email}
               userName={dbUser?.name ?? undefined}
@@ -202,7 +202,11 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         <ExportButton isPro={isPro} />
       </div>
 
-      <ResponsesFilter elements={elementOptions} currentStatus={params.status} availableTags={availableTagOptions} />
+      <ResponsesFilter
+        elements={elementOptions}
+        currentStatus={params.status}
+        availableTags={availableTagOptions}
+      />
 
       {gatedCount > 0 && (
         <Alert variant="destructive" className="mb-4">
@@ -265,12 +269,24 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
               </colgroup>
               <TableHeader>
                 <TableRow className="border-b border-gray-200/80">
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Response</TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Project</TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Type</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">Status</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Element</TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">Date</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Response
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Project
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Type
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Status
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Element
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Date
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

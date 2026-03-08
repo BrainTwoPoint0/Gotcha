@@ -20,7 +20,8 @@ const features = [
   },
   {
     title: 'Ratings, Votes, NPS, Polls & Bugs',
-    description: 'Star ratings, thumbs up/down, NPS scores, custom polls, and bug reports. Five modes to match any use case.',
+    description:
+      'Star ratings, thumbs up/down, NPS scores, custom polls, and bug reports. Five modes to match any use case.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -34,7 +35,8 @@ const features = [
   },
   {
     title: 'Team Workspaces',
-    description: 'Invite your team, assign roles (Owner, Admin, Member, Viewer), and switch between workspaces.',
+    description:
+      'Invite your team, assign roles (Owner, Admin, Member, Viewer), and switch between workspaces.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -48,7 +50,8 @@ const features = [
   },
   {
     title: 'Webhooks & Integrations',
-    description: 'Push feedback to Slack, Discord, or any custom endpoint in real time. Never miss a signal.',
+    description:
+      'Push feedback to Slack, Discord, or any custom endpoint in real time. Never miss a signal.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -62,7 +65,8 @@ const features = [
   },
   {
     title: 'Export & Analyze',
-    description: 'Export filtered segments as CSV or JSON. Feed data straight into Claude or your analytics tools.',
+    description:
+      'Export filtered segments as CSV or JSON. Feed data straight into Claude or your analytics tools.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -76,7 +80,8 @@ const features = [
   },
   {
     title: 'Built for How You Already Work',
-    description: 'TypeScript, React hooks, customizable themes, and full API access. ~15KB minified.',
+    description:
+      'TypeScript, React hooks, customizable themes, and full API access. ~15KB minified.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path

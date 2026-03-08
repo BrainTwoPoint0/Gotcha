@@ -168,10 +168,7 @@ export async function sendResponseAlertEmail(
   }
 }
 
-export async function sendBugReportEmail(
-  organizationId: string,
-  bug: BugData
-): Promise<void> {
+export async function sendBugReportEmail(organizationId: string, bug: BugData): Promise<void> {
   try {
     const owner = await getOrganizationOwner(organizationId);
     if (!owner) {

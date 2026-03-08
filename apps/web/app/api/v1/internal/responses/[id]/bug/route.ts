@@ -17,7 +17,8 @@ async function getInternalApiKey() {
 
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
-  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS)
+    return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
@@ -34,7 +35,11 @@ async function getInternalApiKey() {
 
   if (apiKey) {
     const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
-    const result = { projectId: apiKey.projectId, organizationId: apiKey.project.organizationId, plan };
+    const result = {
+      projectId: apiKey.projectId,
+      organizationId: apiKey.project.organizationId,
+      plan,
+    };
     cachedApiKey = result;
     cachedKeyHash = keyHash;
     cachedAt = Date.now();
@@ -44,10 +49,7 @@ async function getInternalApiKey() {
   return null;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: responseId } = await params;
 
@@ -125,8 +127,9 @@ export async function POST(
           userAgent: response.userAgent,
           endUserMeta: response.endUserMeta as object,
           endUserId: response.endUserId,
-          reporterEmail: (response.endUserMeta as Record<string, unknown>)?.email as string || null,
-          reporterName: (response.endUserMeta as Record<string, unknown>)?.name as string || null,
+          reporterEmail:
+            ((response.endUserMeta as Record<string, unknown>)?.email as string) || null,
+          reporterName: ((response.endUserMeta as Record<string, unknown>)?.name as string) || null,
         },
       });
 
@@ -160,10 +163,7 @@ export async function POST(
       projectId: apiKey.projectId,
     }).catch(console.error);
 
-    return NextResponse.json(
-      { ticketId: ticket.id, status: 'created' },
-      { status: 201 }
-    );
+    return NextResponse.json({ ticketId: ticket.id, status: 'created' }, { status: 201 });
   } catch (error) {
     console.error('POST /api/v1/internal/responses/[id]/bug error:', error);
     return NextResponse.json(

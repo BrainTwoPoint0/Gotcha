@@ -42,7 +42,8 @@ async function getInternalApiKey() {
   const keyHash = createHash('sha256').update(apiKeyString).digest('hex');
 
   // Return cached if hash matches and TTL not expired
-  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS) return cachedApiKey;
+  if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS)
+    return cachedApiKey;
 
   const apiKey = await prisma.apiKey.findFirst({
     where: { keyHash, revokedAt: null },
@@ -59,7 +60,11 @@ async function getInternalApiKey() {
 
   if (apiKey) {
     const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
-    const result = { projectId: apiKey.projectId, organizationId: apiKey.project.organizationId, plan };
+    const result = {
+      projectId: apiKey.projectId,
+      organizationId: apiKey.project.organizationId,
+      plan,
+    };
     cachedApiKey = result;
     cachedKeyHash = keyHash;
     cachedAt = Date.now();

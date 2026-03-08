@@ -173,7 +173,10 @@ export const corsHeaders = getCorsHeaders();
 
 // Helper to create error responses with CORS headers
 export function apiError(code: string, message: string, status: number, origin?: string | null) {
-  return Response.json({ error: { code, message, status } }, { status, headers: getCorsHeaders(origin) });
+  return Response.json(
+    { error: { code, message, status } },
+    { status, headers: getCorsHeaders(origin) }
+  );
 }
 
 // Helper to create success responses with CORS headers

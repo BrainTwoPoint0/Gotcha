@@ -258,12 +258,16 @@ export function bugReportEmail({
             <td style="padding: 4px 16px 4px 0; font-weight: 500;">Element</td>
             <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${escapeHtml(elementId)}</code></td>
           </tr>
-          ${pageUrl ? `
+          ${
+            pageUrl
+              ? `
           <tr>
             <td style="padding: 4px 16px 4px 0; font-weight: 500;">Page</td>
             <td>${escapeHtml(pageUrl)}</td>
           </tr>
-          ` : ''}
+          `
+              : ''
+          }
         </table>
 
         <div style="margin-top: 32px;">

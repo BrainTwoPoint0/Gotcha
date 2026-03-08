@@ -11,7 +11,12 @@ export function isPrivateUrl(urlString: string): boolean {
     const hostname = url.hostname.toLowerCase();
 
     // Block localhost variants
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '0.0.0.0') {
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '0.0.0.0'
+    ) {
       return true;
     }
 
@@ -249,15 +254,11 @@ async function deliverWebhook(
 
   if (webhook.type === 'slack') {
     body = JSON.stringify(
-      isBugEvent
-        ? formatSlackBugPayload(event, payload)
-        : formatSlackPayload(event, payload)
+      isBugEvent ? formatSlackBugPayload(event, payload) : formatSlackPayload(event, payload)
     );
   } else if (webhook.type === 'discord') {
     body = JSON.stringify(
-      isBugEvent
-        ? formatDiscordBugPayload(event, payload)
-        : formatDiscordPayload(event, payload)
+      isBugEvent ? formatDiscordBugPayload(event, payload) : formatDiscordPayload(event, payload)
     );
   } else {
     // custom — raw payload + HMAC signature

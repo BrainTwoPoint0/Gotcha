@@ -15,7 +15,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
-      return apiError(authResult.error.code, authResult.error.message, authResult.error.status, reqOrigin);
+      return apiError(
+        authResult.error.code,
+        authResult.error.message,
+        authResult.error.status,
+        reqOrigin
+      );
     }
 
     const { apiKey } = authResult;
@@ -40,12 +45,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return Response.json({
-      status: 'deleted',
-      userId,
-      responsesDeleted: responseCount,
-      deletedAt: new Date().toISOString(),
-    }, { headers: getCorsHeaders(reqOrigin) });
+    return Response.json(
+      {
+        status: 'deleted',
+        userId,
+        responsesDeleted: responseCount,
+        deletedAt: new Date().toISOString(),
+      },
+      { headers: getCorsHeaders(reqOrigin) }
+    );
   } catch (error) {
     console.error('DELETE /api/v1/users/:userId error:', error);
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);

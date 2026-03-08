@@ -216,12 +216,19 @@ export function TeamManagement() {
 
                 {isOwner && member.role !== 'OWNER' && (
                   <button
-                    onClick={() => handleRemoveMember(member.id, member.user.name || member.user.email)}
+                    onClick={() =>
+                      handleRemoveMember(member.id, member.user.name || member.user.email)
+                    }
                     className="text-gray-300 hover:text-red-500 transition-colors p-1"
                     title="Remove member"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </button>
                 )}
