@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MobileMoreMenu } from './mobile-more-menu';
 import { WorkspaceSwitcher } from './workspace-switcher';
+import { GlobalBugReporter } from './global-bug-reporter';
 import { getActiveOrganization, getUserWorkspaces } from '@/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -114,6 +115,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
         <Footer />
       </main>
+
+      {/* Global bug reporter — persistent on all dashboard pages */}
+      <GlobalBugReporter
+        userEmail={user.email ?? undefined}
+        plan={isPro ? 'PRO' : 'FREE'}
+      />
     </div>
   );
 }
