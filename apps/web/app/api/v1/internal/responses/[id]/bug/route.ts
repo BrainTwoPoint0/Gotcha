@@ -128,7 +128,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           endUserMeta: response.endUserMeta as object,
           endUserId: response.endUserId,
           reporterEmail:
-            ((response.endUserMeta as Record<string, unknown>)?.email as string) || null,
+            ((response.endUserMeta as Record<string, unknown>)?.email as string)
+            || (response.endUserId?.includes('@') ? response.endUserId : null),
           reporterName: ((response.endUserMeta as Record<string, unknown>)?.name as string) || null,
         },
       });

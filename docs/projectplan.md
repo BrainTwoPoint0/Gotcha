@@ -1,62 +1,65 @@
-# Marketing Pages Update — Reflect New Features
+# Bug Activity Feed — Internal & External Notes
 
 ## Context
 
-Gotcha has had significant upgrades: NPS mode, bug tracking, webhooks (Slack/Discord), team workspaces, data export (CSV/JSON with filters), GDPR data APIs, and the upcoming Score component. The marketing pages (landing, pricing, demo) don't reflect these.
+The bug detail page currently only allows a one-shot "message to reporter" on resolution. We want a proper activity feed where team members can add notes throughout the bug lifecycle. Notes are either **internal** (team only) or **external** (also emailed to the reporter).
 
 ## Todo
 
-### 1. Features Section — Update feature cards
-- [x] Replace "Ratings, Votes, and Polls" with expanded card covering all 5 modes (feedback, vote, poll, NPS, bug reports)
-- [x] Add "Team Workspaces" card (invite team, roles, workspace switcher)
-- [x] Add "Webhooks & Integrations" card (Slack, Discord, custom endpoints)
-- [x] Add "Export & Analyze" card (CSV/JSON export, filtered segments)
-- [x] Removed "5 Minutes to First Feedback" and "Zero Performance Impact" standalone cards — folded into other cards
-- [x] Keep total at 6 cards to maintain grid layout
+### 1. Add `BugNote` model to Prisma schema
+- [x] New model: `id`, `bugTicketId`, `authorEmail`, `authorName`, `content`, `isExternal` (boolean), `createdAt`
+- [x] Relation to `BugTicket` (cascade delete)
+- [x] Index on `[bugTicketId, createdAt]`
+- [x] Run `npx prisma generate`
 
-### 2. Pricing Toggle — Update Pro features list
-- [x] Add: NPS & satisfaction tracking
-- [x] Add: Bug tracking & flagging
-- [x] Add: Webhooks (Slack, Discord)
-- [x] Add: Team workspaces & roles
-- [x] Add: Export to CSV & JSON (was CSV only)
-- [x] Add: GDPR data export & deletion API
+### 2. Create API route for notes
+- [x] `POST /api/bugs/[id]/notes` — create a note (internal or external)
+- [x] `GET /api/bugs/[id]/notes` — fetch all notes for a bug
+- [x] Pro-gated, org-scoped (same pattern as other bug routes)
+- [x] If `isExternal: true` and reporter email exists, send notification email
 
-### 3. Landing Page — Update "Use Gotcha" benefits and code example
-- [x] Update "Use Gotcha" list to mention NPS, webhooks, teams, export
-- [x] Update code example to show NPS and vote modes
+### 3. Add email template for bug update notification
+- [x] New `bugUpdateEmail()` template in `lib/emails/templates.ts`
+- [x] New `sendBugUpdateEmail()` in `lib/emails/send.ts`
+- [x] Distinct from resolution email — this is a status update/note
 
-### 4. Demo Page — Add NPS mode demos
-- [x] Add NPS mode card to the Modes section
-- [x] Add NPS real-world example to Real World Examples
+### 4. Add activity feed to bug detail page
+- [x] Fetch notes in the server component alongside bug data
+- [x] Render chronological activity feed in the main content area (below description, above resolution)
+- [x] Internal notes: gray/neutral styling with "Internal" badge
+- [x] External notes: blue tint with "Sent to reporter" badge
+- [x] Also show status changes and resolution as system events in the feed
 
-### 5. Hero Section — Update subtitle
-- [x] Update hero subtitle to mention NPS and bug tracking alongside ratings/votes
+### 5. Add note composer to bug actions sidebar
+- [x] Textarea + toggle for internal/external
+- [x] External toggle only shown when `reporterEmail` exists
+- [x] Submit button, clear after success
+- [x] Refreshes page to show new note in feed
 
-### 6. Pricing FAQ — Update response definition
-- [x] Update "What counts as a response?" to include NPS scores and bug reports
+### 6. Fire `bug.updated` webhook event
+- [x] New event when note is added (fires for both internal and external notes)
+- [x] Also fires on status/priority changes
+- [x] Add to VALID_EVENTS list + webhook manager UI
+- [x] Slack/Discord formatters handle `bug.updated` with note content display
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `apps/web/app/(marketing)/features-section.tsx` | Updated 4 of 6 feature cards |
-| `apps/web/app/(marketing)/pricing/pricing-toggle.tsx` | Updated Pro features (both monthly + annual) |
-| `apps/web/app/(marketing)/page.tsx` | Updated benefits list + code example |
-| `apps/web/app/(marketing)/demo/page.tsx` | Added NPS mode demo + NPS real-world example |
-| `apps/web/app/(marketing)/hero-section.tsx` | Updated subtitle |
-| `apps/web/app/(marketing)/pricing/page.tsx` | Updated FAQ response definition |
+| `apps/web/prisma/schema.prisma` | Add `BugNote` model |
+| `apps/web/app/api/bugs/[id]/notes/route.ts` | **New** — notes CRUD |
+| `apps/web/lib/emails/templates.ts` | Add bug update template |
+| `apps/web/lib/emails/send.ts` | Add `sendBugUpdateEmail()` |
+| `apps/web/app/(dashboard)/dashboard/bugs/[id]/page.tsx` | Add activity feed |
+| `apps/web/app/(dashboard)/dashboard/bugs/[id]/bug-actions.tsx` | Add note composer |
 
-6 files modified, 0 new files.
+1 new file, 5 modified.
 
 ## Review
 
 **Changes made:**
-- **Features section**: Replaced 3 cards (5 Minutes, Ratings/Votes/Polls, Zero Performance) with 4 new cards (5 Modes, Team Workspaces, Webhooks & Integrations, Export & Analyze). Kept Feedback Where It Matters and Built for How You Already Work (added ~15KB note to the latter). Total stays at 6 cards.
-- **Pricing**: Pro tier now lists 10 features (up from 7), covering NPS, bugs, teams, webhooks, JSON export, and GDPR API. Both monthly and annual tiers updated identically.
-- **Landing page**: "Use Gotcha" benefits now highlight NPS, webhooks, teams, and export instead of generic "constantly improving". Code example shows 3 modes (feedback, NPS, vote) instead of just one.
-- **Demo page**: Added NPS mode to the modes grid (now 5 cards) and a "NPS Survey" real-world example card.
-- **Hero**: Subtitle now reads "rate, vote, submit NPS scores, and flag bugs" instead of just "rate, vote, and respond".
-- **Pricing FAQ**: Response definition now includes NPS scores and bug reports.
-
-All changes are content/copy updates within existing components — no structural or styling changes.
+- **Prisma schema**: Added `BugNote` model with `bugTicketId`, `authorEmail`, `authorName`, `content`, `isExternal`, `createdAt`. Cascade deletes with BugTicket. Added `notes` relation to BugTicket.
+- **Notes API** (`/api/bugs/[id]/notes`): GET returns all notes chronologically. POST creates a note, validates content (max 5000 chars), checks VIEWER role. External notes trigger email to reporter.
+- **Email**: `bugUpdateEmail()` template (blue accent, distinct from green resolution email). `sendBugUpdateEmail()` send function.
+- **Bug detail page**: Activity feed card between Original Response and Resolution sections. Internal notes show gray "Internal" badge, external notes show blue "Sent to reporter" badge. Each note shows author, timestamp, content.
+- **Bug actions sidebar**: Split into 3 cards — Actions (status/priority), Add Note (textarea + "send to reporter" checkbox), Resolve (resolution note + reporter message). Note composer button changes label/style based on internal vs external.

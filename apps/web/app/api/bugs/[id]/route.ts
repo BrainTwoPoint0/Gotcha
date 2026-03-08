@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
+import { fireWebhooks } from '@/lib/webhooks';
 
 const VALID_STATUSES = [
   'OPEN',
@@ -142,6 +143,60 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       where: { id },
       data: updates,
     });
+
+    // Create system notes for status/priority changes
+    const dbUser = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { email: true, name: true },
+    });
+
+    const noteOps: Promise<unknown>[] = [];
+
+    if (body.status && body.status !== existing.status) {
+      noteOps.push(
+        prisma.bugNote.create({
+          data: {
+            bugTicketId: id,
+            authorEmail: dbUser?.email || 'system',
+            authorName: dbUser?.name || null,
+            content: `Status changed from ${existing.status} to ${body.status}`,
+            isExternal: false,
+          },
+        })
+      );
+    }
+
+    if (body.priority && body.priority !== existing.priority) {
+      noteOps.push(
+        prisma.bugNote.create({
+          data: {
+            bugTicketId: id,
+            authorEmail: dbUser?.email || 'system',
+            authorName: dbUser?.name || null,
+            content: `Priority changed from ${existing.priority} to ${body.priority}`,
+            isExternal: false,
+          },
+        })
+      );
+    }
+
+    if (noteOps.length > 0) {
+      Promise.all(noteOps).catch(console.error);
+
+      // Fire webhook for status/priority changes
+      fireWebhooks(existing.projectId, 'bug.updated', {
+        ticketId: id,
+        title: existing.title,
+        elementId: existing.elementId,
+        noteType: 'status_change',
+        ...(body.status && body.status !== existing.status
+          ? { oldStatus: existing.status, newStatus: body.status }
+          : {}),
+        ...(body.priority && body.priority !== existing.priority
+          ? { oldPriority: existing.priority, newPriority: body.priority }
+          : {}),
+      }).catch(console.error);
+    }
 
     return NextResponse.json({ bug: updated });
   } catch (error) {

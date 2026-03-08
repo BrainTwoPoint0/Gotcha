@@ -97,6 +97,7 @@ export default async function BugDetailPage({ params }: PageProps) {
         },
       },
       project: { select: { name: true, slug: true } },
+      notes: { orderBy: { createdAt: 'asc' } },
     },
   });
 
@@ -264,6 +265,71 @@ export default async function BugDetailPage({ params }: PageProps) {
                   <span className="text-gray-200">·</span>
                   <span className="tabular-nums">{formatDateLong(bug.response.createdAt)}</span>
                 </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Activity Feed */}
+          {bug.notes.length > 0 && (
+            <Card className="p-5">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
+                Activity
+              </h2>
+              <div className="space-y-4">
+                {bug.notes.map((note) => {
+                  const isSystemNote =
+                    note.content.startsWith('Status changed from') ||
+                    note.content.startsWith('Priority changed from');
+
+                  if (isSystemNote) {
+                    return (
+                      <div key={note.id} className="flex items-center gap-2 px-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                        <span className="text-xs text-gray-400">
+                          <span className="font-medium text-gray-500">
+                            {note.authorName || note.authorEmail}
+                          </span>{' '}
+                          {note.content.toLowerCase()}
+                        </span>
+                        <span className="text-[11px] text-gray-300 tabular-nums ml-auto">
+                          {formatDateLong(note.createdAt)}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={note.id}
+                      className={`rounded-md border p-3 ${
+                        note.isExternal
+                          ? 'border-blue-200/60 bg-blue-50/30'
+                          : 'border-gray-100 bg-gray-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm font-medium text-gray-700">
+                          {note.authorName || note.authorEmail}
+                        </span>
+                        {note.isExternal ? (
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-blue-600 bg-blue-100/60 px-1.5 py-0.5 rounded">
+                            Sent to reporter
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                            Internal
+                          </span>
+                        )}
+                        <span className="text-[11px] text-gray-400 tabular-nums ml-auto">
+                          {formatDateLong(note.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                        {note.content}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           )}

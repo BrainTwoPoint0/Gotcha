@@ -120,6 +120,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const [newType, setNewType] = useState<WebhookType | null>(null);
   const [newUrl, setNewUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(['response.created', 'bug.created', 'bug.resolved']);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<
@@ -141,7 +142,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: newUrl,
-          events: ['response.created'],
+          events: selectedEvents,
           description: newDescription || undefined,
           type: newType,
         }),
@@ -154,6 +155,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         }
         setNewUrl('');
         setNewDescription('');
+        setSelectedEvents(['response.created', 'bug.created', 'bug.resolved']);
         setNewType(null);
         setShowAdd(false);
         router.refresh();
@@ -329,11 +331,36 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
               onChange={(e) => setNewDescription(e.target.value)}
             />
           </div>
-          <p className="text-xs text-gray-500">
-            Events: <code className="bg-gray-100 px-1 rounded">response.created</code>
-          </p>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-600">Events</label>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { value: 'response.created', label: 'New response' },
+                { value: 'bug.created', label: 'Bug reported' },
+                { value: 'bug.resolved', label: 'Bug resolved' },
+                { value: 'bug.updated', label: 'Bug updated' },
+              ].map((event) => (
+                <label key={event.value} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedEvents.includes(event.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedEvents((prev) => [...prev, event.value]);
+                      } else {
+                        setSelectedEvents((prev) => prev.filter((ev) => ev !== event.value));
+                      }
+                    }}
+                    className="rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                  />
+                  <span className="text-sm text-gray-700">{event.label}</span>
+                  <code className="text-xs text-gray-400 bg-gray-50 px-1 rounded">{event.value}</code>
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-2">
-            <Button onClick={createWebhook} disabled={!newUrl || loading === 'create'}>
+            <Button onClick={createWebhook} disabled={!newUrl || selectedEvents.length === 0 || loading === 'create'}>
               {loading === 'create'
                 ? 'Creating...'
                 : `Create ${TYPE_CONFIG[newType].label} Integration`}

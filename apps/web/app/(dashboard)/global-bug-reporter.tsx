@@ -33,6 +33,7 @@ export function GlobalBugReporter({ userEmail, userName, plan }: GlobalBugReport
           userEmail
             ? {
                 id: userEmail,
+                email: userEmail,
                 name: userName ?? undefined,
                 plan: plan ?? undefined,
               }

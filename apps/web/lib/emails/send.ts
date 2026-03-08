@@ -6,6 +6,7 @@ import {
   usageWarningEmail,
   bugReportEmail,
   bugResolutionEmail,
+  bugUpdateEmail,
   inviteEmail,
 } from './templates';
 
@@ -186,6 +187,48 @@ export async function sendInviteEmail({
     console.log(`Invite email sent to ${email}`);
   } catch (error) {
     console.error('Failed to send invite email:', error);
+  }
+}
+
+export async function sendBugUpdateEmail({
+  reporterEmail,
+  reporterName,
+  projectId,
+  bugTitle,
+  note,
+  authorName,
+}: {
+  reporterEmail: string;
+  reporterName: string | null;
+  projectId: string;
+  bugTitle: string;
+  note: string;
+  authorName: string;
+}): Promise<void> {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+
+    const { subject, html } = bugUpdateEmail({
+      reporterName,
+      projectName: project?.name || 'Unknown Project',
+      bugTitle,
+      note,
+      authorName,
+    });
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: reporterEmail,
+      subject,
+      html,
+    });
+
+    console.log(`Bug update email sent to ${reporterEmail}`);
+  } catch (error) {
+    console.error('Failed to send bug update email:', error);
   }
 }
 

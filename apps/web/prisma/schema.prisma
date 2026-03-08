@@ -430,9 +430,25 @@ model BugTicket {
   // Relations
   project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   response Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  notes    BugNote[]
 
   @@index([projectId, status])
   @@index([projectId, createdAt])
+}
+
+model BugNote {
+  id           String   @id @default(cuid())
+  bugTicketId  String
+  authorEmail  String
+  authorName   String?
+  content      String
+  isExternal   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  bugTicket BugTicket @relation(fields: [bugTicketId], references: [id], onDelete: Cascade)
+
+  @@index([bugTicketId, createdAt])
 }
 
 enum BugStatus {

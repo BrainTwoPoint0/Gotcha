@@ -47,6 +47,14 @@ interface BugResolutionEmailProps {
   message: string;
 }
 
+interface BugUpdateEmailProps {
+  reporterName: string | null;
+  projectName: string;
+  bugTitle: string;
+  note: string;
+  authorName: string;
+}
+
 const baseStyles = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
@@ -265,6 +273,38 @@ export function inviteEmail({ inviterName, orgName, role, acceptUrl }: InviteEma
   };
 }
 
+export function bugUpdateEmail({
+  reporterName,
+  projectName,
+  bugTitle,
+  note,
+  authorName,
+}: BugUpdateEmailProps): { subject: string; html: string } {
+  const displayName = reporterName ? escapeHtml(reporterName) : 'there';
+
+  return {
+    subject: `Update: ${bugTitle}`,
+    html: `
+      <div style="${baseStyles}">
+        <h1 style="color: #1e293b; margin-bottom: 24px;">Bug Update</h1>
+
+        <p>Hey ${displayName},</p>
+
+        <p>${escapeHtml(authorName)} left an update on an issue you reported:</p>
+
+        <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">${escapeHtml(bugTitle)}</p>
+          <p style="margin: 0; color: #1e3a5f; font-size: 14px; white-space: pre-wrap;">${escapeHtml(note)}</p>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 12px; margin-top: 32px;">
+          Powered by <a href="https://gotcha.cx" style="color: #64748b; text-decoration: none; font-weight: 500;">Gotcha</a>
+        </p>
+      </div>
+    `,
+  };
+}
+
 export function bugResolutionEmail({
   reporterName,
   projectName,
@@ -274,27 +314,22 @@ export function bugResolutionEmail({
   const displayName = reporterName ? escapeHtml(reporterName) : 'there';
 
   return {
-    subject: `Your reported issue has been resolved - ${projectName}`,
+    subject: `Resolved: ${bugTitle}`,
     html: `
       <div style="${baseStyles}">
         <h1 style="color: #059669; margin-bottom: 24px;">Issue Resolved</h1>
 
         <p>Hey ${displayName},</p>
 
-        <p>An issue you reported on <strong>${escapeHtml(projectName)}</strong> has been resolved:</p>
+        <p>An issue you reported has been resolved:</p>
 
         <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
           <p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46;">${escapeHtml(bugTitle)}</p>
           <p style="margin: 0; color: #047857; font-size: 14px;">${escapeHtml(message)}</p>
         </div>
 
-        <p style="color: #6b7280; font-size: 14px;">
-          Thank you for taking the time to report this. Your feedback helps make the product better.
-        </p>
-
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The ${escapeHtml(projectName)} Team
+        <p style="color: #9ca3af; font-size: 12px; margin-top: 32px;">
+          Powered by <a href="https://gotcha.cx" style="color: #64748b; text-decoration: none; font-weight: 500;">Gotcha</a>
         </p>
       </div>
     `,

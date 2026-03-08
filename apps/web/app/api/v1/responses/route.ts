@@ -195,7 +195,8 @@ export async function POST(request: NextRequest) {
               userAgent: data.context?.userAgent,
               endUserMeta: (data.user || {}) as object,
               endUserId: data.user?.id,
-              reporterEmail: typeof data.user?.email === 'string' ? data.user.email : null,
+              reporterEmail: typeof data.user?.email === 'string' ? data.user.email
+                : (typeof data.user?.id === 'string' && data.user.id.includes('@') ? data.user.id : null),
               reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
             },
           });

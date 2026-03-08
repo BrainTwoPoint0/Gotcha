@@ -137,6 +137,7 @@ export function formatSlackBugPayload(
   payload: Record<string, unknown>
 ): Record<string, unknown> {
   const isResolved = event === 'bug.resolved';
+  const isUpdated = event === 'bug.updated';
   const title = String(payload.title || 'Untitled bug');
   const elementId = payload.elementId || 'unknown';
 
@@ -149,9 +150,13 @@ export function formatSlackBugPayload(
   if (isResolved && payload.resolutionNote) {
     fields.push(`*Resolution:* ${String(payload.resolutionNote)}`);
   }
+  if (isUpdated && payload.noteContent) {
+    const noteLabel = payload.noteType === 'external' ? 'Note (sent to reporter)' : 'Internal note';
+    fields.push(`*${noteLabel}:* ${String(payload.noteContent)}`);
+  }
 
-  const emoji = isResolved ? ':white_check_mark:' : ':warning:';
-  const heading = isResolved ? 'Bug resolved' : 'New bug reported';
+  const emoji = isResolved ? ':white_check_mark:' : isUpdated ? ':pencil2:' : ':warning:';
+  const heading = isResolved ? 'Bug resolved' : isUpdated ? 'Bug updated' : 'New bug reported';
 
   return {
     blocks: [
@@ -178,6 +183,7 @@ export function formatDiscordBugPayload(
   payload: Record<string, unknown>
 ): Record<string, unknown> {
   const isResolved = event === 'bug.resolved';
+  const isUpdated = event === 'bug.updated';
   const title = String(payload.title || 'Untitled bug');
   const elementId = payload.elementId || 'unknown';
 
@@ -197,12 +203,16 @@ export function formatDiscordBugPayload(
   if (isResolved && payload.resolutionNote) {
     embedFields.push({ name: 'Resolution', value: String(payload.resolutionNote), inline: false });
   }
+  if (isUpdated && payload.noteContent) {
+    const noteLabel = payload.noteType === 'external' ? 'Note (sent to reporter)' : 'Internal note';
+    embedFields.push({ name: noteLabel, value: String(payload.noteContent), inline: false });
+  }
 
   return {
     embeds: [
       {
-        title: isResolved ? `Bug resolved: ${title}` : `New bug: ${title}`,
-        color: isResolved ? 0x16a34a : 0xf59e0b, // green or amber
+        title: isResolved ? `Bug resolved: ${title}` : isUpdated ? `Bug updated: ${title}` : `New bug: ${title}`,
+        color: isResolved ? 0x16a34a : isUpdated ? 0x3b82f6 : 0xf59e0b, // green, blue, or amber
         fields: embedFields,
         timestamp: new Date().toISOString(),
         footer: { text: 'Gotcha' },

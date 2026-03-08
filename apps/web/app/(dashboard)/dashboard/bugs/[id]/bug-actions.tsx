@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,12 +44,20 @@ export function BugActions({
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [priority, setPriority] = useState(currentPriority);
-  const [resolutionNote, setResolutionNote] = useState('');
-  const [reporterMessage, setReporterMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [noteContent, setNoteContent] = useState('');
+  const [isExternal, setIsExternal] = useState(false);
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
 
+  // Sync local state when server data changes (e.g. after resolve)
+  useEffect(() => { setStatus(currentStatus); }, [currentStatus]);
+  useEffect(() => { setPriority(currentPriority); }, [currentPriority]);
+
   const hasChanges = status !== currentStatus || priority !== currentPriority;
+  const isResolved = currentStatus === 'RESOLVED' || currentStatus === 'CLOSED';
+  const hasNote = noteContent.trim().length > 0;
 
   async function handleSave() {
     setIsSaving(true);
@@ -67,6 +75,25 @@ export function BugActions({
     }
   }
 
+  async function handleAddNote() {
+    if (!hasNote) return;
+    setIsAddingNote(true);
+    try {
+      await fetch(`/api/bugs/${bugId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: noteContent.trim(), isExternal }),
+      });
+      setNoteContent('');
+      setIsExternal(false);
+      router.refresh();
+    } catch (err) {
+      console.error('Failed to add note:', err);
+    } finally {
+      setIsAddingNote(false);
+    }
+  }
+
   async function handleResolve() {
     setIsResolving(true);
     try {
@@ -74,10 +101,12 @@ export function BugActions({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resolutionNote: resolutionNote || undefined,
-          reporterMessage: reporterMessage || undefined,
+          resolutionNote: noteContent.trim() || undefined,
+          reporterMessage: isExternal && noteContent.trim() ? noteContent.trim() : undefined,
         }),
       });
+      setNoteContent('');
+      setIsExternal(false);
       router.refresh();
     } catch (err) {
       console.error('Failed to resolve bug:', err);
@@ -86,15 +115,14 @@ export function BugActions({
     }
   }
 
-  const isResolved = currentStatus === 'RESOLVED' || currentStatus === 'CLOSED';
-
   return (
     <Card className="p-5">
       <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Actions</h2>
 
-      <div className="space-y-4">
+      {/* Status & Priority */}
+      <div className="space-y-3">
         <div>
-          <label className="text-[11px] text-gray-400 block mb-1.5">Status</label>
+          <span className="text-[11px] text-gray-400 block mb-1.5">Status</span>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-full text-sm">
               <SelectValue />
@@ -110,7 +138,7 @@ export function BugActions({
         </div>
 
         <div>
-          <label className="text-[11px] text-gray-400 block mb-1.5">Priority</label>
+          <span className="text-[11px] text-gray-400 block mb-1.5">Priority</span>
           <Select value={priority} onValueChange={setPriority}>
             <SelectTrigger className="w-full text-sm">
               <SelectValue />
@@ -130,61 +158,73 @@ export function BugActions({
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         )}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-100 my-4" />
+
+      {/* Note */}
+      <div className="space-y-3">
+        <span className="text-[11px] text-gray-400 block">Note</span>
+        <textarea
+          value={noteContent}
+          onChange={(e) => setNoteContent(e.target.value)}
+          placeholder="Add a note or resolution message..."
+          rows={3}
+          maxLength={5000}
+          className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-none transition-colors"
+        />
+
+        {reporterEmail && (
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={isExternal}
+              onChange={(e) => setIsExternal(e.target.checked)}
+              className="rounded border-gray-300 text-slate-700 focus:ring-slate-500 transition-colors"
+            />
+            <span className="text-[11px] text-gray-400 group-hover:text-gray-500 transition-colors">
+              Also email to{' '}
+              <span className="text-gray-500 font-medium">{reporterEmail}</span>
+            </span>
+          </label>
+        )}
+
+        <Button
+          onClick={handleAddNote}
+          disabled={isAddingNote || !hasNote}
+          variant="outline"
+          className="w-full"
+          size="sm"
+        >
+          {isAddingNote ? 'Adding...' : 'Add Note'}
+        </Button>
 
         {!isResolved && (
-          <>
-            <div className="border-t border-gray-100 pt-4">
-              <label className="text-[11px] text-gray-400 block mb-1.5">Internal Note</label>
-              <textarea
-                value={resolutionNote}
-                onChange={(e) => setResolutionNote(e.target.value)}
-                placeholder="How was this resolved? (internal only)"
-                rows={2}
-                className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-none transition-colors"
-              />
-            </div>
-
-            {reporterEmail && (
-              <div>
-                <label className="text-[11px] text-gray-400 block mb-1.5">
-                  Message to Reporter
-                  <span className="text-gray-300 ml-1">({reporterEmail})</span>
-                </label>
-                <textarea
-                  value={reporterMessage}
-                  onChange={(e) => setReporterMessage(e.target.value)}
-                  placeholder="Let them know it's been fixed..."
-                  rows={2}
-                  className="w-full text-sm border border-blue-200/60 rounded-md px-3 py-2 text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 resize-none transition-colors bg-blue-50/30"
-                />
-              </div>
+          <Button
+            onClick={handleResolve}
+            disabled={isResolving}
+            variant="outline"
+            className="w-full border-emerald-200/60 text-emerald-700 hover:bg-emerald-50/80 hover:text-emerald-800 transition-colors"
+            size="sm"
+          >
+            {isResolving ? (
+              'Resolving...'
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M3.5 7L6 9.5L10.5 4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {hasNote ? 'Resolve with Note' : 'Mark as Resolved'}
+              </span>
             )}
-
-            <Button
-              onClick={handleResolve}
-              disabled={isResolving}
-              variant="outline"
-              className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-              size="sm"
-            >
-              {isResolving ? (
-                'Resolving...'
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path
-                      d="M3.5 7L6 9.5L10.5 4.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Mark as Resolved
-                </span>
-              )}
-            </Button>
-          </>
+          </Button>
         )}
       </div>
     </Card>

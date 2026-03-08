@@ -5,11 +5,11 @@ import { getActiveOrganization } from '@/lib/auth';
 import { generateSecret, isPrivateUrl } from '@/lib/webhooks';
 import { z } from 'zod';
 
-const VALID_EVENTS = ['response.created', 'bug.created', 'bug.resolved'];
+const VALID_EVENTS = ['response.created', 'bug.created', 'bug.resolved', 'bug.updated'];
 
 const createWebhookSchema = z.object({
   url: z.string().url(),
-  events: z.array(z.enum(['response.created', 'bug.created', 'bug.resolved'])).min(1),
+  events: z.array(z.enum(['response.created', 'bug.created', 'bug.resolved', 'bug.updated'])).min(1),
   description: z.string().max(200).optional(),
   type: z.enum(['custom', 'slack', 'discord']).default('custom'),
 });
