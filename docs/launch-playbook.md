@@ -21,12 +21,12 @@
 ### Week 0 — Prep (Before Any Launch)
 - [ ] Public GitHub repo for SDK is live with clean README
 - [ ] Demo URL works and loads fast (under 2 seconds)
-- [ ] npm page (`gotcha-feedback`) has description, keywords, and badge
-- [ ] Record 30-60 second demo GIF (widget appearing on a React app, user clicking stars, submitting)
+- [ ] npm page (`gotcha-feedback`) has description, keywords, and badge — v1.1.0 published
+- [ ] Record 30-60 second demo GIF (widget appearing on a React app, user clicking stars, NPS score, submitting)
 - [ ] Create 5-6 gallery images for Product Hunt (see Assets section)
-- [ ] Clean pricing screenshot (Free vs Pro)
+- [ ] Clean pricing screenshot (Free vs Pro with annual toggle)
 - [ ] Build 30 days of Reddit comment history (if needed)
-- [ ] Set up keyword alerts (F5Bot or similar) for: "feedback widget," "collect user feedback," "Typeform alternative," "product feedback React"
+- [ ] Set up keyword alerts (F5Bot or similar) for: "feedback widget," "collect user feedback," "Typeform alternative," "product feedback React," "NPS React component"
 
 ### Week 1 — Directory Submissions (Low Effort)
 - [ ] Submit to **AlternativeTo** — list as alternative to Canny, Hotjar, UserVoice, Intercom, Survicate
@@ -75,9 +75,9 @@
 ### Pre-Launch Prep
 
 **2 weeks before:**
-- Record 60-90 second demo GIF/video showing 3-line integration
+- Record 60-90 second demo GIF/video showing: install SDK → add `<Gotcha />` → feedback appears → view in dashboard
 - Set up `/launch` page or "Upvote us on PH" CTA
-- Ensure live demo at `/demo` works without sign-up
+- Ensure live demo at `/demo` works without sign-up — includes NPS mode
 - Prepare PH profile: photo, bio, links
 - Draft all copy (below)
 - Design gallery images (see Assets)
@@ -101,18 +101,18 @@
 
 ### Tagline Options (under 60 chars)
 
-1. **Feedback that lives where users actually experience it** ← recommended
-2. Component-level feedback for React. 3 lines of code.
+1. **Feedback that lives where users actually experience it** — recommended
+2. NPS, ratings, votes & bugs — embedded in React components
 3. Stop guessing which feature users hate. Ask them there.
-4. Embed feedback into any React component in 5 minutes
-5. Contextual feedback SDK — no surveys, no portals
+4. Contextual feedback SDK — no surveys, no portals
+5. 5 feedback modes for any React component. 3 lines of code.
 
 ### Short Description (under 260 chars)
 
 ```
-Gotcha lets you embed star ratings, thumbs up/down, and polls directly into React
-components. Users give feedback exactly where they experience your features — not
-in a survey they open three days later. 3 lines of code. 5-minute setup.
+Gotcha lets you embed star ratings, NPS scores, thumbs up/down, polls, and bug
+reports directly into React components. Users give feedback where they experience
+your features. 5 modes, team workspaces, Slack webhooks. 3 lines of code.
 ```
 
 ### Maker Comment (First Comment)
@@ -128,18 +128,25 @@ forgotten the exact moment of frustration.
 
 Gotcha is different: you attach feedback directly to a component.
 
-  <Gotcha projectId="abc123">
-    <YourFeatureComponent />
-  </Gotcha>
+  <GotchaProvider apiKey="your-key">
+    <Gotcha elementId="checkout" mode="nps" />
+    <Gotcha elementId="search" mode="vote" />
+    <Gotcha elementId="pricing" mode="feedback" />
+  </GotchaProvider>
 
-That's it. Now that specific feature has a feedback widget. Star ratings, thumbs
-up/down, or custom polls — right there, in context, at the moment of experience.
+That's it. Five feedback modes — star ratings, thumbs up/down, NPS (0-10),
+custom polls, and bug reports — right there, in context, at the moment of
+experience.
 
 What I've built:
 - React SDK (~15KB, tree-shakeable), published as `gotcha-feedback` on npm
-- Dashboard to view, filter, and analyze responses
+- Dashboard with analytics, element benchmarking, and anomaly detection
+- Team workspaces with roles (Owner, Admin, Member, Viewer)
+- Webhooks to Slack, Discord, or custom endpoints
+- Export to CSV/JSON with filters for AI analysis
+- GDPR data export and deletion API
 - Free tier: 500 responses/month, 1 project
-- Pro: $29/month, unlimited everything
+- Pro: $29/month (or $24/month annual), unlimited everything
 
 I'd love your honest feedback — especially from anyone who's struggled with vague
 user feedback or low survey response rates. What would make this more useful
@@ -152,25 +159,22 @@ for your stack?
 
 **Self-hunt.** For a developer tool, self-hunting reads as genuine. PH's algorithm weights upvotes/engagement/comment quality far more than who submits. You control exact launch time and all metadata.
 
-Exception: only use a hunter if you have a direct relationship with someone who's genuinely excited about Gotcha and has 10,000+ followers.
-
 ### Launch Day Hour-by-Hour
 
 | Time (PST) | Action |
 |---|---|
 | 12:01 AM | Submit product. Post maker comment within 60 seconds. First tweet. |
-| 12:01–2:00 AM | Send personal DMs to top 10-15 people. Say "check it out" not "upvote." Post on IH if active there. |
-| 6:00–9:00 AM | Send newsletter email (8 AM). Post in active Slack communities. Reply to every PH comment. |
-| 9:00 AM–12:00 PM | Twitter/X thread (problem → solution → PH link). Post in r/reactjs and r/SideProject if you have history. |
-| 12:00–5:00 PM | Peak traffic. Stay online. Reply to every comment within 15 minutes. "Midday update" tweet. |
-| 5:00–11:59 PM | Final push tweet. Thank commenters. Personal thank-you DMs to substantive commenters. |
+| 12:01-2:00 AM | Send personal DMs to top 10-15 people. Say "check it out" not "upvote." Post on IH if active there. |
+| 6:00-9:00 AM | Send newsletter email (8 AM). Post in active Slack communities. Reply to every PH comment. |
+| 9:00 AM-12:00 PM | Twitter/X thread (problem -> solution -> PH link). Post in r/reactjs and r/SideProject if you have history. |
+| 12:00-5:00 PM | Peak traffic. Stay online. Reply to every comment within 15 minutes. "Midday update" tweet. |
+| 5:00-11:59 PM | Final push tweet. Thank commenters. Personal thank-you DMs to substantive commenters. |
 
 ### Post-Launch
 
 - **Day after:** Launch recap on Twitter/X and Indie Hackers (upvotes, comments, signups, one unexpected insight)
 - **Week after:** Personally reach out to substantive PH commenters (warm leads). Post "what I learned from my PH launch" on IH.
 - **Long-term:** Add "Featured on Product Hunt" badge to site + README. Use PH comments as testimonials.
-- **Underrated move:** DM every upvoter who didn't comment and ask: "What almost stopped you from trying Gotcha?"
 
 ---
 
@@ -180,37 +184,42 @@ Exception: only use a hunter if you have a direct relationship with someone who'
 
 **Title:**
 ```
-Show HN: Gotcha – Contextual feedback SDK for React (star ratings/votes inside your components)
+Show HN: Gotcha – Contextual feedback SDK for React (ratings, NPS, votes, polls, bugs)
 ```
 
 **Body:**
 ```
 Gotcha is a React SDK that lets you collect user feedback directly inside your
-components — star ratings, thumbs up/down, or open text — without redirecting
-users to a survey.
+components — star ratings, NPS scores, thumbs up/down, polls, or bug reports —
+without redirecting users to a survey.
 
 Integration is a wrapper component:
 
-  <Gotcha projectId="your-id" mode="rating">
-    <YourFeatureComponent />
-  </Gotcha>
+  <GotchaProvider apiKey="your-key">
+    <Gotcha elementId="checkout" mode="nps" />
+    <Gotcha elementId="search" mode="vote" />
+  </GotchaProvider>
 
 A small feedback button appears on the component. Responses are aggregated
-in a dashboard.
+in a dashboard with element-level benchmarking and anomaly detection.
 
 Bundle is ~15KB gzipped. No dependencies outside React. The button auto-detects
 system theme (dark/light). API endpoint returns immediately; DB writes are async.
 
+Other features: team workspaces with roles, webhooks to Slack/Discord, CSV/JSON
+export with filters, GDPR deletion API.
+
 Free tier: 500 responses/month, 1 project. Pro: $29/month, unlimited.
 
 npm: gotcha-feedback
+Demo: gotcha.cx/demo
 ```
 
 ### Full Narrative Post (Alternative)
 
 **Title:**
 ```
-I built a React feedback SDK to avoid context-switching to Typeform on every project
+I built a React feedback SDK because Typeform surveys had 2% response rates
 ```
 
 **Body:**
@@ -223,19 +232,27 @@ The insight: feedback quality is inversely proportional to the time and distance
 between the experience and the feedback request.
 
 Gotcha (gotcha-feedback on npm) is a React wrapper component. You put it around
-any component and a feedback button floats on it.
+any component and a feedback button floats on it. Five modes: star ratings,
+thumbs up/down, NPS (0-10), custom polls, and bug reports.
 
 Technical decisions worth discussing:
 
 **Bundle size**: Started at ~40KB. Removed date picker, switched from third-party
-modal to React portal with inline styles → ~15KB gzipped.
+modal to React portal with inline styles -> ~15KB gzipped.
 
 **Theme detection**: Synchronous detection before hydration to avoid flash-of-wrong-theme.
 
 **API latency**: Response endpoint validates payload and returns 200 immediately.
 DB write is async. User-facing latency under 100ms.
 
-**Modal**: React portal mounted to document.body — no z-index inheritance issues.
+**Webhooks**: Real-time delivery to Slack/Discord/custom endpoints with retry
+logic and failure tracking.
+
+**NPS**: 0-10 scale with automatic promoter/passive/detractor classification
+and score calculation in the analytics dashboard.
+
+**Teams**: Workspace model with roles (Owner, Admin, Member, Viewer). Workspace
+switcher for users in multiple orgs.
 
 Curious whether contextual feedback is something people find useful, or if the
 problem is better solved by better survey UX.
@@ -243,7 +260,7 @@ problem is better solved by better survey UX.
 
 ### HN Timing & Tactics
 
-- **When:** Tuesday/Wednesday/Thursday, 9:00–10:00 AM ET
+- **When:** Tuesday/Wednesday/Thursday, 9:00-10:00 AM ET
 - **First 30 minutes are critical** — respond to first 3-5 comments within 10-15 min
 - **Never post on:** Friday afternoon, same day as major tech announcements
 
@@ -253,10 +270,16 @@ problem is better solved by better survey UX.
 > Hotjar and FullStory are session replay — passive observation. Gotcha is active: users explicitly rate a specific component. Session replay tells you what users did; contextual feedback tells you what they thought. They're complementary.
 
 **"Seems like this could be a custom hook"**
-> Fair — you could build this with a hook + portal. Gotcha saves you the button design, modal, API endpoint, dashboard, and response aggregation. If you want full control, roll your own. The SDK is for shipping in 5 minutes rather than 2 days.
+> Fair — you could build this with a hook + portal. Gotcha saves you the button design, modal, API endpoint, dashboard, analytics, webhooks, team management, and NPS calculations. If you want full control, roll your own. The SDK is for shipping in 5 minutes rather than 2 weeks.
 
 **"What about GDPR/privacy?"**
-> Responses tied to anonymous session ID by default — no PII unless the user types it. You can pass a userId prop to correlate to authenticated users (opt-in). You're the data controller, Gotcha is the processor. DPA available on request.
+> Responses tied to anonymous session ID by default — no PII unless the user types it. You can pass a userId prop to correlate to authenticated users (opt-in). We have a GDPR deletion API (`DELETE /api/v1/users/:userId`) that removes all data for a specific end user. You're the data controller, Gotcha is the processor.
+
+**"Why only React?"**
+> React-first because that's what I use and I wanted the DX to be perfect — actual React components, not script-tag injection. Vue and Svelte support is on the roadmap. The API and dashboard work with any frontend if you POST directly.
+
+**"NPS on individual components? That seems weird."**
+> Traditional NPS asks "would you recommend this company?" which is too broad to be actionable. Per-component NPS tells you "users are promoters of your search but detractors of your checkout." That's specific enough to act on. You can also use it at the page level — just put it on the page layout.
 
 ### What Gets You Upvoted on HN
 - Genuinely interesting technical decisions explained clearly
@@ -303,17 +326,21 @@ already forgotten what they wanted to say by the time the survey loaded.
 So I built Gotcha.
 
 It's a React SDK (gotcha-feedback on npm) that lets you wrap any component with
-a feedback trigger. Star ratings, thumbs up/down, open text — all rendered right
-inside your UI, in context.
+a feedback trigger. Star ratings, NPS scores, thumbs up/down, polls, or bug
+reports — all rendered right inside your UI, in context.
 
-  <Gotcha projectId="your-id">
-    <YourFeatureComponent />
-  </Gotcha>
+  <GotchaProvider apiKey="your-key">
+    <Gotcha elementId="checkout" mode="nps" />
+    <Gotcha elementId="search" mode="vote" />
+  </GotchaProvider>
 
 Some decisions I made:
 - Kept the bundle under 15KB. No dependency bloat.
 - Glassmorphism button that works on dark and light themes without config
 - API returns immediately — DB writes are async, no latency hit on the user
+- Team workspaces with roles so your whole team can see feedback
+- Webhooks to Slack/Discord so you never miss a response
+- Export to CSV/JSON with filters for feeding data into AI for analysis
 - Free: 500 responses/month, 1 project. Pro: $29/month unlimited.
 
 Demo: [link]
@@ -327,7 +354,7 @@ Curious if this solves a real problem.
 
 **Title:**
 ```
-Why in-context feedback beats surveys every time (and how to implement it in React in 5 minutes)
+Why in-context feedback beats surveys every time (and how to implement it in React)
 ```
 
 **Body:**
@@ -341,19 +368,24 @@ The fix is contextual feedback — collect it right where the experience happens
 
   npm install gotcha-feedback
 
-  import { Gotcha } from 'gotcha-feedback'
+  import { GotchaProvider, Gotcha } from 'gotcha-feedback'
 
-  <Gotcha projectId="abc123" mode="vote">
+  <GotchaProvider apiKey="your-key">
     <PricingTable />
-  </Gotcha>
+    <Gotcha elementId="pricing" mode="nps" />
+  </GotchaProvider>
 
-A subtle feedback button appears on the component. Responses land in your dashboard.
+A subtle feedback button appears on the component. Responses land in your
+dashboard. Five modes: star ratings, NPS (0-10), thumbs up/down, polls, and
+bug reports.
 
-- Uses a React portal (doesn't affect layout or z-index)
-- Theme auto-detected from OS preference
-- onSubmit callback for piping data to your own analytics
+Other features that matter:
+- Webhooks to Slack/Discord (get pinged when feedback arrives)
+- Team workspaces with roles
+- Export to CSV/JSON for analysis
+- GDPR deletion API
 
-The SDK is gotcha-feedback on npm. Free tier covers most indie projects.
+The SDK is gotcha-feedback on npm. Free tier covers most indie projects (500/mo).
 Happy to answer implementation questions.
 ```
 
@@ -361,30 +393,38 @@ Happy to answer implementation questions.
 
 **Title:**
 ```
-Built a contextual feedback SDK for React — looking for honest critique before
-I push harder on marketing
+Built a contextual feedback SDK for React — 5 modes, team workspaces, Slack
+webhooks — looking for honest critique
 ```
 
 **Body:**
 ```
-I've been quietly using this on my own projects and recently published it.
-Before I invest more, I want to make sure the DX is good.
+I've been quietly using this on my own projects and recently published v1.1.0.
+Before I invest more in marketing, I want to make sure the DX is good.
 
-  <Gotcha
-    projectId="your-project-id"
-    mode="rating"
-    theme="auto"
-    onSubmit={(data) => console.log(data)}
-    onError={(err) => console.error(err)}
-  >
-    <YourComponent />
-  </Gotcha>
+  <GotchaProvider apiKey="your-key">
+    <Gotcha
+      elementId="feature-card"
+      mode="feedback"        // or "vote", "nps", "poll"
+      theme="auto"
+      size="sm"
+      position="inline"
+    />
+  </GotchaProvider>
+
+What's in the box:
+- 5 modes: star ratings, thumbs up/down, NPS (0-10), polls, bug reports
+- Team workspaces with Owner/Admin/Member/Viewer roles
+- Webhooks to Slack, Discord, or custom endpoints
+- Export to CSV/JSON with filter forwarding
+- Element-level analytics with benchmarking
+- ~15KB bundle, no deps outside React
 
 Questions:
 1. Does the API feel natural, or would you design it differently?
 2. Is 15KB too heavy for a feedback widget?
 3. Would you reach for this or build something yourself?
-4. Is the free tier (500 responses/mo) reasonable?
+4. Any modes/features obviously missing?
 
 Demo: [link] | npm: gotcha-feedback
 
@@ -407,7 +447,7 @@ Not here to pitch — genuinely want to know if this is worth pursuing. Be bruta
 - Post and disappear
 - Delete negative comments — respond thoughtfully
 
-**Timing:** Tuesday–Thursday, 9:00–10:30 AM ET or 12:00–1:00 PM ET
+**Timing:** Tuesday-Thursday, 9:00-10:30 AM ET or 12:00-1:00 PM ET
 
 ---
 
@@ -432,23 +472,25 @@ Not here to pitch — genuinely want to know if this is worth pursuing. Be bruta
 **Indie Hackers:**
 > I was tired of feedback forms nobody fills out, so I built an SDK that asks users in context.
 >
-> The problem with feedback portals is they're separated from the moment of experience. Gotcha is a React SDK (`gotcha-feedback` on npm) that embeds star ratings, thumbs up/down, and polls directly in your components.
+> The problem with feedback portals is they're separated from the moment of experience. Gotcha is a React SDK (`gotcha-feedback` on npm) that embeds star ratings, NPS scores, thumbs up/down, polls, and bug reports directly in your components.
 >
-> 3 lines of code. 15KB. Free tier: 500 responses/month. Pro: $29/month.
+> 3 lines of code. 15KB. Team workspaces. Slack webhooks. Export to CSV/JSON.
+>
+> Free tier: 500 responses/month. Pro: $29/month (or $24/month annual).
 >
 > What would make you actually integrate this into your app?
 
 **Uneed:**
-> Embed feedback widgets into React components in 3 lines of code. 15KB SDK, 5-minute integration. Free tier: 500 responses/month. Pro: $29/month unlimited.
+> Embed feedback widgets into React components in 3 lines of code. 5 feedback modes (ratings, NPS, votes, polls, bugs). Team workspaces, Slack webhooks, CSV/JSON export. 15KB SDK. Free tier: 500 responses/month. Pro: $29/month.
 
 **Betalist:**
-> Contextual feedback for React apps — right where your users experience features. No survey portals, no redirects. 3 lines of code, 5-minute setup. Published on npm as `gotcha-feedback`.
+> Contextual feedback for React apps — right where your users experience features. 5 modes: star ratings, NPS, thumbs up/down, polls, bug reports. Team workspaces with roles, Slack/Discord webhooks, data export. 3 lines of code, 5-minute setup. Published on npm as `gotcha-feedback`.
 
 **Microlaunch:**
-> The feedback SDK indie hackers actually finish integrating. Install from npm, drop `<Gotcha projectId="..." />` into any component, and start collecting star ratings, votes, or polls. 15KB, free tier, $29/mo Pro.
+> The feedback SDK indie hackers actually finish integrating. Install from npm, drop `<Gotcha elementId="..." mode="nps" />` into any component, and start collecting NPS scores, star ratings, votes, polls, or bug reports. 15KB, team workspaces, Slack webhooks, free tier, $29/mo Pro.
 
 **Peerlist:**
-> I built Gotcha because I kept building feedback forms nobody filled out. It's a React SDK that embeds feedback directly into your components — users rate features right where they use them. 5-minute integration via npm. Free + Pro at $29/mo.
+> I built Gotcha because I kept building feedback forms nobody filled out. It's a React SDK that embeds feedback directly into your components — users rate features where they use them. 5 modes including NPS and bug reports. Team workspaces, Slack webhooks, data export. Free + Pro at $29/mo.
 
 ---
 
@@ -475,26 +517,31 @@ List as alternative to: **Canny, UserVoice, Hotjar, Intercom, Survicate, Typefor
 ```
 Gotcha — Contextual feedback SDK for React developers
 
-Gotcha lets you embed star ratings, thumbs up/down votes, and polls directly
-inside your React components. Feedback happens where users experience your
-product, not in a separate survey portal they never open.
+Gotcha lets you embed star ratings, NPS scores, thumbs up/down votes, polls,
+and bug reports directly inside your React components. Feedback happens where
+users experience your product, not in a separate survey portal they never open.
 
 3 lines of code. 5-minute setup. Ships in 15KB.
 
-Free tier: 500 responses/month, 1 project.
-Pro: $29/month, unlimited everything.
-```
+Team workspaces with roles, webhooks to Slack/Discord, CSV/JSON export,
+GDPR deletion API.
 
-**Key tactic:** Drive early users to your AlternativeTo page to click "I use this." Even 20-30 votes early on improves your placement in "[competitor] alternative" search results. This compounds over time.
+Free tier: 500 responses/month, 1 project.
+Pro: $29/month (or $24/month annual), unlimited everything.
+```
 
 ### SaaSHub
 
 ```
-Gotcha — Feedback SDK for React
+Gotcha — Contextual Feedback SDK for React
 
 Embed feedback collection directly into your React app with 3 lines of code.
 Unlike Canny or Hotjar, Gotcha isn't a separate portal — it lives inside your
-components. Install: npm install gotcha-feedback
+components. 5 modes: star ratings, NPS, votes, polls, bug reports.
+
+Team workspaces, Slack/Discord webhooks, CSV/JSON export, GDPR API.
+
+Install: npm install gotcha-feedback
 
 Free: 500 responses/month, 1 project
 Pro: $29/month, unlimited
@@ -506,10 +553,13 @@ Pro: $29/month, unlimited
 I built Gotcha because I was tired of sending surveys nobody fills out.
 
 Gotcha is a React SDK that embeds feedback directly into your app components.
-Your users rate features where they experience them.
+Your users rate features where they experience them — with star ratings, NPS
+scores, votes, polls, or bug reports.
 
 npm install gotcha-feedback
 3 lines of code. Works in 5 minutes.
+
+Plus: team workspaces, Slack webhooks, data export, GDPR API.
 
 Free tier available. $29/mo for unlimited responses.
 
@@ -522,26 +572,28 @@ Would love feedback from anyone who's struggled with product signal at the early
 
 ### Must-Have Before Any Launch
 
-1. **Demo GIF** (30-60 seconds) — Widget appearing on a React app → user clicks stars → submits → success state
+1. **Demo GIF** (30-60 seconds) — Widget appearing on a React app -> user clicks stars -> submits -> success state. Also show NPS mode (0-10 scale).
 2. **Gallery images** (1270x760px for PH):
-   - **Thumbnail:** Dark bg, Gotcha logo + 3-line code snippet + "Component-level feedback for React"
+   - **Thumbnail:** Dark bg, Gotcha logo + 3-line code snippet + "Contextual feedback for React"
    - **Image 1 — The Problem:** Split screen: empty Canny board vs Gotcha widget on a component. "Feedback at the feature is signal."
-   - **Image 2 — Integration Code:** VS Code dark theme, 3-line wrap with callouts: "1. Install", "2. Wrap", "3. Done"
-   - **Image 3 — Live Widget:** Glassmorphism button on a real SaaS UI, modal open with star rating
-   - **Image 4 — Dashboard:** Screenshot of analytics with component-level breakdown
-   - **Image 5 — Pricing:** Clean Free vs Pro comparison. "Free to start. No credit card."
-3. **Pricing screenshot** — Clean visual of tiers
+   - **Image 2 — 5 Modes:** Show all five modes side by side — star ratings, NPS, thumbs up/down, polls, bug report
+   - **Image 3 — Integration Code:** VS Code dark theme, 3-line wrap with callouts: "1. Install", "2. Wrap", "3. Done"
+   - **Image 4 — Dashboard:** Screenshot of analytics with element benchmarking, NPS scores, anomaly detection
+   - **Image 5 — Team & Integrations:** Workspace switcher + Slack webhook notification example
+   - **Image 6 — Pricing:** Clean Free vs Pro comparison with annual toggle
+3. **Pricing screenshot** — Clean visual of tiers with annual savings shown
 4. **npm badge** — Weekly download count (even small numbers = social proof)
-5. **One-liner** (memorize this): "Contextual feedback for React apps — 3 lines of code, 15KB, no portal needed."
+5. **One-liner** (memorize this): "5 feedback modes for any React component — NPS, ratings, votes, polls, bugs. 3 lines of code, 15KB."
 
 ---
 
 ## Key Principles Across All Platforms
 
-1. **Lead with the problem, not the product.** "Surveys suck because users forget" → "That's why Gotcha exists"
-2. **Be technical with developers.** Mention npm, bundle size, React portals, async DB writes.
+1. **Lead with the problem, not the product.** "Surveys suck because users forget" -> "That's why Gotcha exists"
+2. **Be technical with developers.** Mention npm, bundle size, React portals, async DB writes, webhook delivery.
 3. **Be personal everywhere.** "I built this because..." outperforms "We're excited to announce..."
-4. **Respond to everything.** Every comment, every question, within 2 hours. This is your biggest lever.
-5. **Never say "upvote."** Say "check it out" or "would love your feedback."
-6. **Don't launch everywhere at once.** Stagger over 6 weeks. Each launch feeds the next.
-7. **Honest numbers always.** 15KB, 500 free responses, $29 Pro, 5-minute setup — specificity builds trust.
+4. **Highlight the full platform.** Don't just say "feedback widget" — mention NPS, bug reports, team workspaces, Slack webhooks, export. The feature set is now competitive with tools 3-5x the price.
+5. **Respond to everything.** Every comment, every question, within 2 hours. This is your biggest lever.
+6. **Never say "upvote."** Say "check it out" or "would love your feedback."
+7. **Don't launch everywhere at once.** Stagger over 6 weeks. Each launch feeds the next.
+8. **Honest numbers always.** 15KB, 500 free responses, $29 Pro ($24 annual), 5-minute setup, 5 modes — specificity builds trust.
