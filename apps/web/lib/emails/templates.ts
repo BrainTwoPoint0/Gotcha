@@ -254,7 +254,7 @@ export function inviteEmail({ inviterName, orgName, role, acceptUrl }: InviteEma
 
         <p>Hey there,</p>
 
-        <p><strong>${escapeHtml(inviterName)}</strong> has invited you to join <strong>${escapeHtml(orgName)}</strong> on Gotcha as a <strong>${escapeHtml(roleLabel)}</strong>.</p>
+        <p><strong>${escapeHtml(inviterName)}</strong> has invited you to join <strong>${escapeHtml(orgName)}</strong> on Gotcha as <strong>${escapeHtml(roleLabel)}</strong>.</p>
 
         <div style="margin-top: 32px;">
           <a href="${escapeHtml(acceptUrl)}" style="${buttonStyles}">Accept Invitation</a>

@@ -1,6 +1,5 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SpinnerProps {
@@ -8,19 +7,38 @@ interface SpinnerProps {
   className?: string;
 }
 
-const sizeClasses = {
-  sm: 'h-4 w-4',
-  md: 'h-8 w-8',
-  lg: 'h-12 w-12',
+const sizeConfig = {
+  sm: { wrapper: 'h-4 w-4', dot: 'h-1 w-1' },
+  md: { wrapper: 'h-8 w-8', dot: 'h-1.5 w-1.5' },
+  lg: { wrapper: 'h-10 w-10', dot: 'h-2 w-2' },
 };
 
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+  const config = sizeConfig[size];
+
   return (
-    <Loader2
-      className={cn(sizeClasses[size], 'animate-spin text-muted-foreground', className)}
+    <div
+      className={cn(config.wrapper, 'relative', className)}
       role="status"
       aria-label="Loading"
-    />
+    >
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className={cn(
+            config.dot,
+            'absolute rounded-full bg-gray-400',
+            'animate-[pulse_1.2s_ease-in-out_infinite]'
+          )}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: `translate(-50%, -50%) translateX(${(i - 1) * (size === 'sm' ? 6 : size === 'md' ? 10 : 14)}px)`,
+            animationDelay: `${i * 0.15}s`,
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -28,11 +46,19 @@ interface LoadingScreenProps {
   message?: string;
 }
 
-export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
+export function LoadingScreen({ message }: LoadingScreenProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <Spinner size="lg" />
-      <p className="text-muted-foreground text-sm animate-pulse">{message}</p>
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
+      <div className="flex items-center gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="h-2 w-2 rounded-full bg-gray-300 animate-[pulse_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
+      </div>
+      {message && <p className="text-gray-400 text-sm">{message}</p>}
     </div>
   );
 }
