@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -56,7 +57,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Gotcha
           </Link>
         </div>
-        <div className="flex-1 flex items-center justify-center px-6 py-12">{children}</div>
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
+          <Suspense>{children}</Suspense>
+        </div>
       </div>
     </div>
   );
