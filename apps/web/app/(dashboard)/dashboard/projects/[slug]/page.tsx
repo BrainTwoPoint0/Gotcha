@@ -4,6 +4,7 @@ import { getActiveOrganization } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
+import { DeleteProjectCard } from './delete-project-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -159,7 +160,7 @@ export default async function ProjectPage({ params }: Props) {
           ) : (
             <div className="space-y-4">
               {(project.apiKeys as ApiKeyItem[]).map((apiKey) => (
-                <ApiKeyCard key={apiKey.id} apiKey={apiKey} />
+                <ApiKeyCard key={apiKey.id} apiKey={apiKey} projectSlug={slug} />
               ))}
             </div>
           )}
@@ -171,7 +172,7 @@ export default async function ProjectPage({ params }: Props) {
 
 import { GotchaProvider, Gotcha } from 'gotcha-feedback'
 
-<GotchaProvider apiKey="${project.apiKeys[0]?.key || 'YOUR_API_KEY'}">
+<GotchaProvider apiKey="YOUR_API_KEY">
   <Gotcha elementId="feature-card">
     <YourComponent />
   </Gotcha>
@@ -213,7 +214,10 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
                       {response.elementIdRaw} · {formatTimeAgo(response.createdAt)}
                     </p>
                   </div>
-                  {response.rating && (
+                  {response.rating && response.mode === 'NPS' && (
+                    <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
+                  )}
+                  {response.rating && response.mode !== 'NPS' && (
                     <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
                   )}
                   {response.vote && (
@@ -226,6 +230,11 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback'
             </div>
           )}
         </Card>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="mt-12">
+        <DeleteProjectCard projectName={project.name} projectSlug={slug} userEmail={user?.email} />
       </div>
     </div>
   );

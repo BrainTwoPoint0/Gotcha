@@ -9,13 +9,25 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Copy, Check } from 'lucide-react';
 
 export function NewProjectForm() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdProject, setCreatedProject] = useState<{ slug: string; apiKey: string } | null>(
+    null
+  );
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
+
+  const handleCopy = async () => {
+    if (!createdProject) return;
+    await navigator.clipboard.writeText(createdProject.apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +47,8 @@ export function NewProjectForm() {
         throw new Error(data.error || 'Failed to create project');
       }
 
-      router.push(`/dashboard/projects/${data.slug}`);
+      setCreatedProject({ slug: data.slug, apiKey: data.apiKey });
+      setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
@@ -46,6 +59,57 @@ export function NewProjectForm() {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+
+  if (createdProject) {
+    return (
+      <div className="max-w-2xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Project created</h1>
+          <p className="text-gray-600">
+            Save your API key now — you won&apos;t be able to see it again.
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Your API Key</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="min-w-0 flex-1 text-sm bg-gray-100 px-3 py-2 rounded font-mono text-gray-900 break-all select-all">
+                  {createdProject.apiKey}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="shrink-0 p-2 rounded hover:bg-gray-100 transition-colors"
+                  title="Copy"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <Alert>
+              <AlertDescription>
+                This is the only time your full API key will be shown. Copy it and store it
+                securely. If you lose it, you&apos;ll need to regenerate a new one.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex justify-end">
+              <Button onClick={() => router.push(`/dashboard/projects/${createdProject.slug}`)}>
+                Go to Project
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl">

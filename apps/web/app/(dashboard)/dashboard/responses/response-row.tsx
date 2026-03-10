@@ -97,7 +97,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         onClick={() => hasExpandableContent && setExpanded(!expanded)}
       >
         {/* Response column */}
-        <TableCell>
+        <TableCell className="!py-2">
           <div className={`flex items-center gap-2.5 ${isGated ? 'blur-sm select-none' : ''}`}>
             {/* Vote indicator */}
             {response.vote && (
@@ -133,8 +133,8 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
               </div>
             )}
 
-            {/* Rating stars */}
-            {response.rating && (
+            {/* Rating stars (feedback) */}
+            {response.rating && response.mode !== 'NPS' && (
               <div className="flex items-center gap-0.5 shrink-0">
                 {Array.from({ length: 5 }, (_, i) => (
                   <svg key={i} width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -148,6 +148,11 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                   </svg>
                 ))}
               </div>
+            )}
+
+            {/* NPS score */}
+            {response.rating && response.mode === 'NPS' && (
+              <span className="text-sm font-medium text-teal-600 shrink-0">{response.rating}/10</span>
             )}
 
             {/* Preview text */}
@@ -186,20 +191,20 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         {/* Project */}
         <TableCell
-          className={`hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`!py-2 hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {response.project.name}
         </TableCell>
 
         {/* Type badge */}
-        <TableCell className={`hidden sm:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell className={`!py-2 hidden sm:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
           <Badge variant="outline" className={modeConfig.className}>
             {modeConfig.label}
           </Badge>
         </TableCell>
 
         {/* Status */}
-        <TableCell onClick={(e) => e.stopPropagation()}>
+        <TableCell className="!py-2" onClick={(e) => e.stopPropagation()}>
           {!isGated ? (
             <StatusBadge
               responseId={response.id}
@@ -211,7 +216,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         </TableCell>
 
         {/* Element */}
-        <TableCell className={`hidden md:table-cell pl-6 max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell className={`!py-2 hidden md:table-cell max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}>
           <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded truncate block max-w-full">
             {response.elementIdRaw}
           </code>
@@ -219,7 +224,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         {/* Date */}
         <TableCell
-          className={`hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`!py-2 hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {formatDate(new Date(response.createdAt))}
         </TableCell>
@@ -250,7 +255,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
             <div className="px-3 py-3 sm:px-6 sm:py-4 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
               <div className="max-w-2xl space-y-3">
                 {/* Rating detail */}
-                {response.rating && (
+                {response.rating && response.mode !== 'NPS' && (
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
                       Rating
@@ -271,6 +276,16 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                       </div>
                       <span className="text-xs text-gray-400">{response.rating} of 5</span>
                     </div>
+                  </div>
+                )}
+
+                {/* NPS score detail */}
+                {response.rating && response.mode === 'NPS' && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
+                      NPS
+                    </span>
+                    <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
                   </div>
                 )}
 

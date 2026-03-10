@@ -261,7 +261,10 @@ export default async function DashboardPage() {
                         {response.project.name} · {formatTimeAgo(response.createdAt)}
                       </p>
                     </div>
-                    {response.rating && (
+                    {response.rating && response.mode === 'NPS' && (
+                      <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
+                    )}
+                    {response.rating && response.mode !== 'NPS' && (
                       <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
                     )}
                     {response.vote && (
