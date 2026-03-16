@@ -8,6 +8,7 @@
 [functions]
   external_node_modules = ["@prisma/client", ".prisma"]
   node_bundler = "esbuild"
+  directory = "netlify/functions"
 
 # Next.js plugin for Netlify
 [[plugins]]
@@ -19,13 +20,7 @@
   # Skip scanning for NEXT_PUBLIC_* vars (they're meant to be in client bundle)
   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY"
 
-# Headers for API routes
-[[headers]]
-  for = "/api/v1/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PATCH, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Idempotency-Key"
+# CORS is handled dynamically by getCorsHeaders() in app code — no static wildcard needed
 
 # Cache static assets
 [[headers]]
@@ -40,7 +35,8 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    X-XSS-Protection = "1; mode=block"
+    X-XSS-Protection = "0"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    # CSP: unsafe-inline/unsafe-eval required for Next.js + Stripe. Nonce support would require middleware changes.
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.upstash.io; frame-src https://js.stripe.com https://hooks.stripe.com;"

@@ -17,11 +17,7 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   const config = sizeConfig[size];
 
   return (
-    <div
-      className={cn(config.wrapper, 'relative', className)}
-      role="status"
-      aria-label="Loading"
-    >
+    <div className={cn(config.wrapper, 'relative', className)} role="status" aria-label="Loading">
       {[0, 1, 2].map((i) => (
         <div
           key={i}

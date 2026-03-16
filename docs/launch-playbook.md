@@ -1,6 +1,8 @@
 # Gotcha Launch Playbook
 
-> Complete platform-by-platform marketing plan for launching Gotcha across 25+ platforms — $0 budget.
+> Complete platform-by-platform marketing plan for launching Gotcha across 30+ platforms — $0 budget.
+>
+> **Last updated:** March 10, 2026 — revised with current PH/HN/Reddit research
 
 ---
 
@@ -10,9 +12,11 @@
 2. [Product Hunt](#product-hunt)
 3. [Hacker News](#hacker-news)
 4. [Reddit](#reddit)
-5. [Indie Platforms](#indie-platforms)
-6. [SaaS Directories](#saas-directories)
-7. [Assets to Prepare](#assets-to-prepare)
+5. [Dev.to](#devto)
+6. [Indie Platforms](#indie-platforms)
+7. [SaaS Directories](#saas-directories)
+8. [Assets to Prepare](#assets-to-prepare)
+9. [Contingency Plan](#contingency-plan)
 
 ---
 
@@ -25,8 +29,11 @@
 - [ ] Record 30-60 second demo GIF (widget appearing on a React app, user clicking stars, NPS score, submitting)
 - [ ] Create 5-6 gallery images for Product Hunt (see Assets section)
 - [ ] Clean pricing screenshot (Free vs Pro with annual toggle)
-- [ ] Build 30 days of Reddit comment history (if needed)
+- [ ] **Build 60+ days of Reddit comment history** — target 500+ karma in r/reactjs, r/webdev, r/SideProject (many subreddits now enforce 60-90 day account age and 500+ karma minimums)
 - [ ] Set up keyword alerts (F5Bot or similar) for: "feedback widget," "collect user feedback," "Typeform alternative," "product feedback React," "NPS React component"
+- [ ] **Collect 2-3 testimonials** from beta users or free tier signups — even 1-line quotes help ("Integrated in 5 minutes" — Name, Role)
+- [ ] **Add product screenshot/GIF to homepage hero** — dashboard analytics or widget flow in a real app context
+- [ ] **Start building PH network** — identify 30-50 PH power users who've upvoted dev tools (Bruno, Supabase, LogRocket, Sentry). Engage authentically in their PH comments 4 weeks before launch. Do NOT cold DM.
 
 ### Week 1 — Directory Submissions (Low Effort)
 - [ ] Submit to **AlternativeTo** — list as alternative to Canny, Hotjar, UserVoice, Intercom, Survicate
@@ -34,29 +41,37 @@
 - [ ] Submit to **TinyLaunch** and **SideProjectors** (10 min each)
 - [ ] Submit to **Betalist** (free queue = 2-4 weeks, or $129 for featured)
 - [ ] Submit to **Fazier** and **Tiny Startup**
+- [ ] Submit to **DevHunt** (devhunt.org) — developer-specific PH alternative, high-fit audience
+- [ ] Submit to **Toolfolio** — tool directory, quick submission
+- [ ] Submit to **LaunchingNext** — startup launch directory with newsletter reach
+- [ ] Submit to **Launchboard.dev** — developer-focused launch board
 
 ### Week 2 — Community Warm-Up
 - [ ] Create **Indie Hackers** product page (listing only, not the big post yet)
+- [ ] Post IH build-in-public teaser: "I'm building a React feedback SDK — here's why surveys suck"
 - [ ] Submit to **Microlaunch** — start engaging with community
 - [ ] Post teaser content on Twitter/X about the problem Gotcha solves
 - [ ] Warm up personal network: "I'm launching next week, would love your support"
+- [ ] Write **Dev.to tutorial** draft: "How to Add Contextual Feedback to Any React Component in 5 Minutes"
 
 ### Week 3 — Main Launch Week
 - **Monday:** Publish **Indie Hackers** "Show IH" post
-- **Tuesday:** Post **Show HN** on Hacker News (9 AM ET)
+- **Tuesday evening (7-8 PM PST / ~3 AM UTC Wed):** Post **Show HN** on Hacker News (see revised timing below)
 - **Wednesday:** Launch on **Uneed** — coordinate network to vote
+- **Wednesday/Thursday:** Publish **Dev.to** tutorial post (same day or day after HN for cross-traffic)
 - **Thursday:** Post on **r/SideProject** (Reddit)
 - **Friday:** If Betalist featured is paid, schedule here to ride momentum
 
-### Week 4 — Reddit Wave
-- [ ] Post educational angle to **r/webdev**
-- [ ] Post "asking for feedback" angle to **r/reactjs** Show & Tell thread
-- [ ] Launch on **Peerlist** with personal "I built this" narrative
-- [ ] Submit to **Startup Stash** and **FounderList**
+### Week 4 — Reddit Wave (stagger 48 hours apart — do NOT post all same day)
+- [ ] **Monday, 9 AM ET:** Post educational angle to **r/webdev**
+- [ ] **Wednesday/Thursday:** Post "asking for feedback" angle to **r/reactjs** Show & Tell thread (check which day the thread goes up)
+- [ ] **Friday:** Launch on **Peerlist** with personal "I built this" narrative
+- [ ] Submit to **Startup Stash**, **FounderList**, **LaunchIt**, and **LaunchYourApp**
 
 ### Week 5 — Product Hunt
-- [ ] Launch on **Product Hunt** (Tuesday/Wednesday/Thursday, 12:01 AM PST)
+- [ ] Launch on **Product Hunt** (Thursday or Friday preferred — lower competition than Tue/Wed while maintaining strong engagement. 12:01 AM PST)
 - [ ] Full launch day execution (see Product Hunt section)
+- [ ] If not featured by hour 2, execute contingency plan (see Contingency Plan section)
 
 ### Week 6 — Follow-Through
 - [ ] Post to **r/indiehackers** and **r/SaaS** with traction update
@@ -86,7 +101,7 @@
 
 **1 week before:**
 - Submit PH draft, review everything
-- Schedule for **Tuesday, Wednesday, or Thursday**
+- Schedule for **Thursday or Friday** (lower competition than Tue/Wed, strong engagement — 2025-2026 PH data shows featured rate is similar but competition is 40% lower)
 - Launch time: **12:01 AM PST** (maximizes 24-hour window)
 - Reach out to network: "I'm launching next [day], will send a link when live"
 - Schedule launch-day email for 8 AM PST (if newsletter exists)
@@ -101,11 +116,12 @@
 
 ### Tagline Options (under 60 chars)
 
-1. **Feedback that lives where users actually experience it** — recommended
-2. NPS, ratings, votes & bugs — embedded in React components
+1. **NPS, ratings, votes & bugs — embedded in React components** — recommended (specific, technical, tells devs what they get)
+2. Embed feedback into React components. 5 modes. 3 lines of code.
 3. Stop guessing which feature users hate. Ask them there.
-4. Contextual feedback SDK — no surveys, no portals
-5. 5 feedback modes for any React component. 3 lines of code.
+4. 5 feedback modes for any React component. 3 lines of code.
+5. Contextual feedback SDK — no surveys, no portals
+6. ~~Feedback that lives where users actually experience it~~ — cut (too abstract/passive for developer audience)
 
 ### Short Description (under 260 chars)
 
@@ -260,7 +276,8 @@ problem is better solved by better survey UX.
 
 ### HN Timing & Tactics
 
-- **When:** Tuesday/Wednesday/Thursday, 9:00-10:00 AM ET
+- **When:** Tuesday or Wednesday evening, **7:00-8:00 PM PST** (which is ~3:00-4:00 AM UTC — catches the European morning + early NA readers with minimal competition). 2025 data shows posts around midnight-1 AM UTC get 2x engagement (25.7 avg votes vs 18 overall). Alternatively, 6:00-7:00 AM ET (11:00-12:00 PM UTC) if you prefer a morning post.
+- **Avoid:** 9:00-10:00 AM ET (2:00-3:00 PM UTC) — past the optimal engagement window, peak US competition
 - **First 30 minutes are critical** — respond to first 3-5 comments within 10-15 min
 - **Never post on:** Friday afternoon, same day as major tech announcements
 
@@ -276,7 +293,7 @@ problem is better solved by better survey UX.
 > Responses tied to anonymous session ID by default — no PII unless the user types it. You can pass a userId prop to correlate to authenticated users (opt-in). We have a GDPR deletion API (`DELETE /api/v1/users/:userId`) that removes all data for a specific end user. You're the data controller, Gotcha is the processor.
 
 **"Why only React?"**
-> React-first because that's what I use and I wanted the DX to be perfect — actual React components, not script-tag injection. Vue and Svelte support is on the roadmap. The API and dashboard work with any frontend if you POST directly.
+> React-first because the DX matters — actual React components, not script tags that break your theme. Vue/Svelte will come once we hit profitability. Meanwhile, you can POST directly to our API from any frontend — the dashboard works regardless.
 
 **"NPS on individual components? That seems weird."**
 > Traditional NPS asks "would you recommend this company?" which is too broad to be actionable. Per-component NPS tells you "users are promoters of your search but detractors of your checkout." That's specific enough to act on. You can also use it at the page level — just put it on the page layout.
@@ -352,7 +369,17 @@ Curious if this solves a real problem.
 
 ### Post Template B — Educational (r/webdev, r/SaaS)
 
-**Title:**
+**Title (Option A — story angle, stronger hook):**
+```
+I got 2% survey response rates until I moved feedback into the app itself
+```
+
+**Title (Option B — teaching angle):**
+```
+Building a feedback widget that developers actually integrate (with React example)
+```
+
+**Title (Option C — original, weaker):**
 ```
 Why in-context feedback beats surveys every time (and how to implement it in React)
 ```
@@ -431,6 +458,17 @@ Demo: [link] | npm: gotcha-feedback
 Not here to pitch — genuinely want to know if this is worth pursuing. Be brutal.
 ```
 
+### Reddit Account Requirements (Updated March 2026)
+
+> **Warning:** Many subreddits have tightened requirements. r/reactjs and r/webdev typically enforce 60-90 day account age and expect 500+ karma. If your account is newer than 60 days or has <500 karma, your posts may be silently removed.
+
+**Account warm-up strategy:**
+- Start **60+ days** before planned Reddit launch posts
+- Comment genuinely on 5-10 posts/day in target subreddits (answer questions, share opinions)
+- Target **500+ karma** before posting any Gotcha content
+- If launching in <60 days: lead with r/SideProject (lower barriers), skip r/reactjs until account is ready
+- Post to low-barrier subs first: r/SideProject → r/webdev → r/reactjs (highest friction)
+
 ### Reddit Rules
 
 **DO:**
@@ -466,6 +504,9 @@ Not here to pitch — genuinely want to know if this is worth pursuing. Be bruta
 | 7 | **Tiny Startup** | Low | Medium | Curated newsletter, high audience quality |
 | 8 | **SideProjectors** | Low | Low | 15 minutes, decent SEO |
 | 9 | **TinyLaunch** | Low | Low | Pure SEO/directory play |
+| 10 | **DevHunt** | Medium | High | Developer-specific PH alternative, high-fit audience |
+| 11 | **Toolfolio** | Low | Medium | Tool directory, quick submission |
+| 12 | **Launchboard.dev** | Low | Medium | Developer-focused launch board |
 
 ### Platform-Specific Copy
 
@@ -505,10 +546,13 @@ Not here to pitch — genuinely want to know if this is worth pursuing. Be bruta
 | 3 | **Startup Stash** | Moderate | Moderate | Submit after top 2 |
 | 4 | **FounderList** | Low | High | Submit — mini Product Hunt format |
 | 5 | **PeerPush** | Low | Moderate | Submit if active in community |
-| 6 | **LaunchIgniter** | Uncertain | Moderate | Marginal — only if truly one-click |
-| 7 | **TrustMRR** | Low | Low (now) | **Skip** — revisit when you have MRR to show |
-| 8 | **Versily** | Very Low | Moderate | **Skip** — check back in 12 months |
-| 9 | **Dang AI** | Zero | None | **Hard skip** — AI-only directory, Gotcha isn't AI |
+| 6 | **LaunchingNext** | Moderate | Moderate | Submit — startup directory with newsletter reach |
+| 7 | **LaunchIgniter** | Uncertain | Moderate | Marginal — only if truly one-click |
+| 8 | **LaunchIt** | Low | Moderate | Quick submit, worth trying |
+| 9 | **LaunchYourApp** | Low | Moderate | Quick submit, worth trying |
+| 10 | **TrustMRR** | Low | Low (now) | **Skip** — revisit when you have MRR to show |
+| 11 | **Versily** | Very Low | Moderate | **Skip** — check back in 12 months |
+| 12 | **Dang AI** | Zero | None | **Hard skip** — AI-only directory, Gotcha isn't AI |
 
 ### AlternativeTo (Highest Priority)
 
@@ -584,6 +628,137 @@ Would love feedback from anyone who's struggled with product signal at the early
 3. **Pricing screenshot** — Clean visual of tiers with annual savings shown
 4. **npm badge** — Weekly download count (even small numbers = social proof)
 5. **One-liner** (memorize this): "5 feedback modes for any React component — NPS, ratings, votes, polls, bugs. 3 lines of code, 15KB."
+
+---
+
+## Dev.to
+
+### Why Dev.to Matters
+
+Dev.to is a high-leverage platform missing from the original playbook. Unlike PH/Reddit (transient spikes), Dev.to posts compound over time through SEO. A tutorial post can drive qualified traffic for months.
+
+### Tutorial Post
+
+**Title:**
+```
+How to Add Contextual Feedback to Any React Component in 5 Minutes
+```
+
+**Tags:** `react`, `typescript`, `webdev`, `tutorial`
+
+**Body:**
+```
+Ever sent a survey and gotten 2% response rates? The problem isn't the questions —
+it's the timing. By the time users reach your survey, they've moved on from the
+feature they wanted to comment on.
+
+Contextual feedback fixes this. Here's how to add it to any React component.
+
+## Install
+
+npm install gotcha-feedback
+
+## Wrap Your App
+
+import { GotchaProvider } from 'gotcha-feedback';
+
+function App() {
+  return (
+    <GotchaProvider apiKey="your-api-key">
+      <YourApp />
+    </GotchaProvider>
+  );
+}
+
+## Add Feedback to Any Component
+
+import { Gotcha } from 'gotcha-feedback';
+
+// Star ratings on your new feature
+<Gotcha elementId="new-feature" mode="feedback" />
+
+// NPS score on checkout
+<Gotcha elementId="checkout" mode="nps" />
+
+// Quick vote on search results
+<Gotcha elementId="search" mode="vote" />
+
+A subtle feedback button appears on each component. Users click it, give feedback,
+and it lands in your dashboard — tied to the exact element they were using.
+
+## 5 Feedback Modes
+
+- **feedback** — Star ratings + optional text
+- **vote** — Thumbs up/down
+- **nps** — 0-10 scale with promoter/passive/detractor scoring
+- **poll** — Custom options (binary or multi-select)
+- **Bug reports** — Flagging with browser/device metadata
+
+## What You Get
+
+- Dashboard with element-level analytics and benchmarking
+- Team workspaces with roles (Owner, Admin, Member, Viewer)
+- Webhooks to Slack, Discord, or custom endpoints
+- Export to CSV/JSON for feeding into AI or spreadsheets
+- GDPR data deletion API
+
+## Pricing
+
+Free: 500 responses/month, 1 project.
+Pro: $29/month ($24/month annual), unlimited everything.
+
+---
+
+The SDK is `gotcha-feedback` on npm (~15KB gzipped, no deps outside React).
+Try the interactive demo at gotcha.cx/demo.
+
+Questions? Happy to answer in the comments.
+```
+
+### Dev.to Timing
+- Publish **Wednesday or Thursday** during Week 3 (same week as Show HN for cross-traffic)
+- Cross-post link to HN discussion if it's active
+- Engage with every comment for 48 hours
+
+---
+
+## Contingency Plan
+
+### If Product Hunt Doesn't Get Featured (90% chance)
+
+PH's algorithm only features ~10% of launches. Plan for this.
+
+**If not featured by hour 2:**
+1. Don't panic — PH is nice-to-have, not make-or-break
+2. Immediately post Twitter/X thread (problem → solution → PH link)
+3. Activate Discord/Slack communities early (don't wait for next week)
+4. Accelerate Reddit posts if you have the account karma
+5. Post Dev.to article same day if not published yet
+6. Email newsletter immediately (don't wait for scheduled send)
+
+**If PH performs well (featured, top 5):**
+1. Screenshot the ranking — use as social proof everywhere
+2. Add "Featured on Product Hunt" badge to site + README within 24 hours
+3. Post recap on IH and Twitter/X immediately
+4. Use PH comments as testimonials on landing page
+
+### If Hacker News Gets No Traction
+
+HN is unpredictable. A great post can get 0 upvotes.
+
+**If <5 upvotes after 1 hour:**
+1. Don't repost (HN penalizes reposts within 2 weeks)
+2. Pivot energy to Reddit and Dev.to posts
+3. Try the narrative version ("I built a React feedback SDK because Typeform surveys had 2% response rates") as a separate post 2 weeks later
+4. HN's "second chance" pool sometimes resurfaces posts — patience helps
+
+### If Reddit Posts Get Removed
+
+**If silently removed (no notification):**
+1. Check with a logged-out browser — if post doesn't appear, it was auto-removed
+2. Message the subreddit mods politely, ask what rule was violated
+3. If account age/karma: wait, build more history, try again in 30 days
+4. Lead with r/SideProject (most lenient) and build from there
 
 ---
 

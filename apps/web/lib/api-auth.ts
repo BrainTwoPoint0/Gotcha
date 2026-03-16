@@ -33,6 +33,8 @@ function hashApiKey(key: string): string {
 // Validate origin against allowed domains (deterministic, no regex)
 function validateOrigin(origin: string | null, allowedDomains: string[]): boolean {
   // Allow requests with no origin (server-to-server, Postman, etc.)
+  // Note: allowedDomains is browser-only defense-in-depth, not a security boundary.
+  // Server-to-server SDK usage legitimately has no Origin header.
   if (!origin) return true;
 
   // If no domains configured, allow all (not recommended for production)
@@ -85,7 +87,7 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
       success: false,
       error: {
         code: 'INVALID_API_KEY',
-        message: 'Invalid API key format',
+        message: 'Invalid API key',
         status: 401,
       },
     };
@@ -94,17 +96,21 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
   const keyHash = hashApiKey(key);
 
   // Look up the API key
-  const apiKey = await prisma.apiKey.findFirst({
+  const apiKey = await prisma.apiKey.findUnique({
     where: {
       keyHash,
-      revokedAt: null,
     },
-    include: {
+    select: {
+      id: true,
+      projectId: true,
+      allowedDomains: true,
+      revokedAt: true,
       project: {
-        include: {
+        select: {
+          organizationId: true,
           organization: {
-            include: {
-              subscription: true,
+            select: {
+              subscription: { select: { plan: true } },
             },
           },
         },
@@ -112,12 +118,12 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
     },
   });
 
-  if (!apiKey) {
+  if (!apiKey || apiKey.revokedAt !== null) {
     return {
       success: false,
       error: {
         code: 'INVALID_API_KEY',
-        message: 'The provided API key is invalid or revoked',
+        message: 'Invalid API key',
         status: 401,
       },
     };
@@ -136,7 +142,7 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
     };
   }
 
-  // Update last used timestamp (fire-and-forget to avoid blocking the response)
+  // Update last used timestamp (fire-and-forget — best-effort tracking, intentionally non-blocking)
   prisma.apiKey
     .update({
       where: { id: apiKey.id },

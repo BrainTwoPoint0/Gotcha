@@ -120,9 +120,14 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const [newType, setNewType] = useState<WebhookType | null>(null);
   const [newUrl, setNewUrl] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(['response.created', 'bug.created', 'bug.resolved']);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([
+    'response.created',
+    'bug.created',
+    'bug.resolved',
+  ]);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<
     Record<string, { success: boolean; statusCode: number | null; error: string | null } | null>
   >({});
@@ -136,10 +141,11 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const createWebhook = async () => {
     if (!newType) return;
     setLoading('create');
+    setError(null);
     try {
       const res = await fetch(`/api/projects/${projectSlug}/webhooks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           url: newUrl,
           events: selectedEvents,
@@ -159,9 +165,11 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         setNewType(null);
         setShowAdd(false);
         router.refresh();
+      } else {
+        setError(data.error || 'Failed to create webhook');
       }
-    } catch (error) {
-      console.error('Failed to create webhook:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create webhook');
     } finally {
       setLoading(null);
     }
@@ -169,15 +177,21 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
 
   const toggleWebhook = async (id: string, active: boolean) => {
     setLoading(id);
+    setError(null);
     try {
-      await fetch(`/api/projects/${projectSlug}/webhooks/${id}`, {
+      const res = await fetch(`/api/projects/${projectSlug}/webhooks/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ active }),
       });
-      router.refresh();
-    } catch (error) {
-      console.error('Failed to toggle webhook:', error);
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to toggle webhook');
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle webhook');
     } finally {
       setLoading(null);
     }
@@ -186,13 +200,20 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
   const deleteWebhook = async (id: string) => {
     if (!confirm('Delete this integration? This cannot be undone.')) return;
     setLoading(id);
+    setError(null);
     try {
-      await fetch(`/api/projects/${projectSlug}/webhooks/${id}`, {
+      const res = await fetch(`/api/projects/${projectSlug}/webhooks/${id}`, {
         method: 'DELETE',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
-      router.refresh();
-    } catch (error) {
-      console.error('Failed to delete webhook:', error);
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to delete webhook');
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete webhook');
     } finally {
       setLoading(null);
     }
@@ -237,6 +258,13 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
 
   return (
     <div className="space-y-6">
+      {/* Error display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Secret display (shown after creation) */}
       {createdSecret && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -354,13 +382,18 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                     className="rounded border-gray-300 text-gray-900 focus:ring-gray-500"
                   />
                   <span className="text-sm text-gray-700">{event.label}</span>
-                  <code className="text-xs text-gray-400 bg-gray-50 px-1 rounded">{event.value}</code>
+                  <code className="text-xs text-gray-400 bg-gray-50 px-1 rounded">
+                    {event.value}
+                  </code>
                 </label>
               ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={createWebhook} disabled={!newUrl || selectedEvents.length === 0 || loading === 'create'}>
+            <Button
+              onClick={createWebhook}
+              disabled={!newUrl || selectedEvents.length === 0 || loading === 'create'}
+            >
               {loading === 'create'
                 ? 'Creating...'
                 : `Create ${TYPE_CONFIG[newType].label} Integration`}

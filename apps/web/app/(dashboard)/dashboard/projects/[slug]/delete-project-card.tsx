@@ -31,7 +31,7 @@ export function DeleteProjectCard({
     try {
       const res = await fetch(`/api/projects/${projectSlug}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ confirmName: confirmText }),
       });
 

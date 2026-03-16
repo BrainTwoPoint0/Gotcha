@@ -50,10 +50,15 @@ export function BugActions({
   const [isExternal, setIsExternal] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Sync local state when server data changes (e.g. after resolve)
-  useEffect(() => { setStatus(currentStatus); }, [currentStatus]);
-  useEffect(() => { setPriority(currentPriority); }, [currentPriority]);
+  useEffect(() => {
+    setStatus(currentStatus);
+  }, [currentStatus]);
+  useEffect(() => {
+    setPriority(currentPriority);
+  }, [currentPriority]);
 
   const hasChanges = status !== currentStatus || priority !== currentPriority;
   const isResolved = currentStatus === 'RESOLVED' || currentStatus === 'CLOSED';
@@ -61,15 +66,17 @@ export function BugActions({
 
   async function handleSave() {
     setIsSaving(true);
+    setError(null);
     try {
-      await fetch(`/api/bugs/${bugId}`, {
+      const res = await fetch(`/api/bugs/${bugId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ status, priority }),
       });
+      if (!res.ok) throw new Error(`Failed to update (${res.status})`);
       router.refresh();
     } catch (err) {
-      console.error('Failed to update bug:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsSaving(false);
     }
@@ -78,17 +85,19 @@ export function BugActions({
   async function handleAddNote() {
     if (!hasNote) return;
     setIsAddingNote(true);
+    setError(null);
     try {
-      await fetch(`/api/bugs/${bugId}/notes`, {
+      const res = await fetch(`/api/bugs/${bugId}/notes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ content: noteContent.trim(), isExternal }),
       });
+      if (!res.ok) throw new Error(`Failed to add note (${res.status})`);
       setNoteContent('');
       setIsExternal(false);
       router.refresh();
     } catch (err) {
-      console.error('Failed to add note:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsAddingNote(false);
     }
@@ -96,20 +105,22 @@ export function BugActions({
 
   async function handleResolve() {
     setIsResolving(true);
+    setError(null);
     try {
-      await fetch(`/api/bugs/${bugId}/resolve`, {
+      const res = await fetch(`/api/bugs/${bugId}/resolve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           resolutionNote: noteContent.trim() || undefined,
           reporterMessage: isExternal && noteContent.trim() ? noteContent.trim() : undefined,
         }),
       });
+      if (!res.ok) throw new Error(`Failed to resolve (${res.status})`);
       setNoteContent('');
       setIsExternal(false);
       router.refresh();
     } catch (err) {
-      console.error('Failed to resolve bug:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsResolving(false);
     }
@@ -118,6 +129,8 @@ export function BugActions({
   return (
     <Card className="p-5">
       <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Actions</h2>
+
+      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {/* Status & Priority */}
       <div className="space-y-3">
@@ -184,8 +197,7 @@ export function BugActions({
               className="rounded border-gray-300 text-slate-700 focus:ring-slate-500 transition-colors"
             />
             <span className="text-[11px] text-gray-400 group-hover:text-gray-500 transition-colors">
-              Also email to{' '}
-              <span className="text-gray-500 font-medium">{reporterEmail}</span>
+              Also email to <span className="text-gray-500 font-medium">{reporterEmail}</span>
             </span>
           </label>
         )}

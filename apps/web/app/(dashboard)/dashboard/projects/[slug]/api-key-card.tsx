@@ -41,6 +41,7 @@ export function ApiKeyCard({ apiKey, projectSlug }: { apiKey: ApiKey; projectSlu
     try {
       const res = await fetch(`/api/projects/${projectSlug}/regenerate-key`, {
         method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
 
       const data = await res.json();
@@ -137,9 +138,7 @@ export function ApiKeyCard({ apiKey, projectSlug }: { apiKey: ApiKey; projectSlu
                     onClick={handleRegenerate}
                     disabled={regenerating}
                   >
-                    <RefreshCw
-                      className={`h-3 w-3 mr-1.5 ${regenerating ? 'animate-spin' : ''}`}
-                    />
+                    <RefreshCw className={`h-3 w-3 mr-1.5 ${regenerating ? 'animate-spin' : ''}`} />
                     {regenerating ? 'Regenerating...' : 'Regenerate'}
                   </Button>
                   <Button

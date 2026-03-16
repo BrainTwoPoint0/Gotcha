@@ -20,7 +20,7 @@ export function isPrivateUrl(urlString: string): boolean {
       return true;
     }
 
-    // Block private IP ranges
+    // Block private IPv4 ranges
     const parts = hostname.split('.').map(Number);
     if (parts.length === 4 && parts.every((p) => !isNaN(p))) {
       if (parts[0] === 10) return true; // 10.0.0.0/8
@@ -28,6 +28,16 @@ export function isPrivateUrl(urlString: string): boolean {
       if (parts[0] === 192 && parts[1] === 168) return true; // 192.168.0.0/16
       if (parts[0] === 169 && parts[1] === 254) return true; // 169.254.0.0/16 (AWS metadata)
     }
+
+    // Block private IPv6 ranges (bracketed in URLs, e.g. http://[::1]/)
+    const rawHost = hostname.startsWith('[') ? hostname.slice(1, -1) : hostname;
+    const lowerHost = rawHost.toLowerCase();
+    if (lowerHost.startsWith('fc') || lowerHost.startsWith('fd')) return true; // fc00::/7 unique local
+    if (lowerHost.startsWith('fe80')) return true; // fe80::/10 link-local
+    if (lowerHost.startsWith('::ffff:')) return true; // IPv4-mapped IPv6 (could hide private IPv4)
+
+    // Note: DNS rebinding (hostname resolves to private IP after validation) is a known
+    // limitation. Full mitigation requires a DNS-resolving proxy, which is out of scope.
 
     // Block non-http(s) schemes
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return true;
@@ -211,7 +221,11 @@ export function formatDiscordBugPayload(
   return {
     embeds: [
       {
-        title: isResolved ? `Bug resolved: ${title}` : isUpdated ? `Bug updated: ${title}` : `New bug: ${title}`,
+        title: isResolved
+          ? `Bug resolved: ${title}`
+          : isUpdated
+            ? `Bug updated: ${title}`
+            : `New bug: ${title}`,
         color: isResolved ? 0x16a34a : isUpdated ? 0x3b82f6 : 0xf59e0b, // green, blue, or amber
         fields: embedFields,
         timestamp: new Date().toISOString(),

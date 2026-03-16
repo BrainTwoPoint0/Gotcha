@@ -19,10 +19,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login');
   }
 
+  if (!user.email) {
+    redirect('/login');
+  }
+
   // Get active workspace and all workspaces for the switcher
   const [activeOrg, workspaces] = await Promise.all([
-    getActiveOrganization(user.email!),
-    getUserWorkspaces(user.email!),
+    getActiveOrganization(user.email),
+    getUserWorkspaces(user.email),
   ]);
   const isPro = activeOrg?.isPro ?? false;
   const proBadge = isPro ? undefined : 'Pro';
@@ -117,10 +121,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </main>
 
       {/* Global bug reporter — persistent on all dashboard pages */}
-      <GlobalBugReporter
-        userEmail={user.email ?? undefined}
-        plan={isPro ? 'PRO' : 'FREE'}
-      />
+      <GlobalBugReporter userEmail={user.email ?? undefined} plan={isPro ? 'PRO' : 'FREE'} />
     </div>
   );
 }

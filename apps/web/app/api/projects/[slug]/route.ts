@@ -1,14 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { getActiveOrganization } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { orgManagementLimiter } from '@/lib/rate-limit';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
+
+    // CSRF protection — custom header cannot be sent cross-origin by form POSTs
+    if (!request.headers.get('x-requested-with')) {
+      return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -23,6 +30,17 @@ export async function DELETE(
 
     if (!organization) {
       return NextResponse.json({ error: 'No organization' }, { status: 403 });
+    }
+
+    // RBAC: require OWNER role for project deletion
+    if (activeOrg?.membership.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Only owners can delete projects' }, { status: 403 });
+    }
+
+    // Rate limit by user ID
+    const { success: withinLimit } = await orgManagementLimiter.limit(user.id);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const { confirmName } = await request.json();
@@ -50,7 +68,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/projects/[slug] error:', error);
+    console.error(
+      'DELETE /api/projects/[slug] error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   }
 }

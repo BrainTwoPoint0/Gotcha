@@ -8,6 +8,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id: responseId } = await params;
 
+    // UUID format validation
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(responseId)) {
+      return apiError('INVALID_REQUEST', 'Invalid response ID format', 400);
+    }
+
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
@@ -74,8 +79,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           endUserMeta: response.endUserMeta as object,
           endUserId: response.endUserId,
           reporterEmail:
-            ((response.endUserMeta as Record<string, unknown>)?.email as string)
-            || (response.endUserId?.includes('@') ? response.endUserId : null),
+            ((response.endUserMeta as Record<string, unknown>)?.email as string) ||
+            (response.endUserId?.includes('@') ? response.endUserId : null),
           reporterName: ((response.endUserMeta as Record<string, unknown>)?.name as string) || null,
         },
       });
@@ -115,7 +120,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { status: 201, headers: corsHeaders }
     );
   } catch (error) {
-    console.error('POST /api/v1/responses/[id]/bug error:', error);
+    console.error(
+      'POST /api/v1/responses/[id]/bug error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500);
   }
 }

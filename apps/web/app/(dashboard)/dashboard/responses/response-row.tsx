@@ -97,7 +97,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         onClick={() => hasExpandableContent && setExpanded(!expanded)}
       >
         {/* Response column */}
-        <TableCell className="!py-3">
+        <TableCell className="!py-2">
           <div className={`flex items-center gap-2.5 ${isGated ? 'blur-sm select-none' : ''}`}>
             {/* Vote indicator */}
             {response.vote && (
@@ -152,7 +152,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
             {/* NPS score */}
             {response.rating && response.mode === 'NPS' && (
-              <span className="text-sm font-medium text-teal-600 shrink-0">{response.rating}/10</span>
+              <span className="text-sm font-medium text-teal-600 shrink-0">
+                {response.rating}/10
+              </span>
             )}
 
             {/* Preview text */}
@@ -191,20 +193,20 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         {/* Project */}
         <TableCell
-          className={`!py-3 hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`!py-2 hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {response.project.name}
         </TableCell>
 
         {/* Type badge */}
-        <TableCell className={`!py-3 hidden sm:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell className={`!py-2 hidden sm:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
           <Badge variant="outline" className={modeConfig.className}>
             {modeConfig.label}
           </Badge>
         </TableCell>
 
         {/* Status */}
-        <TableCell className="!py-3" onClick={(e) => e.stopPropagation()}>
+        <TableCell className="!py-2" onClick={(e) => e.stopPropagation()}>
           {!isGated ? (
             <StatusBadge
               responseId={response.id}
@@ -216,7 +218,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
         </TableCell>
 
         {/* Element */}
-        <TableCell className={`!py-3 hidden md:table-cell max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}>
+        <TableCell
+          className={`!py-2 hidden md:table-cell max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}
+        >
           <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded truncate block max-w-full">
             {response.elementIdRaw}
           </code>
@@ -224,7 +228,7 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         {/* Date */}
         <TableCell
-          className={`!py-3 hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
+          className={`!py-2 hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
         >
           {formatDate(new Date(response.createdAt))}
         </TableCell>

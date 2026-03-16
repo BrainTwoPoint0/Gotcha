@@ -9,7 +9,9 @@ const VALID_EVENTS = ['response.created', 'bug.created', 'bug.resolved', 'bug.up
 
 const createWebhookSchema = z.object({
   url: z.string().url(),
-  events: z.array(z.enum(['response.created', 'bug.created', 'bug.resolved', 'bug.updated'])).min(1),
+  events: z
+    .array(z.enum(['response.created', 'bug.created', 'bug.resolved', 'bug.updated']))
+    .min(1),
   description: z.string().max(200).optional(),
   type: z.enum(['custom', 'slack', 'discord']).default('custom'),
 });
@@ -71,7 +73,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ webhooks });
   } catch (error) {
-    console.error('GET /api/projects/[slug]/webhooks error:', error);
+    console.error(
+      'GET /api/projects/[slug]/webhooks error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -82,6 +87,11 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
+    // CSRF protection — custom header cannot be sent cross-origin by form POSTs
+    if (!request.headers.get('x-requested-with')) {
+      return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+    }
+
     const result = await getOrgAndProject(request, slug);
 
     if (!result) {
@@ -114,6 +124,7 @@ export async function POST(
     }
 
     const webhookType = validation.data.type;
+    // TODO: Encrypt webhook secrets at rest (requires encryption key management infrastructure)
     const secret = webhookType === 'custom' ? generateSecret() : null;
 
     const webhook = await prisma.webhook.create({
@@ -144,7 +155,10 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
-    console.error('POST /api/projects/[slug]/webhooks error:', error);
+    console.error(
+      'POST /api/projects/[slug]/webhooks error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

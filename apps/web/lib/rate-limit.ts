@@ -49,25 +49,32 @@ export const orgManagementLimiter = new Ratelimit({
   prefix: 'gotcha:ratelimit:org-mgmt',
 });
 
-// Idempotency key storage (5-minute window)
-const idempotencyCache = new Ratelimit({
-  redis,
-  limiter: Ratelimit.fixedWindow(1, '5 m'),
-  prefix: 'gotcha:idempotency',
-});
-
 export async function checkIdempotency(
-  key: string
+  key: string,
+  apiKeyId: string
 ): Promise<{ isDuplicate: boolean; cachedResponse?: string }> {
-  // Check if this key was already used
-  const cached = await redis.get<string>(`gotcha:idempotency:response:${key}`);
-  if (cached) {
-    return { isDuplicate: true, cachedResponse: cached };
+  const redisKey = `gotcha:idempotency:response:${apiKeyId}:${key}`;
+
+  // Atomic claim: SET NX ensures only one request can own this key
+  const claimed = await redis.set(redisKey, 'pending', { nx: true, ex: 300 });
+  if (claimed === null) {
+    // Another request owns this key — check if it has a cached response
+    const cached = await redis.get<string>(redisKey);
+    if (cached && cached !== 'pending') {
+      return { isDuplicate: true, cachedResponse: cached };
+    }
+    // Still pending (concurrent request in flight) — treat as duplicate
+    return { isDuplicate: true };
   }
   return { isDuplicate: false };
 }
 
-export async function cacheIdempotencyResponse(key: string, response: string): Promise<void> {
-  // Cache the response for 5 minutes
-  await redis.set(`gotcha:idempotency:response:${key}`, response, { ex: 300 });
+export async function cacheIdempotencyResponse(
+  key: string,
+  apiKeyId: string,
+  response: string
+): Promise<void> {
+  // Overwrite the "pending" value with the actual response
+  const redisKey = `gotcha:idempotency:response:${apiKeyId}:${key}`;
+  await redis.set(redisKey, response, { ex: 300 });
 }

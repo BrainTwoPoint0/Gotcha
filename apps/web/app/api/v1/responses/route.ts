@@ -48,29 +48,44 @@ export async function POST(request: NextRequest) {
 
     const { apiKey } = authResult;
 
-    // Parse body and check rate limit + idempotency in parallel
+    // Parse body first (can fail with invalid JSON)
     const idempotencyKey = request.headers.get('idempotency-key');
     const planKey = apiKey.plan.toLowerCase() as PlanType;
 
-    const [body, rateLimit, idempotencyResult] = await Promise.all([
-      request.json(),
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return apiError('INVALID_REQUEST', 'Invalid JSON body', 400, reqOrigin);
+    }
+
+    // Check rate limit + idempotency in parallel
+    const [rateLimit, idempotencyResult] = await Promise.all([
       checkRateLimit(apiKey.id, planKey),
-      idempotencyKey ? checkIdempotency(idempotencyKey) : Promise.resolve(null),
+      idempotencyKey ? checkIdempotency(idempotencyKey, apiKey.id) : Promise.resolve(null),
     ]);
 
     if (!rateLimit.success) {
       return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
     }
 
-    if (idempotencyResult?.isDuplicate && idempotencyResult.cachedResponse) {
-      const cached = JSON.parse(idempotencyResult.cachedResponse);
-      return Response.json(
-        { ...cached, status: 'duplicate' },
-        {
-          status: 201,
-          headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
+    if (idempotencyResult?.isDuplicate) {
+      if (idempotencyResult.cachedResponse) {
+        try {
+          const cached = JSON.parse(idempotencyResult.cachedResponse);
+          return Response.json(
+            { ...cached, status: 'duplicate' },
+            {
+              status: 201,
+              headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
+            }
+          );
+        } catch {
+          // Corrupt cache entry — fall through and reprocess
         }
-      );
+      }
+      // Concurrent request in flight — no cached response yet
+      return apiError('CONFLICT', 'Duplicate request in progress', 409, reqOrigin);
     }
 
     // Validate request body
@@ -100,128 +115,135 @@ export async function POST(request: NextRequest) {
       createdAt: createdAt.toISOString(),
     };
 
-    // Cache idempotency response early (fire-and-forget)
-    if (idempotencyKey) {
-      cacheIdempotencyResponse(idempotencyKey, JSON.stringify(result)).catch(() => {});
-    }
-
     // DB writes (element lookup, response creation, usage tracking)
+    // No inner try/catch — errors propagate to the outer catch which returns 500
     const asyncWrite = async () => {
-      try {
-        // Get or create element (upsert to avoid race conditions)
-        const element = await prisma.element.upsert({
-          where: {
-            projectId_elementId: {
-              projectId: apiKey.projectId,
-              elementId: data.elementId,
-            },
-          },
-          update: {},
-          create: {
+      // Get or create element (upsert to avoid race conditions)
+      const element = await prisma.element.upsert({
+        where: {
+          projectId_elementId: {
             projectId: apiKey.projectId,
             elementId: data.elementId,
           },
+        },
+        update: {},
+        create: {
+          projectId: apiKey.projectId,
+          elementId: data.elementId,
+        },
+      });
+      const elementDbId = element.id;
+
+      // Atomically reset (if new month) and increment usage counter
+      await atomicIncrementUsage(apiKey.organizationId);
+
+      // Check if this response exceeds the free limit
+      let gated = false;
+      if (apiKey.plan === 'FREE') {
+        const subscription = await prisma.subscription.findUnique({
+          where: { organizationId: apiKey.organizationId },
         });
-        const elementDbId = element.id;
 
-        // Atomically reset (if new month) and increment usage counter
-        await atomicIncrementUsage(apiKey.organizationId);
+        if (subscription) {
+          gated = isOverLimit('FREE', subscription.responsesThisMonth);
 
-        // Check if this response exceeds the free limit
-        let gated = false;
-        if (apiKey.plan === 'FREE') {
-          const subscription = await prisma.subscription.findUnique({
-            where: { organizationId: apiKey.organizationId },
-          });
-
-          if (subscription) {
-            gated = isOverLimit('FREE', subscription.responsesThisMonth);
-
-            if (shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
-              const threshold = subscription.responsesThisMonth;
-              if (threshold === 400 || threshold === 450 || threshold === 500) {
-                sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
-              }
+          if (shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
+            const count = subscription.responsesThisMonth;
+            // Range-based: even if counter skips exact thresholds under concurrency
+            if (
+              (count >= 400 && count < 450) ||
+              (count >= 450 && count < 500) ||
+              (count >= 500 && count < 550)
+            ) {
+              const threshold = count >= 500 ? 500 : count >= 450 ? 450 : 400;
+              sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
             }
           }
         }
+      }
 
-        // Create response (marked as gated if over limit)
-        await prisma.response.create({
+      // Create response (marked as gated if over limit)
+      await prisma.response.create({
+        data: {
+          id: responseId,
+          projectId: apiKey.projectId,
+          elementId: elementDbId,
+          elementIdRaw: data.elementId,
+          mode: modeMap[data.mode],
+          content: data.content,
+          title: data.title,
+          rating: data.rating,
+          vote: data.vote ? voteMap[data.vote] : null,
+          pollOptions: data.pollOptions,
+          pollSelected: data.pollSelected,
+          experimentId: data.experimentId,
+          variant: data.variant,
+          endUserId: data.user?.id,
+          endUserMeta: (data.user || {}) as object,
+          url: data.context?.url,
+          userAgent: data.context?.userAgent,
+          idempotencyKey: idempotencyKey,
+          createdAt: createdAt,
+          gated,
+          isBug: data.isBug || false,
+        },
+      });
+
+      // Cache idempotency response after DB write succeeds (fire-and-forget)
+      if (idempotencyKey) {
+        cacheIdempotencyResponse(idempotencyKey, apiKey.id, JSON.stringify(result)).catch(() => {});
+      }
+
+      // If flagged as bug, create a BugTicket
+      if (data.isBug) {
+        const bugTitle = data.content
+          ? data.content.slice(0, 80) + (data.content.length > 80 ? '...' : '')
+          : `Bug report from ${data.elementId}`;
+        const descParts: string[] = [];
+        if (data.content) descParts.push(data.content);
+        if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
+        if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
+
+        const bugDescription = descParts.join('\n\n') || 'No details provided';
+        const bugTicket = await prisma.bugTicket.create({
           data: {
-            id: responseId,
             projectId: apiKey.projectId,
-            elementId: elementDbId,
-            elementIdRaw: data.elementId,
-            mode: modeMap[data.mode],
-            content: data.content,
-            title: data.title,
-            rating: data.rating,
-            vote: data.vote ? voteMap[data.vote] : null,
-            pollOptions: data.pollOptions,
-            pollSelected: data.pollSelected,
-            experimentId: data.experimentId,
-            variant: data.variant,
-            endUserId: data.user?.id,
-            endUserMeta: (data.user || {}) as object,
-            url: data.context?.url,
+            responseId,
+            title: bugTitle,
+            description: bugDescription,
+            elementId: data.elementId,
+            pageUrl: data.context?.url,
             userAgent: data.context?.userAgent,
-            idempotencyKey: idempotencyKey,
-            createdAt: createdAt,
-            gated,
-            isBug: data.isBug || false,
+            endUserMeta: (data.user || {}) as object,
+            endUserId: data.user?.id,
+            reporterEmail:
+              typeof data.user?.email === 'string'
+                ? data.user.email
+                : typeof data.user?.id === 'string' && data.user.id.includes('@')
+                  ? data.user.id
+                  : null,
+            reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
           },
         });
 
-        // If flagged as bug, create a BugTicket
-        if (data.isBug) {
-          const bugTitle = data.content
-            ? data.content.slice(0, 80) + (data.content.length > 80 ? '...' : '')
-            : `Bug report from ${data.elementId}`;
-          const descParts: string[] = [];
-          if (data.content) descParts.push(data.content);
-          if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
-          if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
-
-          const bugDescription = descParts.join('\n\n') || 'No details provided';
-          const bugTicket = await prisma.bugTicket.create({
-            data: {
-              projectId: apiKey.projectId,
-              responseId,
-              title: bugTitle,
-              description: bugDescription,
-              elementId: data.elementId,
-              pageUrl: data.context?.url,
-              userAgent: data.context?.userAgent,
-              endUserMeta: (data.user || {}) as object,
-              endUserId: data.user?.id,
-              reporterEmail: typeof data.user?.email === 'string' ? data.user.email
-                : (typeof data.user?.id === 'string' && data.user.id.includes('@') ? data.user.id : null),
-              reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
-            },
-          });
-
-          // Send bug report email (PRO only, non-blocking)
-          if (apiKey.plan === 'PRO') {
-            sendBugReportEmail(apiKey.organizationId, {
-              id: bugTicket.id,
-              title: bugTitle,
-              description: bugDescription,
-              elementId: data.elementId,
-              pageUrl: data.context?.url || null,
-              projectId: apiKey.projectId,
-            }).catch(console.error);
-          }
+        // Send bug report email (PRO only, non-blocking)
+        if (apiKey.plan === 'PRO') {
+          sendBugReportEmail(apiKey.organizationId, {
+            id: bugTicket.id,
+            title: bugTitle,
+            description: bugDescription,
+            elementId: data.elementId,
+            pageUrl: data.context?.url || null,
+            projectId: apiKey.projectId,
+          }).catch(console.error);
         }
-      } catch (err) {
-        console.error('Async DB write failed for response:', responseId, err);
       }
     };
 
-    // Await DB writes to ensure they complete on serverless (Netlify)
+    // Await DB writes to ensure they complete before Lambda freezes
     await asyncWrite();
 
-    // Fire webhooks for PRO orgs (non-blocking)
+    // Fire webhooks for PRO orgs (non-blocking, OK to lose on Lambda freeze)
     if (apiKey.plan === 'PRO') {
       fireWebhooks(apiKey.projectId, 'response.created', {
         id: responseId,
@@ -254,7 +276,10 @@ export async function POST(request: NextRequest) {
       headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
     });
   } catch (error) {
-    console.error('POST /api/v1/responses error:', error);
+    console.error(
+      'POST /api/v1/responses error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
   }
 }
@@ -323,32 +348,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get total count
-    const total = await prisma.response.count({ where });
-
-    // Get responses
-    const responses = await prisma.response.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true,
-        elementIdRaw: true,
-        mode: true,
-        content: true,
-        title: true,
-        rating: true,
-        vote: true,
-        pollOptions: true,
-        pollSelected: true,
-        experimentId: true,
-        variant: true,
-        endUserId: true,
-        endUserMeta: true,
-        createdAt: true,
-      },
-    });
+    // Get total count and responses in parallel
+    const [total, responses] = await Promise.all([
+      prisma.response.count({ where }),
+      prisma.response.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          elementIdRaw: true,
+          mode: true,
+          content: true,
+          title: true,
+          rating: true,
+          vote: true,
+          pollOptions: true,
+          pollSelected: true,
+          experimentId: true,
+          variant: true,
+          endUserId: true,
+          endUserMeta: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
     // Transform responses
     const data = responses.map((r: (typeof responses)[number]) => ({
@@ -382,7 +407,10 @@ export async function GET(request: NextRequest) {
       { headers: getCorsHeaders(reqOrigin) }
     );
   } catch (error) {
-    console.error('GET /api/v1/responses error:', error);
+    console.error(
+      'GET /api/v1/responses error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
   }
 }

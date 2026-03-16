@@ -2,14 +2,21 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { getActiveOrganization } from '@/lib/auth';
 import { generateApiKey } from '@/lib/api-auth';
-import { NextResponse } from 'next/server';
+import { orgManagementLimiter } from '@/lib/rate-limit';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
+
+    // CSRF protection — custom header cannot be sent cross-origin by form POSTs
+    if (!request.headers.get('x-requested-with')) {
+      return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -24,6 +31,17 @@ export async function POST(
 
     if (!organization) {
       return NextResponse.json({ error: 'No organization' }, { status: 403 });
+    }
+
+    // RBAC: block VIEWER role
+    if (activeOrg?.membership.role === 'VIEWER') {
+      return NextResponse.json({ error: 'Viewers cannot regenerate API keys' }, { status: 403 });
+    }
+
+    // Rate limit by user ID
+    const { success: withinLimit } = await orgManagementLimiter.limit(user.id);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const project = await prisma.project.findUnique({
@@ -52,7 +70,7 @@ export async function POST(
 
     // Generate new key
     const { key, hash } = generateApiKey('live');
-    const keyPrefix = key.substring(0, 15) + '...';
+    const keyPrefix = key.substring(0, 10) + '...';
 
     await prisma.apiKey.create({
       data: {
@@ -66,7 +84,10 @@ export async function POST(
 
     return NextResponse.json({ apiKey: key });
   } catch (error) {
-    console.error('POST /api/projects/[slug]/regenerate-key error:', error);
+    console.error(
+      'POST /api/projects/[slug]/regenerate-key error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json({ error: 'Failed to regenerate key' }, { status: 500 });
   }
 }

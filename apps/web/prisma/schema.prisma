@@ -4,6 +4,7 @@ generator client {
   provider      = "prisma-client-js"
   output        = "../node_modules/.prisma/client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  engineType    = "library"
 }
 
 datasource db {
@@ -139,7 +140,7 @@ model ApiKey {
   projectId      String
   name           String // e.g., "Production", "Development"
   key            String    @unique // gtch_live_xxx or gtch_test_xxx
-  keyHash        String // For secure lookup
+  keyHash        String @unique // For secure lookup
   allowedDomains String[] // ["*.myapp.com", "localhost:*"] for origin validation
   lastUsedAt     DateTime?
   createdAt      DateTime  @default(now())
@@ -148,7 +149,6 @@ model ApiKey {
   // Relations
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([keyHash])
   @@index([projectId])
 }
 

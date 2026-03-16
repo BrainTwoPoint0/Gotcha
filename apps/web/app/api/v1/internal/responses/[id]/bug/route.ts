@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createHash } from 'crypto';
-import { isOriginAllowed } from '@/lib/origin-check';
+import { isInternalOriginAllowed } from '@/lib/origin-check';
 import { fireWebhooks } from '@/lib/webhooks';
 import { sendBugReportEmail } from '@/lib/emails/send';
 
@@ -20,9 +20,10 @@ async function getInternalApiKey() {
   if (cachedApiKey && cachedKeyHash === keyHash && Date.now() - cachedAt < CACHE_TTL_MS)
     return cachedApiKey;
 
-  const apiKey = await prisma.apiKey.findFirst({
-    where: { keyHash, revokedAt: null },
+  const apiKey = await prisma.apiKey.findUnique({
+    where: { keyHash },
     select: {
+      revokedAt: true,
       projectId: true,
       project: {
         select: {
@@ -33,7 +34,7 @@ async function getInternalApiKey() {
     },
   });
 
-  if (apiKey) {
+  if (apiKey && apiKey.revokedAt === null) {
     const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
     const result = {
       projectId: apiKey.projectId,
@@ -53,10 +54,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id: responseId } = await params;
 
-    // Origin check (lenient — allows null origin for same-origin requests)
+    // UUID format validation
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(responseId)) {
+      return NextResponse.json(
+        { error: { code: 'INVALID_REQUEST', message: 'Invalid response ID format' } },
+        { status: 400 }
+      );
+    }
+
+    // Origin check (strict — requires browser context, rejects curl/server scripts)
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (!isOriginAllowed(origin, host)) {
+    if (!isInternalOriginAllowed(origin, host)) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
@@ -128,8 +137,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           endUserMeta: response.endUserMeta as object,
           endUserId: response.endUserId,
           reporterEmail:
-            ((response.endUserMeta as Record<string, unknown>)?.email as string)
-            || (response.endUserId?.includes('@') ? response.endUserId : null),
+            ((response.endUserMeta as Record<string, unknown>)?.email as string) ||
+            (response.endUserId?.includes('@') ? response.endUserId : null),
           reporterName: ((response.endUserMeta as Record<string, unknown>)?.name as string) || null,
         },
       });
@@ -166,7 +175,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ ticketId: ticket.id, status: 'created' }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/v1/internal/responses/[id]/bug error:', error);
+    console.error(
+      'POST /api/v1/internal/responses/[id]/bug error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } },
       { status: 500 }

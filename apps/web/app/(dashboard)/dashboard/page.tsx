@@ -41,24 +41,27 @@ export default async function DashboardPage() {
     } = await supabase.auth.getUser();
 
     // Get user's profile data
-    let dbUser = user
+    let dbUser = user?.email
       ? await prisma.user.findUnique({
-          where: { email: user.email! },
+          where: { email: user.email },
         })
       : null;
 
     // If user is authenticated but doesn't exist in our database, create them
     if (user?.email && !dbUser) {
       try {
-        dbUser = await prisma.user.create({
-          data: {
+        // Use upsert to avoid race condition with concurrent requests
+        dbUser = await prisma.user.upsert({
+          where: { email: user.email },
+          update: {},
+          create: {
             email: user.email,
             name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             avatarUrl: user.user_metadata?.avatar_url || null,
           },
         });
 
-        // Create a default organization for the user
+        // Create a default organization for the user (unique slug prevents duplicates)
         const orgSlug = user.email
           .split('@')[0]
           .toLowerCase()
@@ -83,7 +86,10 @@ export default async function DashboardPage() {
           },
         });
       } catch (createError) {
-        console.error('Error creating user in database:', createError);
+        console.error(
+          'Error creating user in database:',
+          createError instanceof Error ? createError.message : 'Unknown error'
+        );
         // Continue anyway - user can still see the dashboard, just without org data
       }
     }
@@ -91,36 +97,34 @@ export default async function DashboardPage() {
     const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
     const organization = activeOrg?.organization;
 
-    // Fetch projects with response counts for this org
-    const projects: ProjectItem[] = organization
-      ? await prisma.project.findMany({
-          where: { organizationId: organization.id },
-          include: { _count: { select: { responses: true } } },
-        })
-      : [];
+    // Fetch projects and recent responses in parallel
+    const [projects, recentResponses]: [ProjectItem[], ResponseItem[]] = organization
+      ? await Promise.all([
+          prisma.project.findMany({
+            where: { organizationId: organization.id },
+            include: { _count: { select: { responses: true } } },
+          }),
+          prisma.response.findMany({
+            where: {
+              project: {
+                organizationId: organization.id,
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            include: {
+              project: {
+                select: { name: true, slug: true },
+              },
+            },
+          }),
+        ])
+      : [[], []];
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
     const overLimit = subscription
       ? isOverLimit(subscription.plan, subscription.responsesThisMonth)
       : false;
-
-    // Get recent responses (always show — first 500 are accessible)
-    const recentResponses: ResponseItem[] = organization
-      ? await prisma.response.findMany({
-          where: {
-            project: {
-              organizationId: organization.id,
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          include: {
-            project: {
-              select: { name: true, slug: true },
-            },
-          },
-        })
-      : [];
 
     return (
       <div>
@@ -262,7 +266,9 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     {response.rating && response.mode === 'NPS' && (
-                      <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
+                      <span className="text-sm font-medium text-teal-600">
+                        {response.rating}/10
+                      </span>
                     )}
                     {response.rating && response.mode !== 'NPS' && (
                       <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
