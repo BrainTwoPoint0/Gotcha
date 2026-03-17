@@ -1,43 +1,79 @@
-# Element Archiving — Audit Fixes
+# Security & Production Audit Fixes
 
 ## Context
 
-Three audits (security, senior code review, production readiness) identified issues in the element archiving feature. This plan addresses all findings.
+Security and production audits identified 31 findings across 16 security issues and 15 production issues. All addressed in a single pass across 18 source files.
 
 ## Todo
 
-- [x] Atomic DB operations — replace read-then-write with `array_append`/`array_remove` raw SQL
-- [x] Input validation — max 200 chars, allowlist regex, applied to both POST and DELETE
-- [x] Array cap — reject archiving if >= 500 elements (enforced atomically in SQL WHERE clause)
-- [x] Rate limiting — import `orgManagementLimiter` (20 req/hour per user)
-- [x] Filter anomalies by archived element IDs in `analytics/page.tsx`
-- [x] `router.refresh()` after successful archive/unarchive
-- [x] Error feedback — inline alert with dismiss button
-- [x] Archived element filter banner — show warning + "Clear filter" when `?elementId=` is archived
-- [x] Deduplicate revert logic — extract `revertArchiveState()` helper
-- [x] Fix TOCTOU race on cap — move cap check into SQL WHERE clause, check `rowsUpdated`
-- [x] Update documentation (`feature-implementations.md`, `product-spec.md`)
+### Security
+- [x] Cross-tenant idempotency leak — scope Redis keys by `apiKeyId`
+- [x] Idempotency TOCTOU race — atomic `SET NX` claim
+- [x] Internal bug route origin bypass — switch to `isInternalOriginAllowed`
+- [x] Static CORS wildcard — remove from `netlify.toml`
+- [x] API key state enumeration — unify error messages
+- [x] SSRF IPv6 — block `fc00::/7`, `fe80::/10`, `::ffff:`
+- [x] SQL injection — `$queryRawUnsafe` → tagged `$queryRaw`
+- [x] RBAC — block VIEWER on key regen, require OWNER on project delete
+- [x] Rate limiting — `orgManagementLimiter` on dashboard mutation routes
+- [x] CSRF protection — `X-Requested-With` header on all mutation endpoints + client callers
+- [x] Key prefix exposure — reduce stored prefix from 15 to 10 chars
+- [x] Path param validation — UUID regex on response ID routes
+- [x] Sensitive error logging — log `error.message` only, not full objects
+- [x] X-XSS-Protection — change to `"0"` (deprecated header)
+- [x] Dead code — remove unused `idempotencyCache` Ratelimit instance
+- [x] Webhook secrets — add TODO for encryption at rest
 
-## Audits
+### Production
+- [x] asyncWrite swallows errors — remove inner try/catch, propagate to outer 500
+- [x] JSON parse in Promise.all — move `request.json()` to own try/catch → 400
+- [x] Usage warning emails — range-based thresholds for concurrency safety
+- [x] GET parallelization — `count` + `findMany` in `Promise.all`
+- [x] Health route error handling — return 503 instead of throwing
+- [x] Keep-warm hardening — AbortController timeout, status check, `SITE_URL`
+- [x] Null email safety — redirect in layout, safe access in dashboard page
+- [x] User creation race — `create` → `upsert`
+- [x] Dashboard query parallelization — projects + responses in `Promise.all`
+- [x] Client error feedback — error state in bug-actions and webhook-manager
+- [x] keyHash `@unique` — enables `findUnique` in api-auth
+- [x] Corrupt idempotency cache — wrap `JSON.parse` in try/catch, fall through on failure
+- [x] Internal bug route `findFirst` → `findUnique` on keyHash
 
-### Production Readiness — 5/5 PASS
-All checks passed: build, error handling, client resilience, data consistency, rate limiter integration.
+### Schema
+- [x] Add `@unique` to `keyHash` on `ApiKey` model
+- [x] Remove redundant `@@index([keyHash])`
+- [x] Create migration `20260316000000_add_keyhash_unique`
 
-### Security — 7 PASS, 3 ADVISORY
-- PASS: Input validation, authorization, rate limiting, SQL injection (parameterized tagged templates), race conditions (atomic SQL), XSS (React auto-escaping), error leakage
-- ADVISORY (low risk): JSON parse errors return 500 instead of 400; rate limit key uses email (resets on email change); TOCTOU on cap (fixed)
+## Review
 
-### Senior Code Review — 6 PASS, 4 ADVISORY, 1 FAIL (fixed)
-- PASS: Atomic SQL, input validation, rate limiting, authorization, optimistic UI + revert, archived filter banner, error state UX
-- FAIL (fixed): TOCTOU race on 500-element cap — moved cap check into SQL WHERE clause
-- ADVISORY: DELETE body portability, rapid double-click edge case, linear scan on archivedIds, overall averages include archived element data
+### Audits Passed
+- **Tests**: 950/950 pass
+- **TypeScript**: 0 source file errors (pre-existing test-only errors remain)
+- **Senior code review**: No CRITICAL findings. 3 HIGH findings caught and fixed in second pass (missing CSRF headers on webhook toggle/delete and bug-actions, corrupt idempotency cache JSON.parse). Remaining advisories are accepted risks (DNS rebinding, fire-and-forget lastUsedAt, org creation race on first login).
 
-## Files Changed
+### Files Changed (18 source + 3 test + 1 migration)
 
 | File | Changes |
 |------|---------|
-| `app/api/elements/archive/route.ts` | Atomic SQL, validation, rate limiting, array cap (atomic) |
-| `analytics/page.tsx` | Filter anomalies by archived IDs |
-| `analytics/elements-tab.tsx` | router.refresh, error feedback, archived filter banner, dedup revert |
-| `docs/feature-implementations.md` | Added Feature 9: Element Archiving |
-| `docs/product-spec.md` | Added Element Archiving section to dashboard spec |
+| `prisma/schema.prisma` | `keyHash @unique`, remove `@@index([keyHash])` |
+| `lib/rate-limit.ts` | Atomic idempotency (SET NX), tenant-scoped keys, remove dead code |
+| `lib/api-auth.ts` | `findUnique`, unified errors, null-origin comment, revokedAt post-check |
+| `lib/webhooks.ts` | IPv6 SSRF blocking, DNS rebinding comment |
+| `app/api/health/route.ts` | `$queryRaw`, try/catch → 503 |
+| `app/api/v1/responses/route.ts` | JSON parse, asyncWrite propagation, usage ranges, GET parallel, idempotency cache safety |
+| `app/api/v1/internal/.../bug/route.ts` | `isInternalOriginAllowed`, UUID check, `findUnique`, safe logging |
+| `app/api/v1/responses/[id]/bug/route.ts` | UUID check, safe logging |
+| `app/api/projects/[slug]/regenerate-key/route.ts` | RBAC, rate limit, CSRF, key prefix, safe logging |
+| `app/api/projects/[slug]/route.ts` | RBAC (OWNER), rate limit, CSRF, safe logging |
+| `app/api/projects/[slug]/webhooks/route.ts` | CSRF, webhook secret TODO, safe logging |
+| `app/(dashboard)/layout.tsx` | Null email redirect |
+| `app/(dashboard)/dashboard/page.tsx` | User upsert, email safety, parallel queries |
+| `app/(dashboard)/dashboard/bugs/[id]/bug-actions.tsx` | Error state, res.ok checks, CSRF headers |
+| `app/(dashboard)/.../webhook-manager.tsx` | Error state, CSRF headers on all mutations |
+| `app/(dashboard)/.../api-key-card.tsx` | CSRF header |
+| `app/(dashboard)/.../delete-project-card.tsx` | CSRF header |
+| `netlify.toml` | Remove CORS wildcard, XSS header, CSP comment |
+| `netlify/functions/keep-warm.ts` | Timeout, error handling, SITE_URL |
+| `__tests__/api/api-auth-shape.test.ts` | Updated for findUnique + revokedAt |
+| `__tests__/api/health.test.ts` | Updated for $queryRaw + 503 |
+| `__tests__/api/responses-integration.test.ts` | Updated for error propagation (500) |
