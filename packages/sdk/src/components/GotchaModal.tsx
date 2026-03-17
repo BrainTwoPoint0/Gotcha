@@ -190,8 +190,8 @@ export function GotchaModal({
         textAlign: 'left' as const,
       }
     : {
-        position: 'absolute',
-        left: '50%',
+        position: 'fixed' as const,
+        left: anchorRect ? anchorRect.left + anchorRect.width / 2 : '50%',
         width: modalWidth,
         padding: modalPadding,
         borderRadius: t.borders.radius.lg,
@@ -199,11 +199,11 @@ export function GotchaModal({
         color: t.colors.text,
         boxShadow: t.shadows.modal,
         border: `${t.borders.width}px solid ${t.colors.border}`,
-        zIndex: 9999,
+        zIndex: 99999,
         fontFamily: t.typography.fontFamily,
         ...(showAbove
-          ? { bottom: '100%', marginBottom: 8 }
-          : { top: '100%', marginTop: 8 }),
+          ? { top: anchorRect ? anchorRect.top - 8 : undefined, transform: 'translate(-50%, -100%)' }
+          : { top: anchorRect ? anchorRect.bottom + 8 : undefined, transform: 'translate(-50%, 0)' }),
         ...customStyles?.modal,
         textAlign: 'left' as const,
       };
