@@ -459,7 +459,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   let elementsTabData = null;
   if (activeTab === 'elements') {
     // Get ALL elements (not just top 10) with counts + ratings
-    const [allElementsRaw, allElementVotesRaw, overallRatingAgg, overallVotesRaw, sparklineRaw] =
+    const [allElementsRaw, allElementVotesRaw, sparklineRaw] =
       await Promise.all([
         prisma.response.groupBy({
           by: ['elementIdRaw'],
@@ -470,15 +470,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         }),
         prisma.response.groupBy({
           by: ['elementIdRaw', 'vote'],
-          where: { ...where, vote: { not: null } },
-          _count: { vote: true },
-        }),
-        prisma.response.aggregate({
-          where: { ...where, rating: { not: null } },
-          _avg: { rating: true },
-        }),
-        prisma.response.groupBy({
-          by: ['vote'],
           where: { ...where, vote: { not: null } },
           _count: { vote: true },
         }),
@@ -512,16 +503,31 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         `.catch(() => [] as Array<{ element: string; day: string; avg: number }>),
       ]);
 
-    // Overall averages
-    const overallAvgRating = overallRatingAgg._avg.rating
-      ? Number(overallRatingAgg._avg.rating.toFixed(1))
-      : null;
+    // Overall averages (exclude archived elements so benchmarks reflect visible data only)
+    const activeElementsRaw = allElementsRaw.filter(
+      (e) => !archivedElementIds.includes(e.elementIdRaw)
+    );
+    const activeVotesRaw = allElementVotesRaw.filter(
+      (v) => !archivedElementIds.includes(v.elementIdRaw)
+    );
+
+    // Compute overall avg rating from active elements only
+    let totalRatingSum = 0;
+    let totalRatingCount = 0;
+    activeElementsRaw.forEach((e) => {
+      if (e._avg.rating !== null) {
+        totalRatingSum += e._avg.rating * e._count.elementIdRaw;
+        totalRatingCount += e._count.elementIdRaw;
+      }
+    });
+    const overallAvgRating =
+      totalRatingCount > 0 ? Number((totalRatingSum / totalRatingCount).toFixed(1)) : null;
 
     let overallUp = 0,
       overallDown = 0;
-    overallVotesRaw.forEach((v) => {
-      if (v.vote === 'UP') overallUp = v._count.vote;
-      if (v.vote === 'DOWN') overallDown = v._count.vote;
+    activeVotesRaw.forEach((v) => {
+      if (v.vote === 'UP') overallUp += v._count.vote;
+      if (v.vote === 'DOWN') overallDown += v._count.vote;
     });
     const overallPositiveRate =
       overallUp + overallDown > 0
@@ -536,6 +542,8 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       if (v.vote === 'DOWN') elVoteMap[v.elementIdRaw].down = v._count.vote;
     });
 
+    // Benchmarks include ALL elements (active + archived) intentionally —
+    // ElementsTab partitions them client-side to render the archived section.
     const benchmarks = allElementsRaw.map((e) => {
       const votes = elVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
       const totalVotes = votes.up + votes.down;
