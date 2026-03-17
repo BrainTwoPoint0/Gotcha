@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server';
 
 // Revoke an invitation
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
     const supabase = await createClient();

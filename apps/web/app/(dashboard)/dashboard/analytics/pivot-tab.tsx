@@ -69,7 +69,10 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
             <div className="w-full sm:w-auto space-y-1">
               <Label>Row Dimension</Label>
-              <Select value={rowDim || '__none__'} onValueChange={(v) => setRowDim(v === '__none__' ? '' : v)}>
+              <Select
+                value={rowDim || '__none__'}
+                onValueChange={(v) => setRowDim(v === '__none__' ? '' : v)}
+              >
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Select dimension" />
                 </SelectTrigger>
@@ -86,7 +89,10 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
 
             <div className="w-full sm:w-auto space-y-1">
               <Label>Column Dimension</Label>
-              <Select value={colDim || '__none__'} onValueChange={(v) => setColDim(v === '__none__' ? '' : v)}>
+              <Select
+                value={colDim || '__none__'}
+                onValueChange={(v) => setColDim(v === '__none__' ? '' : v)}
+              >
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Select dimension" />
                 </SelectTrigger>
@@ -187,7 +193,10 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
                         0
                       );
                       return (
-                        <td key={col} className="text-center p-2 font-medium tabular-nums text-gray-900">
+                        <td
+                          key={col}
+                          className="text-center p-2 font-medium tabular-nums text-gray-900"
+                        >
                           {colTotal}
                         </td>
                       );
@@ -195,8 +204,7 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
                     <td className="text-center p-2 pr-4 sm:pr-2 font-bold tabular-nums text-gray-900">
                       {data.rows.reduce(
                         (sum, row) =>
-                          sum +
-                          data.cols.reduce((s, col) => s + (data.cells[row]?.[col] || 0), 0),
+                          sum + data.cols.reduce((s, col) => s + (data.cells[row]?.[col] || 0), 0),
                         0
                       )}
                     </td>

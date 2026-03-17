@@ -37,6 +37,20 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return apiError('USER_NOT_FOUND', 'No responses found for this user ID', 404, reqOrigin);
     }
 
+    // Anonymize bug tickets linked to this user before deleting responses
+    await prisma.bugTicket.updateMany({
+      where: {
+        projectId: apiKey.projectId,
+        endUserId: userId,
+      },
+      data: {
+        endUserId: null,
+        endUserMeta: {},
+        reporterEmail: null,
+        reporterName: null,
+      },
+    });
+
     // Delete all responses for this user in this project
     await prisma.response.deleteMany({
       where: {

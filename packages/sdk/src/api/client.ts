@@ -144,7 +144,7 @@ export function createApiClient(config: ApiClientConfig) {
         ...payload,
         user,
         context: {
-          url: typeof window !== 'undefined' ? window.location.href : undefined,
+          url: typeof window !== 'undefined' ? window.location.origin + window.location.pathname : undefined,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
         },
         // Only include isBug if true

@@ -7,6 +7,10 @@ const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
 

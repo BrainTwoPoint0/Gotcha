@@ -4,8 +4,13 @@ import { getActiveOrganization } from '@/lib/auth';
 import { generateApiKey } from '@/lib/api-auth';
 import { isOverProjectLimit } from '@/lib/plan-limits';
 import { NextResponse } from 'next/server';
+import { checkDashboardRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {
@@ -14,6 +19,11 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { success: rateLimitOk } = await checkDashboardRateLimit(user.id);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
     const body = await request.json();

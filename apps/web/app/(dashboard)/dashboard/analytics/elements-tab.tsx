@@ -109,7 +109,9 @@ export function ElementsTab({
   const [archivedIds, setArchivedIds] = useState<string[]>(initialArchivedIds);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const archivedSet = useMemo(() => new Set(archivedIds), [archivedIds]);
   const activeElements = elements.filter((el) => !archivedSet.has(el.elementId));
@@ -144,11 +146,12 @@ export function ElementsTab({
       const res = archive
         ? await fetch('/api/elements/archive', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ elementId }),
           })
         : await fetch(`/api/elements/archive?elementId=${encodeURIComponent(elementId)}`, {
             method: 'DELETE',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
           });
       if (!res.ok) {
         revertArchiveState(elementId, archive);
@@ -234,7 +237,11 @@ export function ElementsTab({
       {isFilteredElementArchived && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-amber-200/60 bg-amber-50 text-sm text-amber-800">
           <span>
-            Selected element <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded">{filteredElementId}</code> is archived.
+            Selected element{' '}
+            <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded">
+              {filteredElementId}
+            </code>{' '}
+            is archived.
           </span>
           <button
             onClick={handleClearArchivedFilter}
@@ -342,8 +349,7 @@ export function ElementsTab({
                     <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-center">
                       Trend
                     </TableHead>
-                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-center">
-                    </TableHead>
+                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-center"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -378,7 +384,9 @@ export function ElementsTab({
                         {formatDelta(el.positiveDelta, 'pp')}
                       </TableCell>
                       <TableCell className="text-center">
-                        {mounted && sparklineData?.[el.elementId] && sparklineData[el.elementId].length >= 2 ? (
+                        {mounted &&
+                        sparklineData?.[el.elementId] &&
+                        sparklineData[el.elementId].length >= 2 ? (
                           <div className="w-16 h-5 mx-auto">
                             <ResponsiveContainer width="100%" height="100%">
                               <LineChart data={sparklineData[el.elementId]}>
@@ -406,8 +414,18 @@ export function ElementsTab({
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 p-1 rounded"
                           title="Archive element"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
+                            />
                           </svg>
                         </button>
                       </TableCell>
@@ -417,7 +435,9 @@ export function ElementsTab({
               </Table>
               {showArchived && archivedElements.length > 0 && (
                 <div className="border-t border-gray-200/80 mt-2 pt-2">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-2">Archived</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-2">
+                    Archived
+                  </p>
                   <Table className="table-fixed w-full min-w-[750px]">
                     <colgroup>
                       <col className="w-[24%]" />
@@ -446,13 +466,17 @@ export function ElementsTab({
                           <TableCell className="text-right tabular-nums text-sm text-gray-500">
                             {el.avgRating !== null ? `${el.avgRating}/5` : '-'}
                           </TableCell>
-                          <TableCell className={`text-right tabular-nums text-sm font-medium ${deltaColor(el.ratingDelta)}`}>
+                          <TableCell
+                            className={`text-right tabular-nums text-sm font-medium ${deltaColor(el.ratingDelta)}`}
+                          >
                             {formatDelta(el.ratingDelta)}
                           </TableCell>
                           <TableCell className="text-right tabular-nums text-sm text-gray-500">
                             {el.positiveRate !== null ? `${el.positiveRate}%` : '-'}
                           </TableCell>
-                          <TableCell className={`text-right tabular-nums text-sm font-medium ${deltaPctColor(el.positiveDelta)}`}>
+                          <TableCell
+                            className={`text-right tabular-nums text-sm font-medium ${deltaPctColor(el.positiveDelta)}`}
+                          >
                             {formatDelta(el.positiveDelta, 'pp')}
                           </TableCell>
                           <TableCell className="text-center">
@@ -465,8 +489,18 @@ export function ElementsTab({
                               className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
                               title="Unarchive element"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0 3-3m-3 3-3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={1.5}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0 3-3m-3 3-3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
+                                />
                               </svg>
                             </button>
                           </TableCell>

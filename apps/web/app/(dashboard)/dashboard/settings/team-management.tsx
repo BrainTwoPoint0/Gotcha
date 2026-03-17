@@ -98,7 +98,7 @@ export function TeamManagement() {
     try {
       const res = await fetch('/api/organization/invitations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
 
@@ -120,7 +120,10 @@ export function TeamManagement() {
 
   async function handleRevokeInvite(invitationId: string) {
     try {
-      await fetch(`/api/organization/invitations/${invitationId}`, { method: 'DELETE' });
+      await fetch(`/api/organization/invitations/${invitationId}`, {
+        method: 'DELETE',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
       fetchData();
     } catch {
       // silent
@@ -131,7 +134,7 @@ export function TeamManagement() {
     try {
       const res = await fetch(`/api/organization/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ role: newRole }),
       });
 
@@ -152,7 +155,10 @@ export function TeamManagement() {
     if (!confirm(`Remove ${memberName} from the organization?`)) return;
 
     try {
-      const res = await fetch(`/api/organization/members/${memberId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/organization/members/${memberId}`, {
+        method: 'DELETE',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
 
       if (!res.ok) {
         const data = await res.json();

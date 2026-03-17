@@ -405,9 +405,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     });
     const prevPositiveRate =
       prevVoteCounts.UP + prevVoteCounts.DOWN > 0
-        ? Math.round(
-            (prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100
-          )
+        ? Math.round((prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100)
         : null;
     const prevAvgRating = prevRatingAgg._avg.rating
       ? Number(prevRatingAgg._avg.rating.toFixed(1))
@@ -415,17 +413,13 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
     const deltas = {
       totalResponses:
-        prevCount > 0
-          ? Math.round(((totalResponses - prevCount) / prevCount) * 100)
-          : null,
+        prevCount > 0 ? Math.round(((totalResponses - prevCount) / prevCount) * 100) : null,
       avgRating:
         avgRating !== null && prevAvgRating !== null
           ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1))
           : null,
       positiveRate:
-        positiveRate !== null && prevPositiveRate !== null
-          ? positiveRate - prevPositiveRate
-          : null,
+        positiveRate !== null && prevPositiveRate !== null ? positiveRate - prevPositiveRate : null,
     };
 
     const elementPerformance = elementPerfRaw.map((e) => {
@@ -459,22 +453,21 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   let elementsTabData = null;
   if (activeTab === 'elements') {
     // Get ALL elements (not just top 10) with counts + ratings
-    const [allElementsRaw, allElementVotesRaw, sparklineRaw] =
-      await Promise.all([
-        prisma.response.groupBy({
-          by: ['elementIdRaw'],
-          where,
-          _count: { elementIdRaw: true },
-          _avg: { rating: true },
-          orderBy: { _count: { elementIdRaw: 'desc' } },
-        }),
-        prisma.response.groupBy({
-          by: ['elementIdRaw', 'vote'],
-          where: { ...where, vote: { not: null } },
-          _count: { vote: true },
-        }),
-        // Sparkline: daily avg rating per element (top 20)
-        prisma.$queryRaw<Array<{ element: string; day: string; avg: number }>>`
+    const [allElementsRaw, allElementVotesRaw, sparklineRaw] = await Promise.all([
+      prisma.response.groupBy({
+        by: ['elementIdRaw'],
+        where,
+        _count: { elementIdRaw: true },
+        _avg: { rating: true },
+        orderBy: { _count: { elementIdRaw: 'desc' } },
+      }),
+      prisma.response.groupBy({
+        by: ['elementIdRaw', 'vote'],
+        where: { ...where, vote: { not: null } },
+        _count: { vote: true },
+      }),
+      // Sparkline: daily avg rating per element (top 20)
+      prisma.$queryRaw<Array<{ element: string; day: string; avg: number }>>`
           SELECT "elementIdRaw" as element, DATE("createdAt") as day, AVG("rating") as avg
           FROM "Response"
           WHERE "projectId" IN (
@@ -501,7 +494,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           GROUP BY 1, 2
           ORDER BY 1, 2
         `.catch(() => [] as Array<{ element: string; day: string; avg: number }>),
-      ]);
+    ]);
 
     // Overall averages (exclude archived elements so benchmarks reflect visible data only)
     const activeElementsRaw = allElementsRaw.filter(
@@ -895,7 +888,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     sampleMeta.forEach((r) => {
       const meta = r.endUserMeta as Record<string, unknown>;
       if (meta && typeof meta === 'object') {
-        Object.keys(meta).forEach((k) => { if (k !== 'id') fieldSet.add(k); });
+        Object.keys(meta).forEach((k) => {
+          if (k !== 'id') fieldSet.add(k);
+        });
       }
     });
     pivotMetaFields = Array.from(fieldSet).map((k) => ({ key: `meta:${k}`, label: k }));
@@ -976,7 +971,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         if (dim === 'status') return r.status;
         if (dim === 'element') return r.elementIdRaw;
         if (dim === 'url') {
-          try { return new URL(r.url || '').pathname; } catch { return r.url || '(empty)'; }
+          try {
+            return new URL(r.url || '').pathname;
+          } catch {
+            return r.url || '(empty)';
+          }
         }
         if (dim === 'device') return parseDevice(r.userAgent);
         if (dim === 'browser') return parseBrowser(r.userAgent);

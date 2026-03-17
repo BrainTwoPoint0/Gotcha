@@ -66,7 +66,9 @@ export default async function ProjectsPage() {
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No projects yet</h3>
-          <p className="mt-2 text-gray-500 max-w-sm mx-auto">Get started by creating your first project.</p>
+          <p className="mt-2 text-gray-500 max-w-sm mx-auto">
+            Get started by creating your first project.
+          </p>
           <Link
             href="/dashboard/projects/new"
             className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"

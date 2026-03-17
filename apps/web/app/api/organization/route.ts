@@ -4,6 +4,10 @@ import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(request: Request) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {

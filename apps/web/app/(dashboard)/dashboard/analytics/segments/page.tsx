@@ -236,10 +236,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
       take: SEGMENT_LIMIT,
     });
 
-    const extractSegmentValue = (
-      r: (typeof responses)[0],
-      groupByKey: string
-    ): string => {
+    const extractSegmentValue = (r: (typeof responses)[0], groupByKey: string): string => {
       if (groupByKey === '__url__') {
         try {
           return new URL(r.url || '').pathname;

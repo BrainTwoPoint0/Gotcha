@@ -6,6 +6,10 @@ import { orgManagementLimiter } from '@/lib/rate-limit';
 
 // Update member role
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
     const supabase = await createClient();
@@ -73,6 +77,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 // Remove member
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
     const supabase = await createClient();

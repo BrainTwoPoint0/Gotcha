@@ -3,13 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET() {
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://gotcha.cx';
   const cookieStore = await cookies();
 
-  // Read token from cookie (preferred) or URL param (fallback for backward compat)
-  const token = cookieStore.get('gotcha_invite')?.value || searchParams.get('token');
+  // Read token from cookie only (no URL param — prevents token leakage in logs/referrer)
+  const token = cookieStore.get('gotcha_invite')?.value;
 
   if (!token) {
     return NextResponse.redirect(`${origin}/login?error=invalid_invite`);

@@ -135,67 +135,80 @@ export function PricingToggle() {
         {currentTiers.map((tier) => (
           <motion.div
             key={tier.name + '-wrapper'}
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } } }}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: {
+                opacity: 1,
+                y: 0,
+                transition: { type: 'spring', stiffness: 100, damping: 20 },
+              },
+            }}
           >
-          <SpotlightCard
-            key={tier.name}
-            className={`p-8 ${
-              tier.highlighted ? 'ring-2 ring-slate-600 shadow-xl md:scale-[1.03]' : 'shadow-sm opacity-90'
-            }`}
-            spotlightColor={
-              tier.highlighted ? 'rgba(71, 85, 105, 0.15)' : 'rgba(148, 163, 184, 0.1)'
-            }
-          >
-            {tier.highlighted && (
-              <div className="text-center mb-4">
-                <Badge className="bg-slate-700 text-white hover:bg-slate-700">Recommended</Badge>
-              </div>
-            )}
-            <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
-            <p className="text-gray-500 text-sm mt-1">{tier.description}</p>
-            <div className="mt-4 mb-6">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={tier.price}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-4xl font-bold text-gray-900 inline-block"
-                >
-                  {tier.price}
-                </motion.span>
-              </AnimatePresence>
-              <span className="text-gray-500 ml-1">{tier.period}</span>
-            </div>
-            <div className="mb-6">
-              <div className="text-2xl font-semibold text-slate-600">{tier.responses}</div>
-              <div className="text-sm text-gray-500">responses/month</div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              {tier.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2 text-sm">
-                  <svg
-                    className="w-5 h-5 text-green-500 flex-shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <SpotlightCard
+              key={tier.name}
+              className={`p-8 ${
+                tier.highlighted
+                  ? 'ring-2 ring-slate-600 shadow-xl md:scale-[1.03]'
+                  : 'shadow-sm opacity-90'
+              }`}
+              spotlightColor={
+                tier.highlighted ? 'rgba(71, 85, 105, 0.15)' : 'rgba(148, 163, 184, 0.1)'
+              }
+            >
+              {tier.highlighted && (
+                <div className="text-center mb-4">
+                  <Badge className="bg-slate-700 text-white hover:bg-slate-700">Recommended</Badge>
+                </div>
+              )}
+              <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
+              <p className="text-gray-500 text-sm mt-1">{tier.description}</p>
+              <div className="mt-4 mb-6">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={tier.price}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-4xl font-bold text-gray-900 inline-block"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600">{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <Button variant={tier.highlighted ? 'default' : 'secondary'} className={`w-full ${tier.highlighted ? 'bg-slate-800 shadow-lg shadow-slate-800/25 hover:bg-slate-900 hover:-translate-y-0.5 transition-all' : ''}`} asChild>
-              <Link href={tier.href}>{tier.cta}</Link>
-            </Button>
-          </SpotlightCard>
+                    {tier.price}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="text-gray-500 ml-1">{tier.period}</span>
+              </div>
+              <div className="mb-6">
+                <div className="text-2xl font-semibold text-slate-600">{tier.responses}</div>
+                <div className="text-sm text-gray-500">responses/month</div>
+              </div>
+              <ul className="space-y-3 mb-6">
+                {tier.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm">
+                    <svg
+                      className="w-5 h-5 text-green-500 flex-shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="text-gray-600">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant={tier.highlighted ? 'default' : 'secondary'}
+                className={`w-full ${tier.highlighted ? 'bg-slate-800 shadow-lg shadow-slate-800/25 hover:bg-slate-900 hover:-translate-y-0.5 transition-all' : ''}`}
+                asChild
+              >
+                <Link href={tier.href}>{tier.cta}</Link>
+              </Button>
+            </SpotlightCard>
           </motion.div>
         ))}
       </motion.div>

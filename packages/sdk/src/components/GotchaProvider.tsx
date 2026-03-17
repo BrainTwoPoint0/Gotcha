@@ -50,6 +50,10 @@ export function GotchaProvider({
 }: GotchaProviderProps) {
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
 
+  if (baseUrl && !baseUrl.startsWith('https://') && !baseUrl.startsWith('/') && !baseUrl.includes('localhost')) {
+    console.warn('[Gotcha] baseUrl should use HTTPS in production:', baseUrl);
+  }
+
   const client = useMemo(
     () => createApiClient({ apiKey, baseUrl, debug }),
     [apiKey, baseUrl, debug]

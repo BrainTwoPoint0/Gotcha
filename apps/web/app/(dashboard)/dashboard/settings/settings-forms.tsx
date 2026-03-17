@@ -93,7 +93,7 @@ export function ProfileForm({
 
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(body),
       });
 
@@ -256,7 +256,7 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
     try {
       const res = await fetch('/api/organization', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ name: formName, slug: formSlug }),
       });
 

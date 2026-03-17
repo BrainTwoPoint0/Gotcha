@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { escapeCsvField } from '@/lib/csv-escape';
+import { checkDashboardRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,11 @@ export async function GET(request: Request) {
 
     if (!user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { success: rateLimitOk } = await checkDashboardRateLimit(user.id);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
     const activeOrg = await getActiveOrganization(user.email);

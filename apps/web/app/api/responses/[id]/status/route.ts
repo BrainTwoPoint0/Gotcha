@@ -6,6 +6,10 @@ import { getActiveOrganization } from '@/lib/auth';
 const VALID_STATUSES = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const { id } = await params;
 

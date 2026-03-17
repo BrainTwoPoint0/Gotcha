@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ResponseMode } from '@prisma/client';
 import { validateApiKey, apiError, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import { calculateNPS } from '@/lib/nps';
+import { checkReadRateLimit, type PlanType } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
@@ -21,6 +22,13 @@ export async function GET(
     }
 
     const { apiKey } = authResult;
+
+    const planKey = apiKey.plan.toLowerCase() as PlanType;
+    const { success: readLimitOk } = await checkReadRateLimit(apiKey.id, planKey);
+    if (!readLimitOk) {
+      return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
+    }
+
     const { elementId } = await params;
 
     const where = {

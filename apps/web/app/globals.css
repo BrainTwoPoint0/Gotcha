@@ -3,7 +3,11 @@
 @tailwind utilities;
 
 body {
-  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  font-family:
+    var(--font-dm-sans),
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #111827; /* gray-900 */
 }
 

@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { decrypt } from '@/lib/crypto';
 
 const TIMEOUT_MS = 10_000;
 const MAX_FAILURES = 10;
@@ -288,7 +289,8 @@ async function deliverWebhook(
     // custom — raw payload + HMAC signature
     body = JSON.stringify(payload);
     if (webhook.secret) {
-      const signature = generateSignature(webhook.secret, body);
+      const rawSecret = decrypt(webhook.secret);
+      const signature = generateSignature(rawSecret, body);
       headers['X-Gotcha-Signature'] = signature;
     }
     headers['X-Gotcha-Event'] = event;

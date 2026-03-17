@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {

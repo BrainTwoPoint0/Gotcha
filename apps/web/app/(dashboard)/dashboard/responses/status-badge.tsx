@@ -92,7 +92,7 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
     try {
       const res = await fetch(`/api/responses/${responseId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ status: newStatus }),
       });
 

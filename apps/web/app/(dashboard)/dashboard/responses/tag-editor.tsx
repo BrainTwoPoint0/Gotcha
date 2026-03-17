@@ -30,7 +30,7 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
       try {
         const res = await fetch(`/api/responses/${responseId}/tags`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ tags: newTags }),
         });
         if (!res.ok) {

@@ -4,8 +4,13 @@ import { getActiveOrganization } from '@/lib/auth';
 import { stripe, STRIPE_PRO_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { shouldBlockCheckout } from '@/lib/stripe-guards';
+import { checkDashboardRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {
@@ -14,6 +19,11 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { success: rateLimitOk } = await checkDashboardRateLimit(user.id);
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
     const activeOrg = await getActiveOrganization(user.email!);

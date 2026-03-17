@@ -16,6 +16,7 @@ const CARTER_ONE_FONT_FACE = `
   font-weight: 400;
   font-display: block;
   src: url(data:font/woff2;base64,d09GMgABAAAAAAK4AA4AAAAABOwAAAJlAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhQbXhwaBmAANBEICoFUgW8BNgIkAwgLBgAEIAWCUgcgGwoEUVQMHgC+OLCNaQVfBAoIrXGAIhjLIIM0CxavPfqMrzmLh6/9fufu20XEQyQzNNPOUEmimUZJpKLdIu3RKOU3O1hXc5D3YTdAbu+mRHU5AAIwC231R25qGGbpnwecyr34QQKM3gHMKMzOM4ogDSwQSreJE9bjISamQdCMwAAgeI0+S7qoy5j8TCDK8Ff4Fwm5+ecJhCwh9EgmsJiTo6S+/WkCPCU8DpCqr+hWKM/FBMRyfLPqV2LSlzBEIhqLxeGhIADg+rwoHxx58Oipm4301FUpgID4K8fAChoJFSYwAhNYKyDLAjudDimd9wA18hGDDvNkBE6AByBJiLpXVM2jgyht94hWK9yPQD+5lb948fAQKnfCK1PjBQWRayfW+hltCzAs9B8eX54Xd5g7vrzpiTswCeXB/VG5PNObmFr711KPrLKC6/mxys5avigCA+uFj8HGq+ErmaRDt/31k1XtfRtcI0pNluOCFEOOmVEOTg5eYn77Hq9Y0SJxu+bSBW5skqWS0VLXOvNJxgyRhVECycL7u2cb2pmOGdolPK+ORsLma1IHQCAY6I5NjWKsNzQVPeDnvzc7Pth+aTYMKHpqoEcCwSM4A6sVYPt/AIoeTckToLx4hELyieAj16Z4TKDbKYzIJOAW2JNhIptMhjyRlbXedjaymDv75i5jb1xkyVYiV4okyfIhmnG0EGNDIyMkVgmkUIJcmbJkQmLEi5Ehjz7iJF06pJeel1ETYiCBP/+OePouYuTKlyAX4iVTAl8JkhRIFyN3UpqAdTHa1nfVAy3Kk3LL2Ejf0Gch0McAqJNIAwAA) format('woff2');
+  unicode-range: U+0047;
 }`.trim();
 
 /**
@@ -205,8 +206,6 @@ export function generateStyleTag(theme: ResolvedTheme): string {
 export function injectStyles(theme: ResolvedTheme): void {
   if (typeof document === 'undefined') return;
 
-  // Carter One is now loaded from Google Fonts alongside DM Sans
-
   // Inject DM Sans from Google Fonts with preconnect
   if (!document.getElementById(FONT_ID)) {
     // Preconnect to Google Fonts
@@ -221,7 +220,7 @@ export function injectStyles(theme: ResolvedTheme): void {
     preconnectStatic.crossOrigin = 'anonymous';
     document.head.appendChild(preconnectStatic);
 
-    // Load DM Sans and Carter One from Google Fonts
+    // Load DM Sans from Google Fonts (Carter One is base64-embedded above)
     const link = document.createElement('link');
     link.id = FONT_ID;
     link.rel = 'stylesheet';

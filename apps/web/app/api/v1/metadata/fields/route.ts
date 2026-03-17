@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey, apiError } from '@/lib/api-auth';
+import { checkReadRateLimit, type PlanType } from '@/lib/rate-limit';
 
 // Auto-discover metadata fields from endUserMeta JSON
 export async function GET(request: NextRequest) {
@@ -12,6 +13,12 @@ export async function GET(request: NextRequest) {
     }
 
     const { apiKey } = authResult;
+
+    const planKey = apiKey.plan.toLowerCase() as PlanType;
+    const { success: readLimitOk } = await checkReadRateLimit(apiKey.id, planKey);
+    if (!readLimitOk) {
+      return apiError('RATE_LIMITED', 'Too many requests', 429);
+    }
 
     // Get recent responses with endUserMeta
     const responses = await prisma.response.findMany({

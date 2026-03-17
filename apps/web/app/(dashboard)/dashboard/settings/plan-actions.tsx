@@ -21,7 +21,7 @@ export function PlanActions({ currentPlan, hasStripeSubscription }: PlanActionsP
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ billing }),
       });
       const data = await res.json();
@@ -42,7 +42,10 @@ export function PlanActions({ currentPlan, hasStripeSubscription }: PlanActionsP
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;

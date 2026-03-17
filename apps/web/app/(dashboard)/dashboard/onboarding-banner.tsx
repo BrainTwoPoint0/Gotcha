@@ -73,7 +73,7 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
 
       await fetch('/api/user/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(body),
       });
       router.refresh();

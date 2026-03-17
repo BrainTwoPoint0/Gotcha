@@ -5,6 +5,7 @@ import {
   checkRateLimit,
   checkIdempotency,
   cacheIdempotencyResponse,
+  checkReadRateLimit,
   type PlanType,
 } from '@/lib/rate-limit';
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
@@ -299,6 +300,12 @@ export async function GET(request: NextRequest) {
     }
 
     const { apiKey } = authResult;
+
+    const planKey = apiKey.plan.toLowerCase() as PlanType;
+    const { success: readLimitOk } = await checkReadRateLimit(apiKey.id, planKey);
+    if (!readLimitOk) {
+      return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
+    }
 
     // Parse query params
     const searchParams = request.nextUrl.searchParams;

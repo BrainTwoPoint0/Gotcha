@@ -46,6 +46,10 @@ export async function GET() {
 
 // Send a new invitation
 export async function POST(request: Request) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {

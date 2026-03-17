@@ -102,7 +102,9 @@ export function ResponsesFilter({
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleFilter(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleFilter();
+          }}
           placeholder="Search feedback..."
           className="w-full sm:w-[200px]"
         />

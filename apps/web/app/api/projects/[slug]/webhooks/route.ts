@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganization } from '@/lib/auth';
 import { generateSecret, isPrivateUrl } from '@/lib/webhooks';
+import { encrypt } from '@/lib/crypto';
 import { z } from 'zod';
 
 const VALID_EVENTS = ['response.created', 'bug.created', 'bug.resolved', 'bug.updated'];
@@ -124,28 +125,28 @@ export async function POST(
     }
 
     const webhookType = validation.data.type;
-    // TODO: Encrypt webhook secrets at rest (requires encryption key management infrastructure)
-    const secret = webhookType === 'custom' ? generateSecret() : null;
+    const rawSecret = webhookType === 'custom' ? generateSecret() : null;
+    const encryptedSecret = rawSecret ? encrypt(rawSecret) : null;
 
     const webhook = await prisma.webhook.create({
       data: {
         projectId: result.project.id,
         type: webhookType,
         url: validation.data.url,
-        secret,
+        secret: encryptedSecret,
         events: validation.data.events,
         description: validation.data.description,
       },
     });
 
-    // Return secret only on creation for custom type
+    // Return raw secret only on creation for custom type
     return NextResponse.json(
       {
         webhook: {
           id: webhook.id,
           type: webhook.type,
           url: webhook.url,
-          ...(webhookType === 'custom' ? { secret } : {}),
+          ...(webhookType === 'custom' ? { secret: rawSecret } : {}),
           events: webhook.events,
           active: webhook.active,
           description: webhook.description,

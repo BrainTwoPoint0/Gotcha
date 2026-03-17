@@ -66,11 +66,21 @@ export default function HomePage() {
                 <span className="text-red-400">✗</span> Build It Yourself
               </h3>
               <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>$3,000+ in engineering time</li>
-                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>1–3 weeks to build</li>
-                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>Ongoing maintenance burden</li>
-                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>No analytics dashboard</li>
-                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>Limited to your ideas</li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300 mt-0.5">—</span>$3,000+ in engineering time
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300 mt-0.5">—</span>1–3 weeks to build
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300 mt-0.5">—</span>Ongoing maintenance burden
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300 mt-0.5">—</span>No analytics dashboard
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300 mt-0.5">—</span>Limited to your ideas
+                </li>
               </ul>
             </div>
             <div className="bg-emerald-50/60 border-2 border-emerald-400/40 shadow-lg rounded-2xl p-8">
@@ -78,11 +88,24 @@ export default function HomePage() {
                 <span className="text-emerald-500">✓</span> Use Gotcha
               </h3>
               <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>From $0/month</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>5 minutes to integrate</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>NPS, bug tracking, and 4 feedback modes</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>Webhooks to Slack, Discord & more</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>Team workspaces, export, and analytics</li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>From $0/month
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>5 minutes to integrate
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>NPS, bug tracking, and 4
+                  feedback modes
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>Webhooks to Slack, Discord &
+                  more
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>Team workspaces, export, and
+                  analytics
+                </li>
               </ul>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey, apiError, getCorsHeaders } from '@/lib/api-auth';
+import { checkReadRateLimit, type PlanType } from '@/lib/rate-limit';
 
 interface RouteParams {
   params: Promise<{ userId: string }>;
@@ -34,6 +35,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const { apiKey } = authResult;
+
+    const planKey = apiKey.plan.toLowerCase() as PlanType;
+    const { success: readLimitOk } = await checkReadRateLimit(apiKey.id, planKey);
+    if (!readLimitOk) {
+      return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
+    }
 
     // Scope to the API key's project only (not org-wide)
     const responses = await prisma.response.findMany({

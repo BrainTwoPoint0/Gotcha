@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 import { updateProfileSchema } from '@/lib/validations';
 
 export async function PATCH(request: Request) {
+  if (!request.headers.get('x-requested-with')) {
+    return NextResponse.json({ error: 'Missing required header' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const {

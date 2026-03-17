@@ -123,6 +123,7 @@ export function FeedbackMode({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={placeholder || 'Share your thoughts...'}
+          maxLength={5000}
           style={inputStyles}
           disabled={isLoading}
           aria-label="Your feedback"

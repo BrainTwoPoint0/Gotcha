@@ -74,10 +74,7 @@ export function HeatmapChart({ data }: HeatmapChartProps) {
             {/* Hour labels */}
             <div className="flex ml-10 mb-1">
               {HOURS.map((h) => (
-                <div
-                  key={h}
-                  className="flex-1 text-center text-[9px] sm:text-[10px] text-gray-400"
-                >
+                <div key={h} className="flex-1 text-center text-[9px] sm:text-[10px] text-gray-400">
                   {h % 3 === 0 ? `${h}:00` : ''}
                 </div>
               ))}

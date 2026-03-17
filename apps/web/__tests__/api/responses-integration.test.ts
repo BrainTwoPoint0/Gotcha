@@ -81,10 +81,7 @@ jest.mock('@/lib/emails/send', () => ({
 import { POST } from '@/app/api/v1/responses/route';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey } from '@/lib/api-auth';
-import {
-  checkIdempotency,
-  cacheIdempotencyResponse,
-} from '@/lib/rate-limit';
+import { checkIdempotency, cacheIdempotencyResponse } from '@/lib/rate-limit';
 import { atomicIncrementUsage } from '@/lib/usage-atomic';
 import { fireWebhooks } from '@/lib/webhooks';
 
@@ -100,10 +97,7 @@ const FREE_KEY = {
 
 const PRO_KEY = { ...FREE_KEY, plan: 'PRO' as const };
 
-function makeRequest(
-  body: Record<string, unknown>,
-  headers: Record<string, string> = {}
-) {
+function makeRequest(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   return new NextRequest('http://localhost/api/v1/responses', {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },

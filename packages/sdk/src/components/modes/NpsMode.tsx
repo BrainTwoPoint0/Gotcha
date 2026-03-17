@@ -170,6 +170,7 @@ export function NpsMode({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={followUpPlaceholder || 'What\'s the main reason for your score?'}
+          maxLength={5000}
           style={{
             width: '100%',
             padding: isTouch ? '12px 14px' : '10px 12px',
