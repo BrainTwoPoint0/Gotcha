@@ -106,8 +106,8 @@ export function generateStyleTag(theme: ResolvedTheme): string {
 }
 
 @keyframes gotcha-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes gotcha-overlay-in {
@@ -205,8 +205,7 @@ export function generateStyleTag(theme: ResolvedTheme): string {
 export function injectStyles(theme: ResolvedTheme): void {
   if (typeof document === 'undefined') return;
 
-  // Ensure Carter One @font-face is present (idempotent — already injected at module load)
-  injectFontFace();
+  // Carter One is now loaded from Google Fonts alongside DM Sans
 
   // Inject DM Sans from Google Fonts with preconnect
   if (!document.getElementById(FONT_ID)) {
@@ -222,11 +221,11 @@ export function injectStyles(theme: ResolvedTheme): void {
     preconnectStatic.crossOrigin = 'anonymous';
     document.head.appendChild(preconnectStatic);
 
-    // Only load DM Sans from Google Fonts — Carter One is bundled as base64 above
+    // Load DM Sans and Carter One from Google Fonts
     const link = document.createElement('link');
     link.id = FONT_ID;
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Carter+One&family=DM+Sans:wght@400;500;600;700&display=swap';
     document.head.appendChild(link);
   }
 

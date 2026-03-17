@@ -176,6 +176,7 @@ export function GotchaModal({
         position: 'fixed',
         left: '50%',
         top: '50%',
+        transform: 'translate(-50%, -50%)',
         width: 'calc(100vw - 32px)',
         maxWidth: modalWidth,
         padding: modalPadding,
@@ -190,8 +191,8 @@ export function GotchaModal({
         textAlign: 'left' as const,
       }
     : {
-        position: 'fixed' as const,
-        left: anchorRect ? anchorRect.left + anchorRect.width / 2 : '50%',
+        position: 'absolute' as const,
+        left: '50%',
         width: modalWidth,
         padding: modalPadding,
         borderRadius: t.borders.radius.lg,
@@ -199,20 +200,23 @@ export function GotchaModal({
         color: t.colors.text,
         boxShadow: t.shadows.modal,
         border: `${t.borders.width}px solid ${t.colors.border}`,
-        zIndex: 99999,
+        zIndex: 9999,
         fontFamily: t.typography.fontFamily,
         ...(showAbove
-          ? { top: anchorRect ? anchorRect.top - 8 : undefined, transform: 'translate(-50%, -100%)' }
-          : { top: anchorRect ? anchorRect.bottom + 8 : undefined, transform: 'translate(-50%, 0)' }),
+          ? { bottom: '100%', marginBottom: 8, transform: 'translateX(-50%)' }
+          : { top: '100%', marginTop: 8, transform: 'translateX(-50%)' }),
         ...customStyles?.modal,
         textAlign: 'left' as const,
       };
 
-  // Stagger delay for form elements
-  const fadeUpStyle = (index: number): React.CSSProperties => ({
-    animation: `gotcha-fade-up ${t.animation.duration.normal} ${t.animation.easing.default} both`,
-    animationDelay: `${index * 0.05}s`,
-  });
+  // Stagger delay for form elements (desktop only — mobile centering is disrupted by staggered opacity)
+  const fadeUpStyle = (index: number): React.CSSProperties =>
+    isMobile
+      ? {}
+      : {
+          animation: `gotcha-fade-up ${t.animation.duration.normal} ${t.animation.easing.default} both`,
+          animationDelay: `${index * 0.05}s`,
+        };
 
   // "Gotcha!" success branding
   const isDefaultThankYou = thankYouMessage === 'Gotcha!' || thankYouMessage === 'Thanks for your feedback!';
@@ -242,7 +246,9 @@ export function GotchaModal({
           height: isMobile ? 40 : 36,
           border: 'none',
           background: 'transparent',
+          outline: 'none',
           cursor: 'pointer',
+          zIndex: 10,
           color: t.colors.closeButton,
           display: 'flex',
           alignItems: 'center',

@@ -79,7 +79,7 @@ export function FeedbackMode({
     backgroundColor: t.colors.inputBackground,
     color: t.colors.text,
     fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
-    resize: 'vertical',
+    resize: 'none',
     minHeight: isTouch ? 100 : 80,
     fontFamily: t.typography.fontFamily,
     outline: 'none',

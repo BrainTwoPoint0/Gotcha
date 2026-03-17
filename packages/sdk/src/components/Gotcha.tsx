@@ -297,9 +297,8 @@ export function Gotcha({
         animated={animated}
       />
 
-      {isOpen && !isMobile && hasMounted && createPortal(
-        <GotchaModal {...modalProps} />,
-        document.body
+      {isOpen && !isMobile && (
+        <GotchaModal {...modalProps} />
       )}
 
       {/* Mobile: frosted glass backdrop portal */}
