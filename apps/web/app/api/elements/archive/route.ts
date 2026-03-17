@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email) {
+    if (!user?.id || !user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -37,13 +37,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Viewers cannot archive elements' }, { status: 403 });
     }
 
-    // Rate limit: 20 archive actions per hour
-    const { success: rateLimitOk } = await orgManagementLimiter.limit(`archive:${user.email}`);
+    // Rate limit: 20 archive actions per hour (keyed by user ID for stability)
+    const { success: rateLimitOk } = await orgManagementLimiter.limit(`archive:${user.id}`);
     if (!rateLimitOk) {
       return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
-    const body = await request.json();
+    let body: { elementId?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const { elementId } = body;
 
     const validationError = validateElementId(elementId);
@@ -54,9 +60,9 @@ export async function POST(request: NextRequest) {
     // Atomic: append only if not already present AND under cap
     const rowsUpdated = await prisma.$executeRaw`
       UPDATE "Organization"
-      SET "archivedElementIds" = array_append("archivedElementIds", ${elementId})
+      SET "archivedElementIds" = array_append("archivedElementIds", ${elementId as string})
       WHERE id = ${organization.id}
-        AND NOT (${elementId} = ANY("archivedElementIds"))
+        AND NOT (${elementId as string} = ANY("archivedElementIds"))
         AND COALESCE(array_length("archivedElementIds", 1), 0) < ${MAX_ARCHIVED_ELEMENTS}
     `;
 
@@ -66,7 +72,7 @@ export async function POST(request: NextRequest) {
         where: { id: organization.id },
         select: { archivedElementIds: true },
       });
-      if (org?.archivedElementIds.includes(elementId)) {
+      if (org?.archivedElementIds.includes(elementId as string)) {
         return NextResponse.json({ ok: true }); // idempotent
       }
       return NextResponse.json(
@@ -89,7 +95,7 @@ export async function DELETE(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email) {
+    if (!user?.id || !user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -104,14 +110,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Viewers cannot unarchive elements' }, { status: 403 });
     }
 
-    // Rate limit: 20 archive actions per hour
-    const { success: rateLimitOk } = await orgManagementLimiter.limit(`archive:${user.email}`);
+    // Rate limit: 20 archive actions per hour (keyed by user ID for stability)
+    const { success: rateLimitOk } = await orgManagementLimiter.limit(`archive:${user.id}`);
     if (!rateLimitOk) {
       return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
     }
 
-    const body = await request.json();
-    const { elementId } = body;
+    // Read elementId from query param for DELETE portability
+    const elementId = request.nextUrl.searchParams.get('elementId');
 
     const validationError = validateElementId(elementId);
     if (validationError) {
@@ -121,7 +127,7 @@ export async function DELETE(request: NextRequest) {
     // Atomic: remove element from array
     await prisma.$executeRaw`
       UPDATE "Organization"
-      SET "archivedElementIds" = array_remove("archivedElementIds", ${elementId})
+      SET "archivedElementIds" = array_remove("archivedElementIds", ${elementId as string})
       WHERE id = ${organization.id}
     `;
 

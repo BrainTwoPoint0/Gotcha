@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -111,12 +111,13 @@ export function ElementsTab({
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { setMounted(true); }, []);
 
-  const activeElements = elements.filter((el) => !archivedIds.includes(el.elementId));
-  const archivedElements = elements.filter((el) => archivedIds.includes(el.elementId));
+  const archivedSet = useMemo(() => new Set(archivedIds), [archivedIds]);
+  const activeElements = elements.filter((el) => !archivedSet.has(el.elementId));
+  const archivedElements = elements.filter((el) => archivedSet.has(el.elementId));
 
   // Check if currently filtered element is archived
   const filteredElementId = searchParams.get('elementId');
-  const isFilteredElementArchived = filteredElementId && archivedIds.includes(filteredElementId);
+  const isFilteredElementArchived = filteredElementId && archivedSet.has(filteredElementId);
 
   const revertArchiveState = (elementId: string, archive: boolean) => {
     if (archive) {
@@ -127,6 +128,9 @@ export function ElementsTab({
   };
 
   const handleArchiveToggle = async (elementId: string, archive: boolean) => {
+    // Guard against rapid double-click while another operation is in-flight
+    if (archivingId) return;
+
     setArchivingId(elementId);
     setError(null);
     // Optimistic update
@@ -137,11 +141,15 @@ export function ElementsTab({
     }
 
     try {
-      const res = await fetch('/api/elements/archive', {
-        method: archive ? 'POST' : 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ elementId }),
-      });
+      const res = archive
+        ? await fetch('/api/elements/archive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ elementId }),
+          })
+        : await fetch(`/api/elements/archive?elementId=${encodeURIComponent(elementId)}`, {
+            method: 'DELETE',
+          });
       if (!res.ok) {
         revertArchiveState(elementId, archive);
         const data = await res.json().catch(() => null);
