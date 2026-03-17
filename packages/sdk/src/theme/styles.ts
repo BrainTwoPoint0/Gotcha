@@ -55,6 +55,7 @@ export function generateStyleTag(theme: ResolvedTheme): string {
   };
   const fontFamily = sanitizeCSS(theme.typography.fontFamily);
   const textDisabled = sanitizeCSS(theme.colors.textDisabled);
+  const borderColor = sanitizeCSS(theme.colors.border);
 
   return `
 /* ── Gotcha Keyframe Animations ────────────────────────────── */
@@ -160,6 +161,15 @@ export function generateStyleTag(theme: ResolvedTheme): string {
 
 [data-gotcha] *, [data-gotcha] *::before, [data-gotcha] *::after {
   box-sizing: border-box;
+}
+
+[data-gotcha] button {
+  outline: none;
+}
+
+[data-gotcha] button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px ${borderColor};
 }
 
 .gotcha-root textarea::placeholder {

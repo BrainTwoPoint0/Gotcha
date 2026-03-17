@@ -273,6 +273,7 @@ export function Gotcha({
     onSubmit: handleSubmit,
     onClose: handleClose,
     anchorRect: anchorRect || undefined,
+    useFixedPosition: !isMobile,
   };
 
   return (
@@ -297,8 +298,10 @@ export function Gotcha({
         animated={animated}
       />
 
-      {isOpen && !isMobile && (
-        <GotchaModal {...modalProps} />
+      {/* Desktop: portal without backdrop, anchored via fixed positioning */}
+      {isOpen && !isMobile && hasMounted && createPortal(
+        <GotchaModal {...modalProps} />,
+        document.body
       )}
 
       {/* Mobile: frosted glass backdrop portal */}

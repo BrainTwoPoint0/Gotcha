@@ -47,6 +47,11 @@ export interface GotchaModalProps {
   onClose: () => void;
   // Position info from parent
   anchorRect?: DOMRect;
+  /**
+   * When true (desktop portal), use fixed positioning relative to the viewport
+   * instead of absolute positioning relative to the container.
+   */
+  useFixedPosition?: boolean;
 }
 
 export function GotchaModal({
@@ -77,6 +82,7 @@ export function GotchaModal({
   onSubmit,
   onClose,
   anchorRect,
+  useFixedPosition = false,
 }: GotchaModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
@@ -171,6 +177,8 @@ export function GotchaModal({
     ? 'gotcha-modal-enter-above'
     : 'gotcha-modal-enter';
 
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+
   const modalStyles: React.CSSProperties = isMobile
     ? {
         position: 'fixed',
@@ -187,6 +195,25 @@ export function GotchaModal({
         border: `${t.borders.width}px solid ${t.colors.border}`,
         zIndex: 9999,
         fontFamily: t.typography.fontFamily,
+        ...customStyles?.modal,
+        textAlign: 'left' as const,
+      }
+    : useFixedPosition && anchorRect && viewportHeight
+    ? {
+        position: 'fixed',
+        left: anchorRect.left + anchorRect.width / 2,
+        width: modalWidth,
+        padding: modalPadding,
+        borderRadius: t.borders.radius.lg,
+        background: t.colors.backgroundGradient,
+        color: t.colors.text,
+        boxShadow: t.shadows.modal,
+        border: `${t.borders.width}px solid ${t.colors.border}`,
+        zIndex: 99999,
+        fontFamily: t.typography.fontFamily,
+        ...(showAbove
+          ? { bottom: viewportHeight - anchorRect.top + 8, transform: 'translateX(-50%)' }
+          : { top: anchorRect.bottom + 8, transform: 'translateX(-50%)' }),
         ...customStyles?.modal,
         textAlign: 'left' as const,
       }
