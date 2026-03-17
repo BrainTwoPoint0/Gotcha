@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { HeatmapChart } from './heatmap-chart';
 
 interface TrendDataPoint {
   date: string;
@@ -70,6 +71,17 @@ interface NpsResult {
   total: number;
 }
 
+interface RatingDistPoint {
+  rating: number;
+  count: number;
+}
+
+interface HeatmapDataPoint {
+  dow: number;
+  hour: number;
+  count: number;
+}
+
 interface AnalyticsChartsProps {
   trendData: TrendDataPoint[];
   modeData: ModeDataPoint[];
@@ -78,6 +90,8 @@ interface AnalyticsChartsProps {
   pollData: PollBreakdownData[];
   elementPerformance: ElementPerformanceData[];
   npsResult?: NpsResult | null;
+  ratingDistribution?: RatingDistPoint[];
+  heatmapData?: HeatmapDataPoint[];
 }
 
 const MODE_COLORS: Record<string, string> = {
@@ -97,6 +111,8 @@ export function AnalyticsCharts({
   pollData,
   elementPerformance,
   npsResult,
+  ratingDistribution,
+  heatmapData,
 }: AnalyticsChartsProps) {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -273,6 +289,50 @@ export function AnalyticsCharts({
         )}
       </div>
 
+      {/* Rating Distribution */}
+      {ratingDistribution && ratingDistribution.some((d) => d.count > 0) && (
+        <Card>
+          <CardHeader className="pb-2 px-4 sm:px-6">
+            <CardTitle className="text-base sm:text-lg">Rating Distribution</CardTitle>
+          </CardHeader>
+          <CardContent className="px-2 sm:px-6 pb-4">
+            <div className="h-44 sm:h-52 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <BarChart
+                  data={ratingDistribution}
+                  margin={{ top: 5, right: 8, left: -10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="rating"
+                    tick={{ fontSize }}
+                    tickFormatter={(v) => `${v} star${v !== 1 ? 's' : ''}`}
+                  />
+                  <YAxis
+                    tick={{ fontSize }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    allowDecimals={false}
+                    width={35}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: 12,
+                    }}
+                    formatter={(value: number) => [`${value} responses`, 'Count']}
+                    labelFormatter={(label) => `${label} star${label !== 1 ? 's' : ''}`}
+                  />
+                  <Bar dataKey="count" fill="#eab308" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* NPS Score */}
       {npsResult && (
         <Card>
@@ -442,6 +502,9 @@ export function AnalyticsCharts({
           </CardContent>
         </Card>
       )}
+
+      {/* Activity Heatmap */}
+      {heatmapData && heatmapData.length > 0 && <HeatmapChart data={heatmapData} />}
 
       {/* Element Performance */}
       {elementPerformance.length > 0 && (

@@ -28,12 +28,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const proBadge = isPro ? undefined : 'Pro';
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-[#f8f9fb] overflow-x-hidden">
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-30">
+      <nav className="fixed top-0 left-0 right-0 h-16 backdrop-blur-sm bg-white/90 border-b border-gray-200/60 z-30">
         <div className="h-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-xl font-bold text-gray-900">
+            <Link href="/dashboard" className="text-xl font-carter text-gray-900">
               Gotcha
             </Link>
             {activeOrg && workspaces.length > 0 && (
@@ -55,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </nav>
 
       {/* Sidebar - hidden on mobile */}
-      <aside className="hidden md:fixed md:block top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 z-20">
+      <aside className="hidden md:fixed md:block top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-50/70 border-r border-gray-200 z-20">
         <nav className="p-4 space-y-1">
           <NavLink href="/dashboard" icon={HomeIcon}>
             Overview

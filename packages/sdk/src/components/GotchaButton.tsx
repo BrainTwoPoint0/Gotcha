@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Size, Theme, GotchaStyles } from '../types';
 import { cn } from '../utils/cn';
 import { isTouchDevice, getResponsiveSize } from '../utils/device';
+import { resolveTheme } from '../theme/resolveTheme';
+import { useGotchaContext } from './GotchaProvider';
 
 export interface GotchaButtonProps {
   size: Size;
@@ -12,14 +14,10 @@ export interface GotchaButtonProps {
   onClick: () => void;
   isOpen: boolean;
   isParentHovered?: boolean;
+  /** Enable entrance animations (default: true) */
+  animated?: boolean;
 }
 
-/**
- * Detect system color-scheme preference synchronously where possible,
- * falling back to 'light'. This avoids the flash that occurred when
- * the old code always initialised state as 'light' and corrected it
- * inside useEffect.
- */
 function getInitialSystemTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -36,15 +34,21 @@ export function GotchaButton({
   onClick,
   isOpen,
   isParentHovered = false,
+  animated = true,
 }: GotchaButtonProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [tapRevealed, setTapRevealed] = useState(false);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(getInitialSystemTheme);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [hasPopped, setHasPopped] = useState(false);
+
+  const { themeConfig } = useGotchaContext();
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
 
-    // Keep systemTheme in sync when user changes OS preference
+    if (typeof window === 'undefined') return;
     const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) =>
       setSystemTheme(e.matches ? 'dark' : 'light');
@@ -60,6 +64,14 @@ export function GotchaButton({
     return true;
   })();
 
+  // Mark bubble pop as done after first appearance
+  useEffect(() => {
+    if (shouldShow && !hasPopped) {
+      const timer = setTimeout(() => setHasPopped(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShow, hasPopped]);
+
   const handleClick = () => {
     if (isTouch && touchBehavior === 'tap-to-reveal' && !tapRevealed) {
       setTapRevealed(true);
@@ -69,47 +81,41 @@ export function GotchaButton({
   };
 
   const buttonSize = getResponsiveSize(size, isTouch);
+  const t = useMemo(
+    () => resolveTheme(theme, systemTheme, themeConfig),
+    [theme, systemTheme, themeConfig]
+  );
 
-  // ── Resolve theme ────────────────────────────────────────────────
-  // "auto" must produce the *exact* same styles as the explicit theme
-  // it resolves to. Previously the initial state defaulted to 'light'
-  // regardless of the actual preference, causing a mismatch on the
-  // first render when the system was dark.
-  const resolvedTheme = theme === 'auto' ? systemTheme : theme;
-  const isDark = resolvedTheme === 'dark';
+  // Compute transform based on state
+  const getTransform = () => {
+    if (!shouldShow) return 'scale(0.6)';
+    if (isPressed) return 'scale(0.95)';
+    if (isHovered) return 'scale(1.08)';
+    return 'scale(1)';
+  };
 
-  // ── Glass-bubble styles ──────────────────────────────────────────
-  // Simulates a raised glass dome / marble sitting on the surface:
-  //   - Bright borderTop highlight mimics light hitting the top edge
-  //   - Subtle darker base border grounds the bottom
-  //   - Vertical gradient: bright at top, more opaque at bottom
-  //   - Inset top shadow for inner refraction glow
-  //   - Inset bottom shadow for depth within the dome
-  //   - Outer shadow to anchor the bubble to the surface
   const baseStyles: React.CSSProperties = {
     width: buttonSize,
     height: buttonSize,
     borderRadius: '50%',
-    border: isDark
-      ? '1px solid rgba(255,255,255,0.15)'
-      : 'none',
+    border: t.colors.glassBorder,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: isDark
-      ? 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.05) 100%)'
-      : 'linear-gradient(160deg, rgba(255,255,255,0.7) 0%, rgba(200,210,230,0.4) 40%, rgba(180,192,220,0.5) 100%)',
-    backdropFilter: 'blur(16px) saturate(170%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-    color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.75)',
-    boxShadow: isDark
-      ? '0 4px 14px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.35)'
-      : '0 3px 12px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.2)',
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    background: t.colors.glassBackground,
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    color: t.colors.glassColor,
+    boxShadow: isHovered ? t.colors.glassHoverShadow : t.colors.glassShadow,
+    transition: hasPopped ? `all 0.3s ${t.animation.easing.spring}` : 'none',
     opacity: shouldShow ? 1 : 0,
-    transform: shouldShow ? 'scale(1)' : 'scale(0.6)',
+    transform: getTransform(),
+    filter: isPressed ? 'brightness(0.95)' : 'brightness(1)',
     pointerEvents: shouldShow ? 'auto' : 'none',
+    ...(animated && shouldShow && !hasPopped ? {
+      animation: 'gotcha-bubble-pop 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) both, gotcha-arrive-glow 1200ms ease-in-out 600ms both',
+    } : {}),
     ...customStyles?.button,
   };
 
@@ -117,32 +123,27 @@ export function GotchaButton({
     <button
       type="button"
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => { setIsHovered(false); setIsPressed(false); }}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onTouchStart={() => setIsPressed(true)}
+      onTouchEnd={() => setIsPressed(false)}
       style={baseStyles}
       className={cn('gotcha-button', isOpen && 'gotcha-button--open')}
       aria-label="Give feedback on this feature"
       aria-expanded={isOpen}
       aria-haspopup="dialog"
     >
-      <GotchaIcon size={buttonSize * 0.65} />
+      <GotchaIcon size={buttonSize * 0.65} animated={animated} />
     </button>
   );
 }
 
-const FONT_ID = 'gotcha-carter-one';
+function GotchaIcon({ size, animated = true }: { size: number; animated?: boolean }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-function useCarterOneFont() {
-  useEffect(() => {
-    if (document.getElementById(FONT_ID)) return;
-    const link = document.createElement('link');
-    link.id = FONT_ID;
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Carter+One&display=swap';
-    document.head.appendChild(link);
-  }, []);
-}
-
-function GotchaIcon({ size }: { size: number }) {
-  useCarterOneFont();
   return (
     <span
       aria-hidden="true"
@@ -156,6 +157,10 @@ function GotchaIcon({ size }: { size: number }) {
         marginTop: size * 0.05,
         marginRight: size * 0.05,
         userSelect: 'none',
+        opacity: animated ? 0 : (mounted ? 1 : 0),
+        ...(animated && mounted ? {
+          animation: 'gotcha-letter-in 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 200ms both',
+        } : {}),
       }}
     >
       G

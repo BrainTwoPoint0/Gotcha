@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SegmentCharts } from './segment-charts';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
+import { parseDevice, parseBrowser } from '@/lib/ua-parser';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,10 +119,14 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     },
   });
 
-  const elements = elementsData.map((e) => ({
-    elementIdRaw: e.elementIdRaw,
-    count: e._count.elementIdRaw,
-  }));
+  const archivedElementIds = organization.archivedElementIds ?? [];
+
+  const elements = elementsData
+    .filter((e) => !archivedElementIds.includes(e.elementIdRaw))
+    .map((e) => ({
+      elementIdRaw: e.elementIdRaw,
+      count: e._count.elementIdRaw,
+    }));
 
   // Fetch available metadata fields
   const where: Record<string, unknown> = {
@@ -183,10 +188,18 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     }));
   }
 
-  const availableFields =
+  const BUILTIN_FIELDS = [
+    { key: '__url__', displayName: 'Page URL' },
+    { key: '__device__', displayName: 'Device' },
+    { key: '__browser__', displayName: 'Browser' },
+  ];
+
+  const userFields =
     metadataFields.length > 0
       ? metadataFields.map((f) => ({ key: f.fieldKey, displayName: f.displayName || f.fieldKey }))
       : discoveredFields;
+
+  const availableFields = [...BUILTIN_FIELDS, ...userFields];
 
   const selectedGroupBy = params.groupBy || availableFields[0]?.key || '';
 
@@ -217,9 +230,29 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         rating: true,
         vote: true,
         endUserMeta: true,
+        url: true,
+        userAgent: true,
       },
       take: SEGMENT_LIMIT,
     });
+
+    const extractSegmentValue = (
+      r: (typeof responses)[0],
+      groupByKey: string
+    ): string => {
+      if (groupByKey === '__url__') {
+        try {
+          return new URL(r.url || '').pathname;
+        } catch {
+          return r.url || '(not set)';
+        }
+      }
+      if (groupByKey === '__device__') return parseDevice(r.userAgent);
+      if (groupByKey === '__browser__') return parseBrowser(r.userAgent);
+      const meta = r.endUserMeta as Record<string, unknown>;
+      const val = meta?.[groupByKey];
+      return val !== undefined && val !== null ? String(val) : '(not set)';
+    };
 
     const segments: Record<
       string,
@@ -227,10 +260,7 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
     > = {};
 
     responses.forEach((r) => {
-      const meta = r.endUserMeta as Record<string, unknown>;
-      const segmentValue = meta?.[selectedGroupBy];
-      const segment =
-        segmentValue !== undefined && segmentValue !== null ? String(segmentValue) : '(not set)';
+      const segment = extractSegmentValue(r, selectedGroupBy);
 
       if (!segments[segment]) {
         segments[segment] = { ratings: [], npsRatings: [], votes: { up: 0, down: 0 } };

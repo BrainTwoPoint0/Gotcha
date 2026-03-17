@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
 import { Spinner } from '../Spinner';
 
 interface PollModeProps {
-  theme: 'light' | 'dark' | 'custom';
+  resolvedTheme: ResolvedTheme;
   options: string[];
   allowMultiple: boolean;
   isLoading: boolean;
@@ -13,7 +14,7 @@ interface PollModeProps {
 }
 
 export function PollMode({
-  theme,
+  resolvedTheme: t,
   options,
   allowMultiple,
   isLoading,
@@ -34,8 +35,6 @@ export function PollMode({
     }
   }, [initialSelected]);
 
-  const isDark = theme === 'dark';
-
   const handleToggle = (option: string) => {
     if (allowMultiple) {
       setSelected((prev) =>
@@ -51,30 +50,27 @@ export function PollMode({
     onSubmit({ pollSelected: selected });
   };
 
-  const getOptionStyles = (option: string): React.CSSProperties => {
+  const getOptionStyles = (option: string, index: number): React.CSSProperties => {
     const isSelected = selected.includes(option);
     return {
       width: '100%',
       padding: isTouch ? '12px 14px' : '9px 12px',
-      border: `1px solid ${isSelected
-        ? (isDark ? 'rgba(226,232,240,0.25)' : 'rgba(30,41,59,0.25)')
-        : (isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0')}`,
-      borderRadius: isTouch ? 10 : 8,
-      backgroundColor: isSelected
-        ? (isDark ? 'rgba(226,232,240,0.08)' : 'rgba(30,41,59,0.05)')
-        : (isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc'),
-      color: isSelected
-        ? (isDark ? '#e2e8f0' : '#1e293b')
-        : (isDark ? '#d1d5db' : '#374151'),
-      fontSize: isTouch ? 15 : 13,
-      fontWeight: 500,
+      border: `1px solid ${isSelected ? t.colors.pollSelectedBorder : t.colors.pollBorder}`,
+      borderRadius: t.borders.radius.lg - 2,
+      backgroundColor: isSelected ? t.colors.pollSelectedBackground : t.colors.pollBackground,
+      color: isSelected ? t.colors.pollSelectedColor : t.colors.pollColor,
+      fontSize: isTouch ? 15 : t.typography.fontSize.sm,
+      fontWeight: isSelected ? t.typography.fontWeight.semibold : t.typography.fontWeight.medium,
+      fontFamily: t.typography.fontFamily,
       cursor: isLoading ? 'not-allowed' : 'pointer',
-      transition: 'background-color 0.2s, border-color 0.2s, color 0.2s',
+      transition: `all 0.2s ${t.animation.easing.default}`,
       textAlign: 'left' as const,
       letterSpacing: '0.01em',
       display: 'flex',
       alignItems: 'center',
       gap: 8,
+      animation: `gotcha-fade-up ${t.animation.duration.normal} ${t.animation.easing.default} both`,
+      animationDelay: `${index * 0.05}s`,
     };
   };
 
@@ -89,7 +85,7 @@ export function PollMode({
         role="group"
         aria-label={allowMultiple ? 'Select one or more options' : 'Select an option'}
       >
-        {options.map((option) => {
+        {options.map((option, index) => {
           const isSelected = selected.includes(option);
           return (
             <button
@@ -97,25 +93,29 @@ export function PollMode({
               type="button"
               onClick={() => handleToggle(option)}
               disabled={isLoading}
-              style={getOptionStyles(option)}
+              style={getOptionStyles(option, index)}
               aria-pressed={isSelected}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = 'translateX(2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateX(0)';
+              }}
             >
               <span
                 style={{
                   width: 16,
                   height: 16,
                   borderRadius: allowMultiple ? 4 : '50%',
-                  border: `2px solid ${isSelected
-                    ? (isDark ? '#e2e8f0' : '#1e293b')
-                    : (isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1')}`,
-                  backgroundColor: isSelected
-                    ? (isDark ? '#e2e8f0' : '#1e293b')
-                    : 'transparent',
+                  border: `2px solid ${isSelected ? t.colors.pollCheckSelectedBorder : t.colors.pollCheckBorder}`,
+                  backgroundColor: isSelected ? t.colors.pollCheckSelectedBg : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  transition: 'all 0.15s',
+                  transition: `all ${t.animation.duration.fast}`,
                 }}
               >
                 {isSelected && (
@@ -144,39 +144,45 @@ export function PollMode({
           width: '100%',
           marginTop: 12,
           padding: isTouch ? '14px 16px' : '10px 16px',
-          border: 'none',
-          borderRadius: 8,
-          backgroundColor: selected.length === 0
-            ? (isDark ? '#374151' : '#e2e8f0')
-            : (isDark ? '#e2e8f0' : '#1e293b'),
-          color: selected.length === 0
-            ? (isDark ? '#6b7280' : '#94a3b8')
-            : (isDark ? '#1e293b' : '#ffffff'),
-          fontSize: isTouch ? 16 : 14,
-          fontWeight: 500,
+          border: t.colors.buttonBorder,
+          borderRadius: t.borders.radius.md,
+          backgroundColor: selected.length === 0 ? t.colors.buttonBackgroundDisabled : t.colors.buttonBackground,
+          color: selected.length === 0 ? t.colors.buttonColorDisabled : t.colors.buttonColor,
+          fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
+          fontWeight: t.typography.fontWeight.medium,
+          fontFamily: t.typography.fontFamily,
           cursor: isLoading || selected.length === 0 ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
           letterSpacing: '0.01em',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
           opacity: isLoading ? 0.8 : 1,
+          ...(isLoading ? {
+            backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)`,
+            backgroundSize: '200% 100%',
+            animation: 'gotcha-shimmer 1.5s ease infinite',
+          } : {}),
         }}
         onMouseEnter={(e) => {
           if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = isDark ? '#cbd5e1' : '#334155';
+            e.currentTarget.style.backgroundColor = t.colors.buttonBackgroundHover;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
           if (!e.currentTarget.disabled) {
             e.currentTarget.style.backgroundColor = selected.length === 0
-              ? (isDark ? '#374151' : '#e2e8f0')
-              : (isDark ? '#e2e8f0' : '#1e293b');
+              ? t.colors.buttonBackgroundDisabled
+              : t.colors.buttonBackground;
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
           }
         }}
       >
-        {isLoading && <Spinner size={isTouch ? 18 : 16} color={isDark ? '#1e293b' : '#ffffff'} />}
+        {isLoading && <Spinner size={isTouch ? 18 : 16} color={t.colors.buttonColor} />}
         {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : 'Submit')}
       </button>
     </div>

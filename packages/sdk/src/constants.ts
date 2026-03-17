@@ -26,7 +26,7 @@ export const DEFAULTS = {
   SHOW_ON_HOVER: true,
   TOUCH_BEHAVIOR: 'always-visible' as const,
   SUBMIT_TEXT: 'Submit',
-  THANK_YOU_MESSAGE: 'Thanks for your feedback!',
+  THANK_YOU_MESSAGE: 'Gotcha!',
 } as const;
 
 // Retry config

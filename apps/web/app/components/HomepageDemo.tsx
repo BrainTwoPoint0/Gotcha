@@ -29,7 +29,7 @@ const demos = [
 
 export function HomepageDemo() {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-24 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">See it in action</h2>
@@ -39,7 +39,7 @@ export function HomepageDemo() {
           {demos.map((demo) => (
             <div
               key={demo.elementId}
-              className="bg-white rounded-xl border border-gray-200 p-6 text-center"
+              className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 p-6 shadow-sm hover:shadow-md transition-shadow text-center"
             >
               <h3 className="font-semibold text-gray-900 mb-1 flex items-center justify-center gap-2">
                 {demo.label}

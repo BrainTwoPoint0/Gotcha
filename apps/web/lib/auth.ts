@@ -8,6 +8,7 @@ interface ActiveOrg {
     id: string;
     name: string;
     slug: string;
+    archivedElementIds: string[];
     subscription?: {
       plan: string;
       status: string;
@@ -74,6 +75,7 @@ export async function getActiveOrganization(userEmail: string): Promise<ActiveOr
       id: organization.id,
       name: organization.name,
       slug: organization.slug,
+      archivedElementIds: organization.archivedElementIds,
       subscription: organization.subscription,
       projects: organization.projects,
     },

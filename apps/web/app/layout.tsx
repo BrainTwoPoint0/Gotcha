@@ -1,6 +1,20 @@
 import type { Metadata } from 'next';
+import { DM_Sans, Carter_One } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const carterOne = Carter_One({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-carter',
+  display: 'swap',
+});
 
 export const viewport = {
   width: 'device-width',
@@ -33,7 +47,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${dmSans.variable} ${carterOne.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

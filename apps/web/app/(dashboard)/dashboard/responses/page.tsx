@@ -38,6 +38,7 @@ interface PageProps {
     elementId?: string;
     status?: string;
     tag?: string;
+    search?: string;
   }>;
 }
 
@@ -81,6 +82,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     : [...defaultStatuses];
 
   // Build where clause
+  const searchTerm = params.search?.trim() || '';
   const where = {
     project: {
       organizationId: organization?.id,
@@ -96,6 +98,12 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           },
         }
       : {}),
+    ...(searchTerm && {
+      OR: [
+        { content: { contains: searchTerm, mode: 'insensitive' as const } },
+        { title: { contains: searchTerm, mode: 'insensitive' as const } },
+      ],
+    }),
   };
 
   // Run all queries in parallel
@@ -144,10 +152,14 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     count: Number(t.count),
   }));
 
-  const elementOptions = elements.map((e) => ({
-    elementIdRaw: e.elementIdRaw,
-    count: e._count.elementIdRaw,
-  }));
+  const archivedElementIds = organization?.archivedElementIds ?? [];
+
+  const elementOptions = elements
+    .filter((e) => !archivedElementIds.includes(e.elementIdRaw))
+    .map((e) => ({
+      elementIdRaw: e.elementIdRaw,
+      count: e._count.elementIdRaw,
+    }));
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -173,7 +185,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">All Responses</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">All Responses</h1>
             <DashboardFeedback
               elementId="responses-page"
               mode="poll"
@@ -234,22 +246,24 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       )}
 
       {safeResponses.length === 0 ? (
-        <Card className="text-center py-16">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
-            />
-          </svg>
+        <Card className="text-center py-20">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+            <svg
+              className="h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+              />
+            </svg>
+          </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No responses found</h3>
-          <p className="mt-2 text-gray-500">
+          <p className="mt-2 text-gray-500 max-w-sm mx-auto">
             {params.startDate || params.endDate || params.elementId
               ? 'Try adjusting your filters.'
               : 'Responses from your SDK integrations will appear here.'}

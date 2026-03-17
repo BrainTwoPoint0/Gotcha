@@ -126,9 +126,9 @@ export default async function DashboardPage() {
       <div>
         {!dbUser?.onboardedAt && <OnboardingBanner userName={dbUser?.name ?? undefined} />}
 
-        <div className="mb-8">
+        <div className="pb-6 border-b border-gray-200/60 mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
             <DashboardFeedback
               elementId="dashboard-nps"
               mode="nps"

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { GotchaStyles } from '../../types';
+import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
 import { Spinner } from '../Spinner';
 
 interface NpsModeProps {
-  theme: 'light' | 'dark' | 'custom';
+  resolvedTheme: ResolvedTheme;
   submitText: string;
   isLoading: boolean;
   onSubmit: (data: { rating?: number; content?: string }) => void;
@@ -20,23 +21,8 @@ interface NpsModeProps {
   isEditing?: boolean;
 }
 
-// Color per score — smooth gradient from red through amber to green
-const SCORE_COLORS = [
-  '#ef4444', // 0 — red
-  '#f05540', // 1
-  '#f1663c', // 2
-  '#f27738', // 3
-  '#f38834', // 4
-  '#f59e0b', // 5 — amber
-  '#d4a30e', // 6
-  '#b3a812', // 7
-  '#79b841', // 8
-  '#45c870', // 9
-  '#10b981', // 10 — green
-];
-
 export function NpsMode({
-  theme,
+  resolvedTheme: t,
   submitText,
   isLoading,
   onSubmit,
@@ -66,8 +52,8 @@ export function NpsMode({
     }
   }, [initialValues?.rating, initialValues?.content]);
 
-  const isDark = theme === 'dark';
   const canSubmit = score !== null;
+  const npsColors = t.colors.npsColors;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,12 +67,12 @@ export function NpsMode({
   return (
     <form onSubmit={handleSubmit}>
       {/* Score scale */}
-      <div style={{ marginBottom: showFollowUp && score !== null ? (isTouch ? 14 : 12) : 0 }}>
-        {/* Number buttons */}
+      <div>
+        {/* Number buttons — always single row */}
         <div
           style={{
             display: 'flex',
-            gap: isTouch ? 8 : 6,
+            gap: isTouch ? 4 : 6,
             justifyContent: 'center',
           }}
           role="group"
@@ -95,7 +81,7 @@ export function NpsMode({
           {Array.from({ length: 11 }, (_, i) => {
             const selected = score === i;
             const hovered = hoveredScore === i;
-            const color = SCORE_COLORS[i];
+            const color = npsColors[i];
 
             return (
               <button
@@ -108,35 +94,38 @@ export function NpsMode({
                 aria-pressed={selected}
                 style={{
                   flex: 1,
-                  height: isTouch ? 36 : 32,
-                  borderRadius: 8,
+                  minWidth: 0,
+                  height: isTouch ? 34 : 32,
+                  borderRadius: t.borders.radius.sm,
                   border: selected
                     ? `2px solid ${color}`
-                    : `1.5px solid ${isDark ? `${color}30` : `${color}25`}`,
+                    : `1.5px solid ${color}25`,
                   backgroundColor: selected
                     ? color
                     : hovered
-                      ? (isDark ? `${color}30` : `${color}18`)
-                      : (isDark ? `${color}15` : `${color}0c`),
+                      ? `${color}25`
+                      : `${color}0c`,
                   color: selected
                     ? '#fff'
                     : hovered
                       ? color
-                      : (isDark ? `${color}cc` : `${color}bb`),
-                  fontSize: isTouch ? 13 : 12,
-                  fontWeight: selected ? 700 : 600,
-                  fontFamily: 'inherit',
+                      : `${color}bb`,
+                  fontSize: 12,
+                  fontWeight: selected ? t.typography.fontWeight.bold : t.typography.fontWeight.semibold,
+                  fontFamily: t.typography.fontFamily,
+                  fontVariantNumeric: 'tabular-nums',
                   cursor: 'pointer',
                   padding: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transition: `all 0.2s ${t.animation.easing.spring}`,
                   transform: selected ? 'scale(1.08)' : hovered ? 'scale(1.04)' : 'scale(1)',
                   boxShadow: selected
-                    ? `0 2px 8px ${color}40`
+                    ? `0 0 12px ${color}40`
                     : 'none',
-                  flexShrink: 0,
+                  ...customStyles?.npsButton,
+                  ...(selected ? customStyles?.npsButtonSelected : {}),
                 }}
               >
                 {i}
@@ -145,36 +134,37 @@ export function NpsMode({
           })}
         </div>
 
-        {/* Labels + category indicator */}
+        {/* Labels */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginTop: 10,
+            marginTop: 6,
             padding: '0 2px',
+            ...customStyles?.npsLabels,
           }}
         >
           <span style={{
-            fontSize: 10,
-            color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-            fontWeight: 500,
+            fontSize: t.typography.fontSize.xs,
+            color: t.colors.textDisabled,
+            fontWeight: t.typography.fontWeight.medium,
+            letterSpacing: '0.02em',
           }}>
             {lowLabel}
           </span>
-
-
           <span style={{
-            fontSize: 10,
-            color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-            fontWeight: 500,
+            fontSize: t.typography.fontSize.xs,
+            color: t.colors.textDisabled,
+            fontWeight: t.typography.fontWeight.medium,
+            letterSpacing: '0.02em',
           }}>
             {highLabel}
           </span>
         </div>
       </div>
 
-      {/* Follow-up textarea */}
+      {/* Follow-up textarea — animated reveal */}
       {showFollowUp && score !== null && (
         <textarea
           value={content}
@@ -183,30 +173,32 @@ export function NpsMode({
           style={{
             width: '100%',
             padding: isTouch ? '12px 14px' : '10px 12px',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-            borderRadius: 8,
-            backgroundColor: isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc',
-            color: isDark ? '#f9fafb' : '#111827',
-            fontSize: isTouch ? 16 : 14,
+            border: `1px solid ${t.colors.inputBorder}`,
+            borderRadius: t.borders.radius.md,
+            backgroundColor: t.colors.inputBackground,
+            color: t.colors.text,
+            fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
             resize: 'vertical' as const,
             minHeight: isTouch ? 80 : 60,
-            fontFamily: 'inherit',
+            fontFamily: t.typography.fontFamily,
             outline: 'none',
-            transition: 'border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: `border-color ${t.animation.duration.fast} ${t.animation.easing.default}, box-shadow ${t.animation.duration.fast} ${t.animation.easing.default}`,
             lineHeight: 1.5,
+            animation: `gotcha-expand-in 0.3s ${t.animation.easing.default} both`,
+            overflow: 'hidden',
             ...customStyles?.input,
           }}
           disabled={isLoading}
           aria-label="Follow-up feedback"
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8';
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`;
-            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.7)' : '#ffffff';
+            e.currentTarget.style.borderColor = t.colors.inputBorderFocus;
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${t.colors.inputFocusRing}`;
+            e.currentTarget.style.backgroundColor = t.colors.inputBackgroundFocus;
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
+            e.currentTarget.style.borderColor = t.colors.inputBorder;
             e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
+            e.currentTarget.style.backgroundColor = t.colors.inputBackground;
           }}
         />
       )}
@@ -218,18 +210,15 @@ export function NpsMode({
         style={{
           width: '100%',
           padding: isTouch ? '14px 16px' : '10px 16px',
-          border: 'none',
-          borderRadius: 8,
-          backgroundColor: !canSubmit
-            ? (isDark ? '#374151' : '#e2e8f0')
-            : (isDark ? '#e2e8f0' : '#1e293b'),
-          color: !canSubmit
-            ? (isDark ? '#6b7280' : '#94a3b8')
-            : (isDark ? '#1e293b' : '#ffffff'),
-          fontSize: isTouch ? 16 : 14,
-          fontWeight: 500,
+          border: t.colors.buttonBorder,
+          borderRadius: t.borders.radius.md,
+          backgroundColor: !canSubmit ? t.colors.buttonBackgroundDisabled : t.colors.buttonBackground,
+          color: !canSubmit ? t.colors.buttonColorDisabled : t.colors.buttonColor,
+          fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
+          fontWeight: t.typography.fontWeight.medium,
+          fontFamily: t.typography.fontFamily,
           cursor: isLoading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
           letterSpacing: '0.01em',
           opacity: isLoading ? 0.8 : 1,
           display: 'flex',
@@ -237,20 +226,29 @@ export function NpsMode({
           justifyContent: 'center',
           gap: 8,
           marginTop: 12,
+          ...(isLoading ? {
+            backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)`,
+            backgroundSize: '200% 100%',
+            animation: 'gotcha-shimmer 1.5s ease infinite',
+          } : {}),
           ...customStyles?.submitButton,
         }}
         onMouseEnter={(e) => {
           if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = isDark ? '#cbd5e1' : '#334155';
+            e.currentTarget.style.backgroundColor = t.colors.buttonBackgroundHover;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
           if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = isDark ? '#e2e8f0' : '#1e293b';
+            e.currentTarget.style.backgroundColor = !canSubmit ? t.colors.buttonBackgroundDisabled : t.colors.buttonBackground;
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
           }
         }}
       >
-        {isLoading && <Spinner size={isTouch ? 18 : 16} color={isDark ? '#1e293b' : '#ffffff'} />}
+        {isLoading && <Spinner size={isTouch ? 18 : 16} color={t.colors.buttonColor} />}
         {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : submitText)}
       </button>
     </form>

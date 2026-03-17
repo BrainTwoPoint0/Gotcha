@@ -11,13 +11,13 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Code Example */}
-      <section className="py-16 bg-gray-900">
+      <section className="py-24 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">Integrate in 3 lines of code</h2>
             <p className="text-gray-400">Seriously, that&apos;s all it takes.</p>
           </div>
-          <div className="bg-gray-800 rounded-2xl p-6 overflow-hidden">
+          <div className="bg-white/[0.06] backdrop-blur-md border border-white/[0.08] shadow-[0_4px_12px_rgba(0,0,0,0.3)] rounded-2xl p-6 overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -52,7 +52,7 @@ export default function HomePage() {
       <FeaturesSection />
 
       {/* Build vs Buy */}
-      <section className="py-20 bg-white">
+      <section className="py-28 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Stop guessing what users want</h2>
@@ -61,28 +61,28 @@ export default function HomePage() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-8">
+            <div className="bg-red-50/60 border border-red-200/60 rounded-2xl p-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-red-500">✗</span> Build It Yourself
+                <span className="text-red-400">✗</span> Build It Yourself
               </h3>
               <ul className="space-y-3 text-gray-600">
-                <li>$3,000+ in engineering time</li>
-                <li>1-3 weeks to build</li>
-                <li>Ongoing maintenance burden</li>
-                <li>No analytics dashboard</li>
-                <li>Limited to your ideas</li>
+                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>$3,000+ in engineering time</li>
+                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>1–3 weeks to build</li>
+                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>Ongoing maintenance burden</li>
+                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>No analytics dashboard</li>
+                <li className="flex items-start gap-2"><span className="text-red-300 mt-0.5">—</span>Limited to your ideas</li>
               </ul>
             </div>
-            <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-8">
+            <div className="bg-emerald-50/60 border-2 border-emerald-400/40 shadow-lg rounded-2xl p-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-green-500">✓</span> Use Gotcha
+                <span className="text-emerald-500">✓</span> Use Gotcha
               </h3>
               <ul className="space-y-3 text-gray-600">
-                <li>From $0/month</li>
-                <li>5 minutes to integrate</li>
-                <li>NPS, bug tracking, and 4 feedback modes</li>
-                <li>Webhooks to Slack, Discord & more</li>
-                <li>Team workspaces, export, and analytics</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>From $0/month</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>5 minutes to integrate</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>NPS, bug tracking, and 4 feedback modes</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>Webhooks to Slack, Discord & more</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">✓</span>Team workspaces, export, and analytics</li>
               </ul>
             </div>
           </div>

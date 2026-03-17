@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GotchaStyles } from '../../types';
+import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
 import { Spinner } from '../Spinner';
 
 interface FeedbackModeProps {
-  theme: 'light' | 'dark' | 'custom';
+  resolvedTheme: ResolvedTheme;
   placeholder?: string;
   submitText: string;
   isLoading: boolean;
@@ -15,18 +16,14 @@ interface FeedbackModeProps {
     rating?: number | null;
   };
   isEditing?: boolean;
-  /** Show the text input (default: true) */
   showText?: boolean;
-  /** Show the star rating (default: true) */
   showRating?: boolean;
-  /** Show "Report an issue" toggle (default: false) */
   enableBugFlag?: boolean;
-  /** Custom label for bug flag toggle (default: "Report an issue") */
   bugFlagLabel?: string;
 }
 
 export function FeedbackMode({
-  theme,
+  resolvedTheme: t,
   placeholder,
   submitText,
   isLoading,
@@ -48,7 +45,6 @@ export function FeedbackMode({
     setIsTouch(isTouchDevice());
   }, []);
 
-  // Update local state when initialValues change (e.g., after loading existing response)
   useEffect(() => {
     if (initialValues?.content !== undefined) {
       setContent(initialValues.content || '');
@@ -57,8 +53,6 @@ export function FeedbackMode({
       setRating(initialValues.rating ?? null);
     }
   }, [initialValues?.content, initialValues?.rating]);
-
-  const isDark = theme === 'dark';
 
   const canSubmit = (() => {
     if (showText && showRating) return content.trim().length > 0 || rating !== null;
@@ -80,31 +74,33 @@ export function FeedbackMode({
   const inputStyles: React.CSSProperties = {
     width: '100%',
     padding: isTouch ? '12px 14px' : '10px 12px',
-    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-    borderRadius: 8,
-    backgroundColor: isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc',
-    color: isDark ? '#f9fafb' : '#111827',
-    fontSize: isTouch ? 16 : 14, // 16px prevents iOS zoom on focus
+    border: `1px solid ${t.colors.inputBorder}`,
+    borderRadius: t.borders.radius.md,
+    backgroundColor: t.colors.inputBackground,
+    color: t.colors.text,
+    fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
     resize: 'vertical',
     minHeight: isTouch ? 100 : 80,
-    fontFamily: 'inherit',
+    fontFamily: t.typography.fontFamily,
     outline: 'none',
-    transition: 'border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: `border-color ${t.animation.duration.fast} ${t.animation.easing.default}, box-shadow ${t.animation.duration.fast} ${t.animation.easing.default}`,
     lineHeight: 1.5,
+    boxShadow: `inset 0 1px 2px rgba(0,0,0,0.04)`,
     ...customStyles?.input,
   };
 
   const buttonStyles: React.CSSProperties = {
     width: '100%',
     padding: isTouch ? '14px 16px' : '10px 16px',
-    border: 'none',
-    borderRadius: 8,
-    backgroundColor: isDark ? '#e2e8f0' : '#1e293b',
-    color: isDark ? '#1e293b' : '#ffffff',
-    fontSize: isTouch ? 16 : 14,
-    fontWeight: 500,
+    border: t.colors.buttonBorder,
+    borderRadius: t.borders.radius.md,
+    backgroundColor: t.colors.buttonBackground,
+    color: t.colors.buttonColor,
+    fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
+    fontWeight: t.typography.fontWeight.medium,
+    fontFamily: t.typography.fontFamily,
     cursor: isLoading ? 'not-allowed' : 'pointer',
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
     letterSpacing: '0.01em',
     ...customStyles?.submitButton,
   };
@@ -117,7 +113,7 @@ export function FeedbackMode({
           marginBottom: showText ? (isTouch ? 16 : 12) : 0,
           ...(!showText ? { display: 'flex', justifyContent: 'center', padding: '8px 0' } : {}),
         }}>
-          <StarRating value={rating} onChange={setRating} isDark={isDark} isTouch={isTouch} large={!showText} />
+          <StarRating value={rating} onChange={setRating} theme={t} isTouch={isTouch} large={!showText} />
         </div>
       )}
 
@@ -131,14 +127,14 @@ export function FeedbackMode({
           disabled={isLoading}
           aria-label="Your feedback"
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#1e293b';
-            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30,41,59,0.15)';
-            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.7)' : '#ffffff';
+            e.currentTarget.style.borderColor = t.colors.inputBorderFocus;
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${t.colors.inputFocusRing}`;
+            e.currentTarget.style.backgroundColor = t.colors.inputBackgroundFocus;
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.backgroundColor = isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc';
+            e.currentTarget.style.borderColor = t.colors.inputBorder;
+            e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04)';
+            e.currentTarget.style.backgroundColor = t.colors.inputBackground;
           }}
         />
       )}
@@ -147,6 +143,8 @@ export function FeedbackMode({
       {enableBugFlag && (
         <button
           type="button"
+          role="switch"
+          aria-checked={isBug}
           onClick={() => setIsBug(!isBug)}
           style={{
             display: 'flex',
@@ -156,20 +154,19 @@ export function FeedbackMode({
             marginTop: 10,
             padding: '7px 10px',
             border: `1px solid ${
-              isBug
-                ? (isDark ? 'rgba(245,158,11,0.3)' : 'rgba(217,119,6,0.25)')
-                : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')
+              isBug ? t.colors.warningBorder : t.colors.border
             }`,
             borderRadius: 7,
-            backgroundColor: isBug
-              ? (isDark ? 'rgba(245,158,11,0.08)' : 'rgba(251,191,36,0.08)')
-              : 'transparent',
+            backgroundColor: isBug ? t.colors.warningSurface : 'transparent',
             cursor: 'pointer',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
+            fontFamily: t.typography.fontFamily,
+            ...customStyles?.bugFlag,
           }}
           onMouseEnter={(e) => {
             if (!isBug) {
-              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+              e.currentTarget.style.backgroundColor = t.colors.surfaceHover === t.colors.inputBackgroundFocus
+                ? 'rgba(0,0,0,0.02)' : t.colors.surfaceHover;
             }
           }}
           onMouseLeave={(e) => {
@@ -178,45 +175,39 @@ export function FeedbackMode({
             }
           }}
         >
-          {/* Bug icon */}
           <svg
             width={14}
             height={14}
             viewBox="0 0 24 24"
             fill="none"
-            stroke={isBug ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#6b7280' : '#9ca3af')}
+            stroke={isBug ? t.colors.warningActive : t.colors.textDisabled}
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ flexShrink: 0, transition: 'stroke 0.2s' }}
+            style={{ flexShrink: 0, transition: `stroke ${t.animation.duration.fast}` }}
           >
             <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
           <span
             style={{
               fontSize: 12,
-              fontWeight: isBug ? 500 : 400,
-              color: isBug
-                ? (isDark ? '#fbbf24' : '#b45309')
-                : (isDark ? '#6b7280' : '#9ca3af'),
-              transition: 'color 0.2s',
+              fontWeight: isBug ? t.typography.fontWeight.medium : t.typography.fontWeight.normal,
+              color: isBug ? t.colors.warningActive : t.colors.textDisabled,
+              transition: `color ${t.animation.duration.fast}`,
               letterSpacing: '0.01em',
             }}
           >
             {isBug ? 'Issue reported' : (bugFlagLabel || 'Report an issue')}
           </span>
-          {/* Toggle indicator */}
           <div
             style={{
               marginLeft: 'auto',
               width: 28,
               height: 16,
               borderRadius: 8,
-              backgroundColor: isBug
-                ? (isDark ? '#f59e0b' : '#d97706')
-                : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+              backgroundColor: isBug ? t.colors.warning : t.colors.border,
               position: 'relative',
-              transition: 'background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: `background-color ${t.animation.duration.fast} ${t.animation.easing.default}`,
               flexShrink: 0,
             }}
           >
@@ -228,10 +219,8 @@ export function FeedbackMode({
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                backgroundColor: isBug
-                  ? '#ffffff'
-                  : (isDark ? '#4b5563' : '#d1d5db'),
-                transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s',
+                backgroundColor: isBug ? '#ffffff' : t.colors.textDisabled,
+                transition: `left ${t.animation.duration.fast} ${t.animation.easing.default}, background-color ${t.animation.duration.fast}`,
                 boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
               }}
             />
@@ -247,29 +236,34 @@ export function FeedbackMode({
           ...buttonStyles,
           marginTop: 12,
           opacity: isLoading ? 0.8 : 1,
-          backgroundColor: !canSubmit
-            ? (isDark ? '#374151' : '#e2e8f0')
-            : (isDark ? '#e2e8f0' : '#1e293b'),
-          color: !canSubmit
-            ? (isDark ? '#6b7280' : '#94a3b8')
-            : (isDark ? '#1e293b' : '#ffffff'),
+          backgroundColor: !canSubmit ? t.colors.buttonBackgroundDisabled : t.colors.buttonBackground,
+          color: !canSubmit ? t.colors.buttonColorDisabled : t.colors.buttonColor,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
+          ...(isLoading ? {
+            backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)`,
+            backgroundSize: '200% 100%',
+            animation: 'gotcha-shimmer 1.5s ease infinite',
+          } : {}),
         }}
         onMouseEnter={(e) => {
           if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = isDark ? '#cbd5e1' : '#334155';
+            e.currentTarget.style.backgroundColor = t.colors.buttonBackgroundHover;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
           if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = isDark ? '#e2e8f0' : '#1e293b';
+            e.currentTarget.style.backgroundColor = t.colors.buttonBackground;
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
           }
         }}
       >
-        {isLoading && <Spinner size={isTouch ? 18 : 16} color={isDark ? '#1e293b' : '#ffffff'} />}
+        {isLoading && <Spinner size={isTouch ? 18 : 16} color={t.colors.buttonColor} />}
         {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : submitText)}
       </button>
     </form>
@@ -279,15 +273,28 @@ export function FeedbackMode({
 interface StarRatingProps {
   value: number | null;
   onChange: (rating: number) => void;
-  isDark: boolean;
+  theme: ResolvedTheme;
   isTouch: boolean;
   large?: boolean;
 }
 
-function StarRating({ value, onChange, isDark, isTouch, large = false }: StarRatingProps) {
+function StarRating({ value, onChange, theme: t, isTouch, large = false }: StarRatingProps) {
   const [hovered, setHovered] = useState<number | null>(null);
+  const [pulsing, setPulsing] = useState<number | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const starSize = large ? (isTouch ? 36 : 28) : (isTouch ? 28 : 18);
-  const buttonPadding = large ? (isTouch ? 8 : 5) : (isTouch ? 6 : 3);
+  const buttonPadding = large ? (isTouch ? 8 : 5) : (isTouch ? 8 : 3);
+
+  useEffect(() => {
+    return () => { clearTimeout(pulseTimerRef.current); };
+  }, []);
+
+  const handleClick = (star: number) => {
+    setPulsing(star);
+    onChange(star);
+    clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = setTimeout(() => setPulsing(null), 300);
+  };
 
   return (
     <div
@@ -304,7 +311,7 @@ function StarRating({ value, onChange, isDark, isTouch, large = false }: StarRat
           <button
             key={star}
             type="button"
-            onClick={() => onChange(star)}
+            onClick={() => handleClick(star)}
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(null)}
             aria-label={`Rate ${star} out of 5`}
@@ -314,9 +321,12 @@ function StarRating({ value, onChange, isDark, isTouch, large = false }: StarRat
               border: 'none',
               cursor: 'pointer',
               padding: buttonPadding,
-              color: isFilled ? '#f59e0b' : (isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'),
-              transition: 'color 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-              transform: (hovered !== null && hovered >= star) ? 'scale(1.1)' : 'scale(1)',
+              color: isFilled ? t.colors.starFilled : t.colors.starEmpty,
+              transition: `color 0.15s ${t.animation.easing.default}`,
+              transform: pulsing === star ? 'scale(1)' : ((hovered !== null && hovered >= star) ? 'scale(1.1)' : 'scale(1)'),
+              animation: pulsing === star ? `gotcha-star-pulse 0.3s ${t.animation.easing.spring}` : 'none',
+              filter: isFilled ? `drop-shadow(0 0 3px ${t.colors.starFilled}40)` : 'none',
+              transitionDelay: `${(star - 1) * 30}ms`,
             }}
           >
             <svg width={starSize} height={starSize} viewBox="0 0 24 24" fill="currentColor">

@@ -14,8 +14,8 @@ export const getResponsiveSize = (
   isTouch: boolean
 ): number => {
   const sizes = {
-    sm: { desktop: 24, mobile: 32 },
-    md: { desktop: 32, mobile: 36 },
+    sm: { desktop: 24, mobile: 28 },
+    md: { desktop: 32, mobile: 34 },
     lg: { desktop: 40, mobile: 40 },
   };
 

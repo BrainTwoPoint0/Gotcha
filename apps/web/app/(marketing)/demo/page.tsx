@@ -5,11 +5,11 @@ import Link from 'next/link';
 
 export default function DemoPage() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="px-6 py-8 md:p-8">
+    <main className="min-h-screen bg-gray-50 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.08),transparent)]">
+      <div className="px-6 py-12 md:p-12">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">SDK Playground</h1>
+          <div className="mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">SDK Playground</h1>
             <p className="text-gray-600">
               Try all the Gotcha SDK variants. Click on any G button to see it in action.
             </p>
@@ -18,8 +18,8 @@ export default function DemoPage() {
           {/* Modes */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Modes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-4">
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Feedback Mode
                   <Gotcha
@@ -33,7 +33,7 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Star rating + text input</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Vote Mode
                   <Gotcha
@@ -47,7 +47,7 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Thumbs up / down</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Poll Mode
                   <Gotcha
@@ -62,7 +62,7 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Custom options (e.g. Yes / No)</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Poll Mode (Multi)
                   <Gotcha
@@ -78,7 +78,7 @@ export default function DemoPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Multiple selections allowed</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   NPS Mode
                   <Gotcha
@@ -98,7 +98,7 @@ export default function DemoPage() {
           {/* Sizes */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Sizes</h2>
-            <div className="bg-white p-4 md:p-6 rounded-lg shadow-md border">
+            <div className="bg-white/70 backdrop-blur-sm p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200/60">
               <div className="flex flex-wrap items-center gap-6 md:gap-4 md:gap-8">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">sm (24px)</span>
@@ -137,8 +137,8 @@ export default function DemoPage() {
           {/* Themes */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Themes</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-4">
-              <div className="bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 p-6 rounded-lg shadow-md border border-white/60">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 p-6 rounded-2xl shadow-sm border border-white/60">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Light
                   <Gotcha
@@ -151,7 +151,7 @@ export default function DemoPage() {
                   />
                 </h3>
               </div>
-              <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 p-6 rounded-lg shadow-md border border-gray-700">
+              <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 p-6 rounded-2xl shadow-sm border border-gray-700">
                 <h3 className="font-medium mb-2 text-white flex items-center gap-2">
                   Dark
                   <Gotcha
@@ -164,7 +164,7 @@ export default function DemoPage() {
                   />
                 </h3>
               </div>
-              <div className="bg-gradient-to-br from-amber-100 via-rose-100 to-violet-100 p-6 rounded-lg shadow-md border border-white/60">
+              <div className="bg-gradient-to-br from-amber-100 via-rose-100 to-violet-100 p-6 rounded-2xl shadow-sm border border-white/60">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Auto
                   <Gotcha
@@ -183,9 +183,9 @@ export default function DemoPage() {
           {/* Positions */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Positions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {/* Inline */}
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   Inline
                   <Gotcha
@@ -200,7 +200,7 @@ export default function DemoPage() {
               </div>
 
               {/* Corner positions */}
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">top-left</span>
                 <Gotcha
                   elementId="pos-top-left"
@@ -210,7 +210,7 @@ export default function DemoPage() {
                   showOnHover={false}
                 />
               </div>
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">top-right</span>
                 <Gotcha
                   elementId="pos-top-right"
@@ -220,7 +220,7 @@ export default function DemoPage() {
                   showOnHover={false}
                 />
               </div>
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">bottom-left</span>
                 <Gotcha
                   elementId="pos-bottom-left"
@@ -230,7 +230,7 @@ export default function DemoPage() {
                   showOnHover={false}
                 />
               </div>
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">bottom-right</span>
                 <Gotcha
                   elementId="pos-bottom-right"
@@ -246,8 +246,8 @@ export default function DemoPage() {
           {/* Show on Hover */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Show on Hover</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-4">
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">showOnHover=false (always visible)</span>
                 <Gotcha
                   elementId="hover-false"
@@ -257,7 +257,7 @@ export default function DemoPage() {
                   showOnHover={false}
                 />
               </div>
-              <div className="relative bg-white p-6 rounded-lg shadow-md border h-32">
+              <div className="relative bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 h-32">
                 <span className="text-sm text-gray-600">showOnHover=true (hover to reveal)</span>
                 <Gotcha
                   elementId="hover-true"
@@ -275,7 +275,7 @@ export default function DemoPage() {
             <h2 className="text-xl font-semibold mb-4">Real World Examples</h2>
             <div className="space-y-4">
               {/* Feature card */}
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   New Analytics Dashboard
                   <Gotcha
@@ -293,7 +293,7 @@ export default function DemoPage() {
               </div>
 
               {/* Pricing option */}
-              <div className="bg-gradient-to-r from-slate-600 to-slate-700 p-6 rounded-lg shadow-md text-white">
+              <div className="bg-gradient-to-r from-slate-600 to-slate-700 p-6 rounded-2xl shadow-sm text-white">
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
                   Pro Plan - $29/mo
                   <Gotcha
@@ -312,7 +312,7 @@ export default function DemoPage() {
               </div>
 
               {/* NPS example */}
-              <div className="bg-white p-6 rounded-lg shadow-md border">
+              <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-200/60 hover:shadow-md transition-all">
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   NPS Survey
                   <Gotcha
@@ -330,7 +330,7 @@ export default function DemoPage() {
               </div>
 
               {/* Settings item */}
-              <div className="bg-white p-4 rounded-lg shadow-md border flex items-center justify-between">
+              <div className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-200/60 flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Dark Mode</h3>
                   <p className="text-gray-500 text-sm">Enable dark theme across the app</p>
@@ -353,7 +353,7 @@ export default function DemoPage() {
           </section>
 
           {/* CTA */}
-          <section className="bg-slate-700 rounded-2xl p-8 text-center text-white">
+          <section className="bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 rounded-2xl p-8 text-center text-white">
             <h2 className="text-2xl font-bold mb-2">Ready to add feedback to your app?</h2>
             <p className="text-slate-200 mb-6">Get started in less than 5 minutes.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

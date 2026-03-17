@@ -32,6 +32,23 @@ export interface GotchaStyles {
   modal?: React.CSSProperties;
   input?: React.CSSProperties;
   submitButton?: React.CSSProperties;
+  title?: React.CSSProperties;
+  closeButton?: React.CSSProperties;
+  starRating?: React.CSSProperties;
+  star?: React.CSSProperties;
+  voteButton?: React.CSSProperties;
+  voteButtonSelected?: React.CSSProperties;
+  pollOption?: React.CSSProperties;
+  pollOptionSelected?: React.CSSProperties;
+  npsButton?: React.CSSProperties;
+  npsButtonSelected?: React.CSSProperties;
+  npsLabels?: React.CSSProperties;
+  successMessage?: React.CSSProperties;
+  successIcon?: React.CSSProperties;
+  errorMessage?: React.CSSProperties;
+  bugFlag?: React.CSSProperties;
+  backdrop?: React.CSSProperties;
+  spinner?: React.CSSProperties;
 }
 
 // ============================================

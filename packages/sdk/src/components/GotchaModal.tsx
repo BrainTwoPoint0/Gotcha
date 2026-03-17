@@ -1,6 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Theme, GotchaStyles, ResponseMode, ExistingResponse } from '../types';
+import { ResolvedTheme } from '../theme/tokens';
+import { resolveTheme } from '../theme/resolveTheme';
+import { injectStyles } from '../theme/styles';
 import { cn } from '../utils/cn';
+import { useGotchaContext } from './GotchaProvider';
 import { FeedbackMode } from './modes/FeedbackMode';
 import { VoteMode } from './modes/VoteMode';
 import { PollMode } from './modes/PollMode';
@@ -24,9 +28,7 @@ export interface GotchaModalProps {
   // Vote mode
   voteLabels?: { up: string; down: string };
   // Feedback mode field visibility
-  /** Show the text input in feedback mode (default: true) */
   showText?: boolean;
-  /** Show the star rating in feedback mode (default: true) */
   showRating?: boolean;
   // Poll mode
   options?: string[];
@@ -78,53 +80,55 @@ export function GotchaModal({
 }: GotchaModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   const [isMobile, setIsMobile] = useState(false);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
+
+  const { themeConfig } = useGotchaContext();
 
   // Detect mobile and system theme after mount (SSR-safe)
   useEffect(() => {
     setIsMobile(window.innerWidth < 640);
 
-    // Detect system theme preference
     const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setSystemTheme(darkQuery.matches ? 'dark' : 'light');
 
-    // Listen for theme changes
     const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
     darkQuery.addEventListener('change', handler);
     return () => darkQuery.removeEventListener('change', handler);
   }, []);
 
-  // Trigger animation after mount
+  // Resolve theme with provider config
+  const t: ResolvedTheme = useMemo(
+    () => resolveTheme(theme, systemTheme, themeConfig),
+    [theme, systemTheme, themeConfig]
+  );
+
+  // Re-inject styles when theme changes
   useEffect(() => {
-    const timer = requestAnimationFrame(() => setIsVisible(true));
-    return () => cancelAnimationFrame(timer);
-  }, []);
-
-  // Resolve theme
-  const resolvedTheme = theme === 'auto' ? systemTheme : theme;
-
-  const isDark = resolvedTheme === 'dark';
+    injectStyles(t);
+  }, [t]);
 
   // Determine if modal should appear above or below
-  const modalHeight = 280; // approximate modal height
-  const spaceBelow = anchorRect
-    ? window.innerHeight - anchorRect.bottom
-    : window.innerHeight / 2;
-  const showAbove = spaceBelow < modalHeight + 20;
+  // Only compute on client after mount (anchorRect is only set on client)
+  const showAbove = (() => {
+    if (typeof window === 'undefined' || !anchorRect) return false;
+    const spaceBelow = window.innerHeight - anchorRect.bottom;
+    return spaceBelow < 300;
+  })();
 
-  // Focus trap
+  // Focus trap — use ref for onClose so effect runs once
   useEffect(() => {
     const modal = modalRef.current;
     if (!modal) return;
 
-    // Focus first element
     firstFocusableRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -147,7 +151,7 @@ export function GotchaModal({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   const defaultPrompt = mode === 'vote'
     ? 'What do you think?'
@@ -157,71 +161,74 @@ export function GotchaModal({
     ? (npsQuestion || 'How likely are you to recommend us?')
     : 'What do you think of this feature?';
 
-  // Responsive sizing - on mobile, use fixed positioning centered on screen
-  const modalPadding = isMobile ? 20 : 16;
-  const modalWidth = mode === 'nps' ? 420 : 320;
+  const modalPadding = isMobile ? 24 : 20;
+  const modalWidth = mode === 'nps' ? 420 : 340;
 
-  const layeredShadow = isDark
-    ? '0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.2)'
-    : '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.06)';
+  // Animation class
+  const animationClass = isMobile
+    ? 'gotcha-modal-enter-center'
+    : showAbove
+    ? 'gotcha-modal-enter-above'
+    : 'gotcha-modal-enter';
 
   const modalStyles: React.CSSProperties = isMobile
     ? {
-        // Mobile: fixed position, centered on screen
         position: 'fixed',
         left: '50%',
         top: '50%',
         width: 'calc(100vw - 32px)',
         maxWidth: modalWidth,
         padding: modalPadding,
-        borderRadius: 12,
-        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-        color: isDark ? '#f9fafb' : '#111827',
-        boxShadow: layeredShadow,
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        borderRadius: t.borders.radius.lg + 2,
+        background: t.colors.backgroundGradient,
+        color: t.colors.text,
+        boxShadow: t.shadows.modal,
+        border: `${t.borders.width}px solid ${t.colors.border}`,
         zIndex: 9999,
-        transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible
-          ? 'translate(-50%, -50%) scale(1)'
-          : 'translate(-50%, -50%) scale(0.96)',
+        fontFamily: t.typography.fontFamily,
         ...customStyles?.modal,
-        textAlign: 'left',
+        textAlign: 'left' as const,
       }
     : {
-        // Desktop: absolute position relative to button
         position: 'absolute',
         left: '50%',
         width: modalWidth,
         padding: modalPadding,
-        borderRadius: 10,
-        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-        color: isDark ? '#f9fafb' : '#111827',
-        boxShadow: layeredShadow,
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        borderRadius: t.borders.radius.lg,
+        background: t.colors.backgroundGradient,
+        color: t.colors.text,
+        boxShadow: t.shadows.modal,
+        border: `${t.borders.width}px solid ${t.colors.border}`,
         zIndex: 9999,
+        fontFamily: t.typography.fontFamily,
         ...(showAbove
           ? { bottom: '100%', marginBottom: 8 }
           : { top: '100%', marginTop: 8 }),
-        transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible
-          ? 'translateX(-50%) scale(1) translateY(0)'
-          : `translateX(-50%) scale(0.96) translateY(${showAbove ? '6px' : '-6px'})`,
         ...customStyles?.modal,
-        textAlign: 'left',
+        textAlign: 'left' as const,
       };
+
+  // Stagger delay for form elements
+  const fadeUpStyle = (index: number): React.CSSProperties => ({
+    animation: `gotcha-fade-up ${t.animation.duration.normal} ${t.animation.easing.default} both`,
+    animationDelay: `${index * 0.05}s`,
+  });
+
+  // "Gotcha!" success branding
+  const isDefaultThankYou = thankYouMessage === 'Gotcha!' || thankYouMessage === 'Thanks for your feedback!';
 
   return (
     <div
       ref={modalRef}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="gotcha-modal-title"
+      aria-label={isSubmitted ? 'Feedback submitted' : undefined}
+      aria-labelledby={isSubmitted ? undefined : 'gotcha-modal-title'}
+      data-gotcha
       style={modalStyles}
-      className={cn('gotcha-modal', isDark && 'gotcha-modal--dark')}
+      className={cn('gotcha-modal', animationClass)}
     >
-      {/* Close button - larger on touch devices */}
+      {/* Close button */}
       <button
         ref={firstFocusableRef}
         type="button"
@@ -229,30 +236,31 @@ export function GotchaModal({
         aria-label="Close feedback form"
         style={{
           position: 'absolute',
-          top: isMobile ? 12 : 8,
-          right: isMobile ? 12 : 8,
-          width: isMobile ? 36 : 28,
-          height: isMobile ? 36 : 28,
+          top: isMobile ? 10 : 6,
+          right: isMobile ? 10 : 6,
+          width: isMobile ? 40 : 36,
+          height: isMobile ? 40 : 36,
           border: 'none',
           background: 'transparent',
           cursor: 'pointer',
-          color: isDark ? '#6b7280' : '#9ca3af',
+          color: t.colors.closeButton,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 6,
-          transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: t.borders.radius.sm,
+          transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
+          ...customStyles?.closeButton,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
-          e.currentTarget.style.color = isDark ? '#9ca3af' : '#6b7280';
+          e.currentTarget.style.backgroundColor = t.colors.closeButtonBg;
+          e.currentTarget.style.color = t.colors.closeButtonHover;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = isDark ? '#6b7280' : '#9ca3af';
+          e.currentTarget.style.color = t.colors.closeButton;
         }}
       >
-        <svg width={isMobile ? 16 : 12} height={isMobile ? 16 : 12} viewBox="0 0 14 14" fill="none">
+        <svg width={isMobile ? 16 : 14} height={isMobile ? 16 : 14} viewBox="0 0 14 14" fill="none">
           <path
             d="M1 1L13 13M1 13L13 1"
             stroke="currentColor"
@@ -263,60 +271,99 @@ export function GotchaModal({
       </button>
 
       {/* Title */}
-      <h2
-        id="gotcha-modal-title"
-        style={{
-          margin: '0 0 16px 0',
-          fontSize: isMobile ? 16 : 14,
-          fontWeight: 600,
-          paddingRight: isMobile ? 40 : 32,
-          letterSpacing: '-0.01em',
-          lineHeight: 1.4,
-          textAlign: 'left',
-        }}
-      >
-        {promptText || defaultPrompt}
-      </h2>
+      {!isSubmitted && (
+        <h2
+          id="gotcha-modal-title"
+          style={{
+            margin: '0 0 16px 0',
+            fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.md,
+            fontWeight: t.typography.fontWeight.semibold,
+            paddingRight: isMobile ? 44 : 38,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.4,
+            textAlign: 'left',
+            fontFamily: t.typography.fontFamily,
+            ...fadeUpStyle(0),
+            ...customStyles?.title,
+          }}
+        >
+          {promptText || defaultPrompt}
+        </h2>
+      )}
 
-      {/* Success state */}
+      {/* Success state — "Gotcha!" branding moment */}
       {isSubmitted && (
         <div
           style={{
             textAlign: 'center',
-            padding: '24px 0',
-            color: isDark ? '#10b981' : '#059669',
+            padding: '28px 0 20px',
           }}
         >
+          {/* Animated checkmark circle */}
           <div
             style={{
-              width: 44,
-              height: 44,
+              width: 52,
+              height: 52,
               borderRadius: '50%',
-              backgroundColor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(5,150,105,0.08)',
+              backgroundColor: t.colors.successSurface,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 12px',
+              margin: '0 auto 16px',
+              animation: `gotcha-success-pop 0.4s ${t.animation.easing.spring} both, gotcha-glow-pulse 0.8s ease 0.4s`,
+              ...customStyles?.successIcon,
             }}
           >
             <svg
-              width="22"
-              height="22"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
             >
               <path
                 d="M20 6L9 17L4 12"
-                stroke="currentColor"
-                strokeWidth="2"
+                stroke={t.colors.success}
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{
+                  strokeDasharray: 24,
+                  strokeDashoffset: 0,
+                  animation: `gotcha-check-draw 0.4s ease 0.2s both`,
+                }}
               />
             </svg>
           </div>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: isDark ? '#d1d5db' : '#374151' }}>
-            {thankYouMessage}
+
+          {/* Primary message */}
+          <p
+            style={{
+              margin: 0,
+              fontSize: isDefaultThankYou ? 22 : t.typography.fontSize.md,
+              fontWeight: isDefaultThankYou ? t.typography.fontWeight.bold : t.typography.fontWeight.medium,
+              color: t.colors.text,
+              fontFamily: isDefaultThankYou ? "'Carter One', cursive" : t.typography.fontFamily,
+              animation: `gotcha-success-text 0.3s ease 0.3s both`,
+              ...customStyles?.successMessage,
+            }}
+          >
+            {isDefaultThankYou ? 'Gotcha!' : thankYouMessage}
           </p>
+
+          {/* Subtitle (only for default message) */}
+          {isDefaultThankYou && (
+            <p
+              style={{
+                margin: '6px 0 0',
+                fontSize: t.typography.fontSize.sm,
+                fontWeight: t.typography.fontWeight.normal,
+                color: t.colors.textSecondary,
+                animation: `gotcha-success-text 0.3s ease 0.45s both`,
+              }}
+            >
+              Thanks for your feedback!
+            </p>
+          )}
         </div>
       )}
 
@@ -326,24 +373,32 @@ export function GotchaModal({
           style={{
             padding: '8px 10px',
             marginBottom: 12,
-            borderRadius: 8,
-            backgroundColor: isDark ? 'rgba(127,29,29,0.3)' : '#fef2f2',
-            border: `1px solid ${isDark ? 'rgba(254,202,202,0.1)' : 'rgba(220,38,38,0.1)'}`,
-            color: isDark ? '#fecaca' : '#dc2626',
-            fontSize: 13,
+            borderRadius: t.borders.radius.sm,
+            backgroundColor: t.colors.errorSurface,
+            border: `1px solid ${t.colors.errorBorder}`,
+            color: t.colors.error,
+            fontSize: t.typography.fontSize.sm,
             lineHeight: 1.4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            ...fadeUpStyle(1),
+            ...customStyles?.errorMessage,
           }}
         >
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           {error}
         </div>
       )}
 
       {/* Form content based on mode */}
       {!isSubmitted && (
-        <>
+        <div style={fadeUpStyle(1)}>
           {mode === 'feedback' && (
             <FeedbackMode
-              theme={resolvedTheme}
+              resolvedTheme={t}
               placeholder={placeholder}
               submitText={submitText}
               isLoading={isLoading}
@@ -362,7 +417,7 @@ export function GotchaModal({
           )}
           {mode === 'vote' && (
             <VoteMode
-              theme={resolvedTheme}
+              resolvedTheme={t}
               isLoading={isLoading}
               onSubmit={onSubmit}
               initialVote={existingResponse?.vote || undefined}
@@ -372,7 +427,7 @@ export function GotchaModal({
           )}
           {mode === 'nps' && (
             <NpsMode
-              theme={resolvedTheme}
+              resolvedTheme={t}
               submitText={submitText}
               isLoading={isLoading}
               onSubmit={onSubmit}
@@ -390,7 +445,7 @@ export function GotchaModal({
           )}
           {mode === 'poll' && options && options.length > 0 && (
             <PollMode
-              theme={resolvedTheme}
+              resolvedTheme={t}
               options={options}
               allowMultiple={allowMultiple}
               isLoading={isLoading}
@@ -399,7 +454,7 @@ export function GotchaModal({
               isEditing={isEditing}
             />
           )}
-        </>
+        </div>
       )}
 
       {/* Screen reader announcement */}

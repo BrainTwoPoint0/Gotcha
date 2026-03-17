@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,8 +100,10 @@ export function PricingToggle() {
           }`}
           aria-label="Toggle annual billing"
         >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          <motion.span
+            layout
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            className={`inline-block h-4 w-4 rounded-full bg-white ${
               billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
@@ -123,12 +126,21 @@ export function PricingToggle() {
       </div>
 
       {/* Tier Cards */}
-      <div className="grid md:grid-cols-2 gap-8">
+      <motion.div
+        className="grid md:grid-cols-2 gap-8"
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
+      >
         {currentTiers.map((tier) => (
+          <motion.div
+            key={tier.name + '-wrapper'}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } } }}
+          >
           <SpotlightCard
             key={tier.name}
             className={`p-8 ${
-              tier.highlighted ? 'ring-2 ring-slate-600 shadow-xl scale-105' : 'shadow-sm'
+              tier.highlighted ? 'ring-2 ring-slate-600 shadow-xl md:scale-[1.03]' : 'shadow-sm opacity-90'
             }`}
             spotlightColor={
               tier.highlighted ? 'rgba(71, 85, 105, 0.15)' : 'rgba(148, 163, 184, 0.1)'
@@ -142,7 +154,18 @@ export function PricingToggle() {
             <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
             <p className="text-gray-500 text-sm mt-1">{tier.description}</p>
             <div className="mt-4 mb-6">
-              <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={tier.price}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-4xl font-bold text-gray-900 inline-block"
+                >
+                  {tier.price}
+                </motion.span>
+              </AnimatePresence>
               <span className="text-gray-500 ml-1">{tier.period}</span>
             </div>
             <div className="mb-6">
@@ -169,12 +192,13 @@ export function PricingToggle() {
                 </li>
               ))}
             </ul>
-            <Button variant={tier.highlighted ? 'default' : 'secondary'} className="w-full" asChild>
+            <Button variant={tier.highlighted ? 'default' : 'secondary'} className={`w-full ${tier.highlighted ? 'bg-slate-800 shadow-lg shadow-slate-800/25 hover:bg-slate-900 hover:-translate-y-0.5 transition-all' : ''}`} asChild>
               <Link href={tier.href}>{tier.cta}</Link>
             </Button>
           </SpotlightCard>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

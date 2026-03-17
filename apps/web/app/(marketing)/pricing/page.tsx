@@ -71,12 +71,12 @@ export default function PricingPage() {
         <PricingToggle />
 
         {/* Need more? */}
-        <div className="mt-8 bg-slate-100 rounded-2xl p-6 text-center">
+        <div className="mt-8 bg-white rounded-2xl p-6 text-center border border-gray-200/60 shadow-sm">
           <p className="text-gray-600">
             Need SSO, SLA, or custom integrations?{' '}
             <a
               href="mailto:info@braintwopoint0.com"
-              className="text-slate-700 font-medium hover:underline"
+              className="text-slate-700 font-medium underline underline-offset-4 decoration-slate-300 hover:decoration-slate-600 transition-colors"
             >
               Contact us
             </a>

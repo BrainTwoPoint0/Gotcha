@@ -9,10 +9,10 @@ export async function Navbar() {
   } = await supabase.auth.getUser();
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-50">
+    <nav className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-gray-900">
+          <Link href="/" className="text-xl font-carter text-gray-900">
             Gotcha
           </Link>
           <div className="hidden md:flex items-center gap-8">

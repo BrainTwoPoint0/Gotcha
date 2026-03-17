@@ -23,7 +23,7 @@ export function ProjectCard({
   return (
     <Link href={`/dashboard/projects/${slug}`}>
       <SpotlightCard
-        className="p-6 h-full transition-shadow hover:shadow-md"
+        className="p-6 h-full hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
         spotlightColor="rgba(148, 163, 184, 0.08)"
       >
         <div className="flex items-start justify-between">

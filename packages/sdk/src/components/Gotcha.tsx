@@ -39,7 +39,7 @@ export interface GotchaProps {
   /** Custom labels for vote buttons (default: Like/Dislike) */
   voteLabels?: { up: string; down: string };
 
-  // Poll mode specific (Phase 2)
+  // Poll mode specific
   /** Required if mode is 'poll' (2-6 options) */
   options?: string[];
   /** Allow selecting multiple options */
@@ -93,6 +93,10 @@ export interface GotchaProps {
   /** When true and user has already responded, show submitted state and allow review/edit instead of new submission */
   onePerUser?: boolean;
 
+  // Animation
+  /** Enable entrance animations on the button and modal (default: true) */
+  animated?: boolean;
+
   // Callbacks
   /** Called after successful submission */
   onSubmit?: (response: GotchaResponse) => void;
@@ -121,6 +125,7 @@ export function Gotcha({
   enableBugFlag = false,
   bugFlagLabel,
   onePerUser = false,
+  animated = true,
   position = DEFAULTS.POSITION,
   size = DEFAULTS.SIZE,
   theme = DEFAULTS.THEME,
@@ -137,29 +142,41 @@ export function Gotcha({
   onClose,
   onError,
 }: GotchaProps) {
-  const { disabled, activeModalId, openModal, closeModal, client } = useGotchaContext();
+  const { disabled, activeModalId, openModal, closeModal } = useGotchaContext();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isParentHovered, setIsParentHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Detect mobile for portal rendering (SSR-safe)
+  // SSR-safe mount detection
   useEffect(() => {
+    setHasMounted(true);
     setIsMobile(window.innerWidth < 640);
+    return () => {
+      clearTimeout(autoCloseTimerRef.current);
+    };
   }, []);
 
-  // This instance's modal is open if activeModalId matches our elementId
   const isOpen = activeModalId === elementId;
 
-  // Attach hover listeners to the parent element (not the button container)
+  // Scroll lock on mobile when modal is open
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen, isMobile]);
+
+  // Attach hover listeners to the parent element
   useEffect(() => {
     if (!showOnHover) return;
 
     const container = containerRef.current;
     if (!container) return;
 
-    // Find the parent element with position: relative
     const parent = container.parentElement;
     if (!parent) return;
 
@@ -183,10 +200,10 @@ export function Gotcha({
     onSuccess: (response) => {
       setIsSubmitted(true);
       onSubmit?.(response);
-      setTimeout(() => {
+      autoCloseTimerRef.current = setTimeout(() => {
         closeModal();
         setIsSubmitted(false);
-      }, 1500);
+      }, 3000);
     },
     onError: (err) => {
       console.warn('[Gotcha] Submission failed:', err instanceof Error ? err.message : err);
@@ -203,6 +220,7 @@ export function Gotcha({
   }, [elementId, openModal, onOpen]);
 
   const handleClose = useCallback(() => {
+    clearTimeout(autoCloseTimerRef.current);
     closeModal();
     setIsSubmitted(false);
     onClose?.();
@@ -215,19 +233,46 @@ export function Gotcha({
     [submit]
   );
 
-  // Resolve submit text — show "Update" when editing in onePerUser mode
   const effectiveSubmitText = isEditing ? 'Update' : submitText;
 
-  // Don't render if disabled or not visible
   if (disabled || !visible) return null;
 
-  // Position styles
   const positionStyles: Record<Position, React.CSSProperties> = {
     'top-right': { position: 'absolute', top: 0, right: 0, transform: 'translate(50%, -50%)' },
     'top-left': { position: 'absolute', top: 0, left: 0, transform: 'translate(-50%, -50%)' },
     'bottom-right': { position: 'absolute', bottom: 0, right: 0, transform: 'translate(50%, 50%)' },
     'bottom-left': { position: 'absolute', bottom: 0, left: 0, transform: 'translate(-50%, 50%)' },
     'inline': { position: 'relative', display: 'inline-flex' },
+  };
+
+  const modalProps = {
+    mode,
+    theme,
+    customStyles,
+    promptText,
+    placeholder,
+    submitText: effectiveSubmitText,
+    thankYouMessage,
+    isLoading,
+    isSubmitted,
+    error,
+    existingResponse,
+    isEditing,
+    showText,
+    showRating,
+    voteLabels,
+    options,
+    allowMultiple,
+    npsQuestion,
+    npsFollowUp,
+    npsFollowUpPlaceholder,
+    npsLowLabel,
+    npsHighLabel,
+    enableBugFlag,
+    bugFlagLabel,
+    onSubmit: handleSubmit,
+    onClose: handleClose,
+    anchorRect: anchorRect || undefined,
   };
 
   return (
@@ -249,81 +294,30 @@ export function Gotcha({
         onClick={handleOpen}
         isOpen={isOpen}
         isParentHovered={isParentHovered}
+        animated={animated}
       />
 
       {isOpen && !isMobile && (
-        <GotchaModal
-          mode={mode}
-          theme={theme}
-          customStyles={customStyles}
-          promptText={promptText}
-          placeholder={placeholder}
-          submitText={effectiveSubmitText}
-          thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
-          isLoading={isLoading}
-          isSubmitted={isSubmitted}
-          error={error}
-          existingResponse={existingResponse}
-          isEditing={isEditing}
-          showText={showText}
-          showRating={showRating}
-          voteLabels={voteLabels}
-          options={options}
-          allowMultiple={allowMultiple}
-          npsQuestion={npsQuestion}
-          npsFollowUp={npsFollowUp}
-          npsFollowUpPlaceholder={npsFollowUpPlaceholder}
-          npsLowLabel={npsLowLabel}
-          npsHighLabel={npsHighLabel}
-          enableBugFlag={enableBugFlag}
-          bugFlagLabel={bugFlagLabel}
-          onSubmit={handleSubmit}
-          onClose={handleClose}
-          anchorRect={anchorRect || undefined}
-        />
+        <GotchaModal {...modalProps} />
       )}
 
-      {/* On mobile, render modal via portal to escape parent transform */}
-      {isOpen && isMobile && createPortal(
+      {/* Mobile: frosted glass backdrop portal */}
+      {isOpen && isMobile && hasMounted && createPortal(
         <div
+          role="presentation"
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 99999,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
+          className="gotcha-overlay-enter"
           onClick={handleClose}
         >
           <div onClick={(e) => e.stopPropagation()}>
-            <GotchaModal
-              mode={mode}
-              theme={theme}
-              customStyles={customStyles}
-              promptText={promptText}
-              placeholder={placeholder}
-              submitText={effectiveSubmitText}
-              thankYouMessage={isEditing ? 'Your feedback has been updated!' : thankYouMessage}
-              isLoading={isLoading}
-              isSubmitted={isSubmitted}
-              error={error}
-              existingResponse={existingResponse}
-              isEditing={isEditing}
-              showText={showText}
-              showRating={showRating}
-              voteLabels={voteLabels}
-              options={options}
-              allowMultiple={allowMultiple}
-              npsQuestion={npsQuestion}
-              npsFollowUp={npsFollowUp}
-              npsFollowUpPlaceholder={npsFollowUpPlaceholder}
-              npsLowLabel={npsLowLabel}
-              npsHighLabel={npsHighLabel}
-              enableBugFlag={enableBugFlag}
-              bugFlagLabel={bugFlagLabel}
-              onSubmit={handleSubmit}
-              onClose={handleClose}
-              anchorRect={anchorRect || undefined}
-            />
+            <GotchaModal {...modalProps} />
           </div>
         </div>,
         document.body
