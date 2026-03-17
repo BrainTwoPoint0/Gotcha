@@ -6,6 +6,9 @@ export { GotchaScore } from './components/GotchaScore';
 // Hooks
 export { useGotcha } from './hooks/useGotcha';
 
+// Theme
+export { createTheme } from './theme/tokens';
+
 // Types (re-export from local)
 export type {
   ResponseMode,
@@ -20,6 +23,8 @@ export type {
   GotchaError,
   ScoreData,
 } from './types';
+
+export type { GotchaThemeConfig } from './theme/tokens';
 
 // Props type
 export type { GotchaProps } from './components/Gotcha';

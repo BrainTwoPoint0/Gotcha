@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Theme, Size } from '../types';
 import { useScore } from '../hooks/useScore';
+import { resolveTheme } from '../theme/resolveTheme';
+import { useGotchaContext } from './GotchaProvider';
 
 export type ScoreVariant = 'stars' | 'number' | 'compact' | 'votes';
 
@@ -29,11 +31,6 @@ const SIZE_MAP: Record<Size, {
   lg: { fontSize: 14, ratingFontSize: 18, starSize: 18, gap: 8, pillPx: 12, pillPy: 6, barHeight: 5, iconSize: 16 },
 };
 
-function resolveTheme(theme: Theme, systemTheme: 'light' | 'dark'): 'light' | 'dark' | 'custom' {
-  if (theme === 'auto') return systemTheme;
-  return theme;
-}
-
 /** Crisp, rounded 5-point star SVG with partial fill via clipPath */
 function Stars({ rating, size, filledColor, emptyColor }: {
   rating: number;
@@ -53,12 +50,10 @@ function Stars({ rating, size, filledColor, emptyColor }: {
             <rect x="0" y="0" width={24 * fill} height="24" />
           </clipPath>
         </defs>
-        {/* Empty star background */}
         <path
           d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
           fill={emptyColor}
         />
-        {/* Filled star overlay clipped to fill percentage */}
         <path
           d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
           fill={filledColor}
@@ -129,25 +124,25 @@ export function GotchaScore({
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  if (isLoading || !score) return null;
+  const { themeConfig } = useGotchaContext();
+  const t = useMemo(() => resolveTheme(theme, systemTheme, themeConfig), [theme, systemTheme, themeConfig]);
 
-  const resolved = resolveTheme(theme, systemTheme);
-  const isDark = resolved === 'dark';
+  if (isLoading || !score) return null;
   const s = SIZE_MAP[size];
 
-  // Color tokens
-  const ratingColor = isDark ? '#f3f4f6' : '#000000';
-  const mutedColor = isDark ? '#9ca3af' : '#9ca3af';
-  const starFilled = isDark ? '#facc15' : '#eab308';
-  const starEmpty = isDark ? '#374151' : '#e5e7eb';
-  const positiveColor = isDark ? '#6ee7b7' : '#16a34a';
-  const positiveTrack = isDark ? '#374151' : '#e5e7eb';
+  // Color tokens from resolved theme
+  const ratingColor = t.colors.text;
+  const mutedColor = t.colors.textDisabled;
+  const starFilled = t.colors.starFilled;
+  const starEmpty = t.colors.starEmpty;
+  const positiveColor = t.colors.voteUp;
+  const positiveTrack = t.colors.starEmpty;
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: s.gap,
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: t.typography.fontFamily,
     lineHeight: 1,
     letterSpacing: '-0.01em',
     WebkitFontSmoothing: 'antialiased',

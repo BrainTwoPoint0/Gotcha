@@ -7,8 +7,10 @@ import { AnalyticsCharts } from './charts';
 import { AnalyticsFilter } from './analytics-filter';
 import { ElementsTab } from './elements-tab';
 import { TrendsTab } from './trends-tab';
+import { PivotTab } from './pivot-tab';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
+import { parseDevice, parseBrowser } from '@/lib/ua-parser';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,8 @@ interface PageProps {
     projectId?: string;
     elementId?: string;
     tab?: string;
+    pivotRow?: string;
+    pivotCol?: string;
   }>;
 }
 
@@ -132,10 +136,14 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     },
   });
 
-  const elements = elementsData.map((e) => ({
-    elementIdRaw: e.elementIdRaw,
-    count: e._count.elementIdRaw,
-  }));
+  const archivedElementIds = organization.archivedElementIds ?? [];
+
+  const elements = elementsData
+    .filter((e) => !archivedElementIds.includes(e.elementIdRaw))
+    .map((e) => ({
+      elementIdRaw: e.elementIdRaw,
+      count: e._count.elementIdRaw,
+    }));
 
   // Parse date filters (default to last 30 days if no filters)
   const thirtyDaysAgo = new Date();
@@ -173,6 +181,20 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   // Overview tab data
   let overviewData = null;
   if (activeTab === 'overview') {
+    // ── Comparison period ──────────────────────────────────────────
+    const periodMs = endDate.getTime() - startDate.getTime();
+    const prevEnd = new Date(startDate.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - periodMs);
+
+    const prevWhere = {
+      project: {
+        organizationId: organization.id,
+        ...(projectId && { id: projectId }),
+      },
+      ...(elementId && { elementIdRaw: elementId }),
+      createdAt: { gte: prevStart, lte: prevEnd },
+    };
+
     const [
       modeCountsRaw,
       ratingAgg,
@@ -181,6 +203,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       elementPerfRaw,
       pollResponses,
       npsRatings,
+      ratingDistRaw,
+      heatmapRaw,
+      prevCount,
+      prevRatingAgg,
+      prevVoteCountsRaw,
     ] = await Promise.all([
       prisma.response.groupBy({
         by: ['mode'],
@@ -231,6 +258,40 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         where: { ...where, mode: 'NPS', rating: { not: null } },
         select: { rating: true },
         take: 10000,
+      }),
+      // Rating distribution (1–5)
+      prisma.response.groupBy({
+        by: ['rating'],
+        where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
+        _count: { rating: true },
+      }),
+      // Heatmap: day-of-week x hour
+      prisma.$queryRaw<Array<{ dow: number; hour: number; count: bigint }>>`
+        SELECT EXTRACT(DOW FROM "createdAt")::int as dow,
+               EXTRACT(HOUR FROM "createdAt")::int as hour,
+               COUNT(*) as count
+        FROM "Response"
+        WHERE "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate}
+        AND "createdAt" <= ${endDate}
+        GROUP BY 1, 2
+      `.catch(() => [] as Array<{ dow: number; hour: number; count: bigint }>),
+      // Previous period: total count
+      prisma.response.count({ where: prevWhere }),
+      // Previous period: avg rating
+      prisma.response.aggregate({
+        where: { ...prevWhere, rating: { not: null } },
+        _avg: { rating: true },
+      }),
+      // Previous period: vote counts
+      prisma.response.groupBy({
+        by: ['vote'],
+        where: { ...prevWhere, vote: { not: null } },
+        _count: { vote: true },
       }),
     ]);
 
@@ -323,6 +384,50 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
     const npsResult = calculateNPS(npsRatings.map((r) => r.rating!));
 
+    // Rating distribution — fill in all 1–5 values
+    const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => {
+      const found = ratingDistRaw.find((r) => r.rating === rating);
+      return { rating, count: found ? found._count.rating : 0 };
+    });
+
+    // Heatmap — convert DOW (Postgres: 0=Sun) to Mon-first (0=Mon)
+    const heatmapData = heatmapRaw.map((row) => ({
+      dow: row.dow === 0 ? 6 : row.dow - 1, // Sun(0)->6, Mon(1)->0, etc.
+      hour: row.hour,
+      count: Number(row.count),
+    }));
+
+    // Comparison deltas
+    const prevVoteCounts = { UP: 0, DOWN: 0 };
+    prevVoteCountsRaw.forEach((v) => {
+      if (v.vote === 'UP') prevVoteCounts.UP = v._count.vote;
+      if (v.vote === 'DOWN') prevVoteCounts.DOWN = v._count.vote;
+    });
+    const prevPositiveRate =
+      prevVoteCounts.UP + prevVoteCounts.DOWN > 0
+        ? Math.round(
+            (prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100
+          )
+        : null;
+    const prevAvgRating = prevRatingAgg._avg.rating
+      ? Number(prevRatingAgg._avg.rating.toFixed(1))
+      : null;
+
+    const deltas = {
+      totalResponses:
+        prevCount > 0
+          ? Math.round(((totalResponses - prevCount) / prevCount) * 100)
+          : null,
+      avgRating:
+        avgRating !== null && prevAvgRating !== null
+          ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1))
+          : null,
+      positiveRate:
+        positiveRate !== null && prevPositiveRate !== null
+          ? positiveRate - prevPositiveRate
+          : null,
+    };
+
     const elementPerformance = elementPerfRaw.map((e) => {
       const votes = elementVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
       const totalVotes = votes.up + votes.down;
@@ -344,6 +449,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       pollData,
       elementPerformance,
       npsResult,
+      ratingDistribution,
+      heatmapData,
+      deltas,
     };
   }
 
@@ -351,7 +459,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   let elementsTabData = null;
   if (activeTab === 'elements') {
     // Get ALL elements (not just top 10) with counts + ratings
-    const [allElementsRaw, allElementVotesRaw, overallRatingAgg, overallVotesRaw] =
+    const [allElementsRaw, allElementVotesRaw, overallRatingAgg, overallVotesRaw, sparklineRaw] =
       await Promise.all([
         prisma.response.groupBy({
           by: ['elementIdRaw'],
@@ -374,6 +482,34 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           where: { ...where, vote: { not: null } },
           _count: { vote: true },
         }),
+        // Sparkline: daily avg rating per element (top 20)
+        prisma.$queryRaw<Array<{ element: string; day: string; avg: number }>>`
+          SELECT "elementIdRaw" as element, DATE("createdAt") as day, AVG("rating") as avg
+          FROM "Response"
+          WHERE "projectId" IN (
+            SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+            ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+          )
+          ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+          AND "createdAt" >= ${startDate}
+          AND "createdAt" <= ${endDate}
+          AND "rating" IS NOT NULL
+          AND "elementIdRaw" IN (
+            SELECT "elementIdRaw" FROM "Response"
+            WHERE "projectId" IN (
+              SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+              ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+            )
+            ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+            AND "createdAt" >= ${startDate}
+            AND "createdAt" <= ${endDate}
+            GROUP BY "elementIdRaw"
+            ORDER BY COUNT(*) DESC
+            LIMIT 20
+          )
+          GROUP BY 1, 2
+          ORDER BY 1, 2
+        `.catch(() => [] as Array<{ element: string; day: string; avg: number }>),
       ]);
 
     // Overall averages
@@ -514,10 +650,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
     const anomalies: Anomaly[] = [];
 
-    // Check each element that has baseline data
+    // Check each element that has baseline data (exclude archived)
     const allElementIds = Array.from(
       new Set([...Object.keys(recentMap), ...Object.keys(baselineMap)])
-    );
+    ).filter((id) => !archivedElementIds.includes(id));
 
     for (const elId of allElementIds) {
       const recent = recentMap[elId];
@@ -618,11 +754,23 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     const severityOrder = { critical: 0, warning: 1, info: 2 };
     anomalies.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
+    // Build sparkline map
+    const sparklineData: Record<string, Array<{ day: string; avg: number }>> = {};
+    sparklineRaw.forEach((row) => {
+      const key =
+        typeof row.day === 'string'
+          ? row.day.split('T')[0]
+          : new Date(row.day).toISOString().split('T')[0];
+      if (!sparklineData[row.element]) sparklineData[row.element] = [];
+      sparklineData[row.element].push({ day: key, avg: Number(Number(row.avg).toFixed(1)) });
+    });
+
     elementsTabData = {
       benchmarks,
       anomalies,
       overallAvgRating,
       overallPositiveRate,
+      sparklineData,
     };
   }
 
@@ -705,6 +853,151 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     });
   }
 
+  // ── Pivot tab data ─────────────────────────────────────────────
+  // Available pivot dimensions
+  const PIVOT_DIMENSIONS = [
+    { key: 'mode', label: 'Mode' },
+    { key: 'rating', label: 'Rating' },
+    { key: 'vote', label: 'Vote' },
+    { key: 'status', label: 'Status' },
+    { key: 'element', label: 'Element' },
+    { key: 'url', label: 'Page URL' },
+    { key: 'device', label: 'Device' },
+    { key: 'browser', label: 'Browser' },
+  ];
+
+  let pivotData: {
+    rows: string[];
+    cols: string[];
+    cells: Record<string, Record<string, number>>;
+  } | null = null;
+
+  // Discover metadata fields for pivot dimensions
+  let pivotMetaFields: { key: string; label: string }[] = [];
+  if (activeTab === 'pivot') {
+    const sampleMeta = await prisma.response.findMany({
+      where: {
+        project: { organizationId: organization.id, ...(projectId && { id: projectId }) },
+        NOT: { endUserMeta: { equals: {} } },
+      },
+      select: { endUserMeta: true },
+      take: 100,
+    });
+    const fieldSet = new Set<string>();
+    sampleMeta.forEach((r) => {
+      const meta = r.endUserMeta as Record<string, unknown>;
+      if (meta && typeof meta === 'object') {
+        Object.keys(meta).forEach((k) => { if (k !== 'id') fieldSet.add(k); });
+      }
+    });
+    pivotMetaFields = Array.from(fieldSet).map((k) => ({ key: `meta:${k}`, label: k }));
+  }
+
+  const allPivotDimensions = [...PIVOT_DIMENSIONS, ...pivotMetaFields];
+
+  const pivotRow = params.pivotRow || '';
+  const pivotCol = params.pivotCol || '';
+
+  if (activeTab === 'pivot' && pivotRow && pivotCol) {
+    // DB-native columns we can GROUP BY directly
+    const DB_COLS: Record<string, string> = {
+      mode: '"mode"',
+      rating: '"rating"::text',
+      vote: '"vote"',
+      status: '"status"',
+      element: '"elementIdRaw"',
+    };
+
+    const rowIsDb = pivotRow in DB_COLS;
+    const colIsDb = pivotCol in DB_COLS;
+
+    if (rowIsDb && colIsDb) {
+      // Pure SQL pivot
+      const rawRows = await prisma.$queryRaw<
+        Array<{ row_val: string; col_val: string; cnt: bigint }>
+      >`
+        SELECT
+          ${Prisma.raw(DB_COLS[pivotRow])} as row_val,
+          ${Prisma.raw(DB_COLS[pivotCol])} as col_val,
+          COUNT(*) as cnt
+        FROM "Response"
+        WHERE "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate}
+        AND "createdAt" <= ${endDate}
+        GROUP BY 1, 2
+        ORDER BY 1, 2
+      `.catch(() => []);
+
+      const cells: Record<string, Record<string, number>> = {};
+      const rowSet = new Set<string>();
+      const colSet = new Set<string>();
+      rawRows.forEach((r) => {
+        const rv = r.row_val ?? '(empty)';
+        const cv = r.col_val ?? '(empty)';
+        rowSet.add(rv);
+        colSet.add(cv);
+        if (!cells[rv]) cells[rv] = {};
+        cells[rv][cv] = Number(r.cnt);
+      });
+      pivotData = { rows: Array.from(rowSet), cols: Array.from(colSet), cells };
+    } else {
+      // Need to fetch responses + derive in JS
+      const responses = await prisma.response.findMany({
+        where,
+        select: {
+          mode: true,
+          rating: true,
+          vote: true,
+          status: true,
+          elementIdRaw: true,
+          url: true,
+          userAgent: true,
+          endUserMeta: true,
+        },
+        take: 10000,
+      });
+
+      const extractVal = (r: (typeof responses)[0], dim: string): string => {
+        if (dim === 'mode') return r.mode;
+        if (dim === 'rating') return r.rating !== null ? String(r.rating) : '(empty)';
+        if (dim === 'vote') return r.vote ?? '(empty)';
+        if (dim === 'status') return r.status;
+        if (dim === 'element') return r.elementIdRaw;
+        if (dim === 'url') {
+          try { return new URL(r.url || '').pathname; } catch { return r.url || '(empty)'; }
+        }
+        if (dim === 'device') return parseDevice(r.userAgent);
+        if (dim === 'browser') return parseBrowser(r.userAgent);
+        if (dim.startsWith('meta:')) {
+          const key = dim.slice(5);
+          const meta = r.endUserMeta as Record<string, unknown>;
+          const val = meta?.[key];
+          return val !== undefined && val !== null ? String(val) : '(not set)';
+        }
+        return '(unknown)';
+      };
+
+      const cells: Record<string, Record<string, number>> = {};
+      const rowSet = new Set<string>();
+      const colSet = new Set<string>();
+
+      responses.forEach((r) => {
+        const rv = extractVal(r, pivotRow);
+        const cv = extractVal(r, pivotCol);
+        rowSet.add(rv);
+        colSet.add(cv);
+        if (!cells[rv]) cells[rv] = {};
+        cells[rv][cv] = (cells[rv][cv] || 0) + 1;
+      });
+
+      pivotData = { rows: Array.from(rowSet), cols: Array.from(colSet), cells };
+    }
+  }
+
   // ── Summary stats (shared) ─────────────────────────────────────
   // Quick count for the header — cheap query
   const totalResponses = overviewData?.totalResponses ?? (await prisma.response.count({ where }));
@@ -714,6 +1007,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     { key: 'overview', label: 'Overview' },
     { key: 'elements', label: 'Elements' },
     { key: 'trends', label: 'Trends' },
+    { key: 'pivot', label: 'Pivot' },
   ];
 
   return (
@@ -757,7 +1051,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       <AnalyticsFilter projects={projects} elements={elements} />
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200/80 overflow-x-auto -mx-1 px-1 scrollbar-hide">
+      <div className="flex gap-1 mb-6 border-b border-gray-200/80 -mx-1 px-1">
         {tabs.map((tab) => {
           const tabUrl = new URLSearchParams();
           if (params.startDate) tabUrl.set('startDate', params.startDate);
@@ -802,14 +1096,22 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         <>
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard label="Total Responses" value={overviewData.totalResponses.toString()} />
+            <StatCard
+              label="Total Responses"
+              value={overviewData.totalResponses.toString()}
+              delta={overviewData.deltas.totalResponses}
+              deltaLabel="%"
+            />
             <StatCard
               label="Avg Rating"
               value={overviewData.avgRating ? `${overviewData.avgRating}/5` : '-'}
+              delta={overviewData.deltas.avgRating}
             />
             <StatCard
               label="Positive Rate"
               value={overviewData.positiveRate !== null ? `${overviewData.positiveRate}%` : '-'}
+              delta={overviewData.deltas.positiveRate}
+              deltaLabel="pp"
             />
             <StatCard
               label="Most Common"
@@ -829,6 +1131,8 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             pollData={overviewData.pollData}
             elementPerformance={overviewData.elementPerformance}
             npsResult={overviewData.npsResult}
+            ratingDistribution={overviewData.ratingDistribution}
+            heatmapData={overviewData.heatmapData}
           />
         </>
       )}
@@ -839,19 +1143,52 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           anomalies={elementsTabData.anomalies}
           overallAvgRating={elementsTabData.overallAvgRating}
           overallPositiveRate={elementsTabData.overallPositiveRate}
+          sparklineData={elementsTabData.sparklineData}
+          archivedElementIds={archivedElementIds}
         />
       )}
 
       {activeTab === 'trends' && trendsTabData && <TrendsTab data={trendsTabData} />}
+
+      {activeTab === 'pivot' && (
+        <PivotTab
+          data={pivotData}
+          dimensions={allPivotDimensions}
+          selectedRow={pivotRow}
+          selectedCol={pivotCol}
+        />
+      )}
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  delta,
+  deltaLabel = '',
+}: {
+  label: string;
+  value: string;
+  delta?: number | null;
+  deltaLabel?: string;
+}) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-gray-900 capitalize">{value}</p>
+      <div className="mt-1 flex items-baseline gap-2">
+        <p className="text-2xl font-semibold text-gray-900 capitalize">{value}</p>
+        {delta !== null && delta !== undefined && (
+          <span
+            className={`text-xs font-medium ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}
+          >
+            {delta > 0 ? '\u2191' : delta < 0 ? '\u2193' : ''}
+            {delta > 0 ? '+' : ''}
+            {delta}
+            {deltaLabel}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

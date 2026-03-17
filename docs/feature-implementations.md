@@ -14,6 +14,7 @@
 6. [Embeddable Score Component](#6-embeddable-score-component)
 7. [Element-Level Analytics Dashboard](#7-element-level-analytics-dashboard)
 8. [Bug Flagging & Ticket Tracking](#8-bug-flagging--ticket-tracking)
+9. [Element Archiving](#9-element-archiving)
 
 ---
 
@@ -1644,6 +1645,67 @@ This keeps Gotcha lightweight and avoids needing email infrastructure for end us
 | `packages/sdk/src/components/Gotcha.tsx` | Add `enableBugFlag` prop |
 | `packages/sdk/src/api/client.ts` | Add `flagAsBug()` method |
 | `packages/sdk/src/types.ts` | Add `enableBugFlag` to GotchaProps |
+
+---
+
+## 9. Element Archiving
+
+**Goal:** Let team members hide inactive or irrelevant elements from the analytics dashboard without deleting their historical data.
+
+**Effort:** ~1 day | **Impact:** MEDIUM | **Plan:** FREE + PRO
+
+### Database Changes
+
+Added to `Organization` model in `prisma/schema.prisma`:
+
+```prisma
+archivedElementIds String[] @default([])
+```
+
+A flat array on the org — no new table needed. Capped at 500 elements.
+
+### API Route
+
+`POST /api/elements/archive` — Archive an element
+`DELETE /api/elements/archive` — Unarchive an element
+
+Both accept `{ elementId: string }` in the request body.
+
+**Security:**
+- Auth + org membership + role check (VIEWER denied)
+- Rate limited: 20 req/hour per user (shared `orgManagementLimiter`)
+- Input validation: max 200 chars, `/^[\w\-.]+$/` allowlist
+- Atomic SQL: `array_append`/`array_remove` with dedup and cap check in a single UPDATE statement (no TOCTOU race)
+
+**Responses:**
+- `200 { ok: true }` — success (idempotent for already-archived elements)
+- `400` — invalid elementId, cap reached
+- `401` — unauthorized
+- `403` — viewer role
+- `429` — rate limited
+
+### Dashboard Changes
+
+**`analytics/page.tsx`:**
+- Anomaly detection excludes archived element IDs — archived elements no longer trigger volume/rating/sentiment alerts
+
+**`analytics/elements-tab.tsx`:**
+- Optimistic archive/unarchive with revert on error
+- `router.refresh()` after success to update server-rendered data
+- Inline error alert on failure (no toast library)
+- Banner when URL filter (`?elementId=`) points to an archived element, with "Clear filter" button
+- "Show/Hide archived" toggle on the Element Performance table
+
+### Files
+
+| File | Action |
+|------|--------|
+| `apps/web/prisma/schema.prisma` | Add `archivedElementIds` to Organization |
+| `apps/web/app/api/elements/archive/route.ts` | **New** — archive/unarchive API |
+| `apps/web/app/(dashboard)/dashboard/analytics/page.tsx` | Filter anomalies by archived IDs |
+| `apps/web/app/(dashboard)/dashboard/analytics/elements-tab.tsx` | Archive UI, error handling, filter banner |
+
+1 new file, 3 modified.
 
 ---
 

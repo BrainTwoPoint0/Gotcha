@@ -43,6 +43,7 @@ export function ResponsesFilter({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
   const [endDate, setEndDate] = useState(searchParams.get('endDate') || '');
   const [elementId, setElementId] = useState(searchParams.get('elementId') || '');
@@ -61,6 +62,7 @@ export function ResponsesFilter({
 
   const handleFilter = () => {
     const params = new URLSearchParams();
+    if (search) params.set('search', search);
     if (startDate) params.set('startDate', startDate);
     if (endDate) params.set('endDate', endDate);
     if (elementId && elementId !== '__all__') params.set('elementId', elementId);
@@ -71,6 +73,7 @@ export function ResponsesFilter({
   };
 
   const handleClear = () => {
+    setSearch('');
     setStartDate('');
     setEndDate('');
     setElementId('');
@@ -84,6 +87,7 @@ export function ResponsesFilter({
   };
 
   const hasFilters =
+    search ||
     startDate ||
     endDate ||
     elementId ||
@@ -93,6 +97,16 @@ export function ResponsesFilter({
 
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
+      <div className="w-full sm:w-auto space-y-1">
+        <Label>Search</Label>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleFilter(); }}
+          placeholder="Search feedback..."
+          className="w-full sm:w-[200px]"
+        />
+      </div>
       <div className="w-full sm:w-auto space-y-1">
         <Label>Element</Label>
         <Select value={elementId} onValueChange={setElementId}>

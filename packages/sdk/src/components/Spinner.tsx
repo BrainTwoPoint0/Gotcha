@@ -16,19 +16,6 @@ export function Spinner({ size = 16, color = 'currentColor' }: SpinnerProps) {
         animation: 'gotcha-spin 0.8s linear infinite',
       }}
     >
-      <style>
-        {`
-          @keyframes gotcha-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @keyframes gotcha-dash {
-            0% { stroke-dasharray: 1, 62; stroke-dashoffset: 0; }
-            50% { stroke-dasharray: 40, 62; stroke-dashoffset: -12; }
-            100% { stroke-dasharray: 1, 62; stroke-dashoffset: -62; }
-          }
-        `}
-      </style>
       <circle
         cx="12"
         cy="12"

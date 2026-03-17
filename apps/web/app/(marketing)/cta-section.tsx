@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 export function CtaSection() {
   return (
-    <section className="relative py-20 bg-slate-700 overflow-hidden">
+    <section className="relative py-20 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 overflow-hidden">
       <BackgroundBeams />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -18,7 +18,7 @@ export function CtaSection() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             size="lg"
-            className="text-lg px-8 py-6 bg-white text-slate-700 hover:bg-slate-50"
+            className="text-lg px-8 py-6 bg-white text-slate-700 hover:bg-slate-50 shadow-lg shadow-white/20 hover:shadow-xl"
             asChild
           >
             <Link href="/signup">Get Started for Free</Link>

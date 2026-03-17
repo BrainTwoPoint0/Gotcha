@@ -2044,6 +2044,15 @@ app.gotcha.cx/
 - **Segmentation breakdown:** Bar charts by user metadata
 - **Response list:** All responses for this element
 
+#### Element Archiving
+
+- **Archive/unarchive** elements from the Element Performance table (hover to reveal archive button)
+- Archived elements are hidden from the active table and anomaly alerts but their historical data is preserved
+- "Show archived" toggle reveals archived elements with an unarchive option
+- If a URL filter (`?elementId=`) points to an archived element, a banner prompts the user to clear the filter
+- Capped at 500 archived elements per organization
+- API: `POST/DELETE /api/elements/archive` with input validation, rate limiting, and atomic SQL operations
+
 #### Experiment Detail
 
 - **Variant comparison:** Side-by-side stats

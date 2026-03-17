@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import { createApiClient, ApiClient } from '../api/client';
 import { GotchaUser } from '../types';
+import { GotchaThemeConfig } from '../theme/tokens';
+import { resolveTheme } from '../theme/resolveTheme';
+import { injectStyles } from '../theme/styles';
 
 export interface GotchaProviderProps {
   /** Your Gotcha API key */
@@ -15,6 +18,8 @@ export interface GotchaProviderProps {
   disabled?: boolean;
   /** Default user metadata applied to all submissions */
   defaultUser?: GotchaUser;
+  /** Theme configuration overrides applied to all instances */
+  themeConfig?: GotchaThemeConfig;
 }
 
 export interface GotchaContextValue {
@@ -26,9 +31,13 @@ export interface GotchaContextValue {
   activeModalId: string | null;
   openModal: (elementId: string) => void;
   closeModal: () => void;
+  // Theme
+  themeConfig?: GotchaThemeConfig;
 }
 
 const GotchaContext = createContext<GotchaContextValue | null>(null);
+
+const EMPTY_USER: GotchaUser = {};
 
 export function GotchaProvider({
   apiKey,
@@ -36,7 +45,8 @@ export function GotchaProvider({
   baseUrl,
   debug = false,
   disabled = false,
-  defaultUser = {},
+  defaultUser,
+  themeConfig,
 }: GotchaProviderProps) {
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
 
@@ -44,6 +54,20 @@ export function GotchaProvider({
     () => createApiClient({ apiKey, baseUrl, debug }),
     [apiKey, baseUrl, debug]
   );
+
+  // Stabilize defaultUser reference
+  const stableDefaultUser = useMemo(
+    () => defaultUser ?? EMPTY_USER,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(defaultUser)]
+  );
+
+  // Inject styles on mount. Carter One @font-face is injected at module-load time
+  // (styles.ts:37) so it's already available before this runs.
+  useEffect(() => {
+    const resolved = resolveTheme('light', 'light', themeConfig);
+    injectStyles(resolved);
+  }, [themeConfig]);
 
   const openModal = useCallback((elementId: string) => {
     setActiveModalId(elementId);
@@ -57,13 +81,14 @@ export function GotchaProvider({
     () => ({
       client,
       disabled,
-      defaultUser,
+      defaultUser: stableDefaultUser,
       debug,
       activeModalId,
       openModal,
       closeModal,
+      themeConfig,
     }),
-    [client, disabled, defaultUser, debug, activeModalId, openModal, closeModal]
+    [client, disabled, stableDefaultUser, debug, activeModalId, openModal, closeModal, themeConfig]
   );
 
   return (

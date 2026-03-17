@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
 import { Spinner } from '../Spinner';
 
 interface VoteModeProps {
-  theme: 'light' | 'dark' | 'custom';
+  resolvedTheme: ResolvedTheme;
   isLoading: boolean;
   onSubmit: (data: { vote: 'up' | 'down' }) => void;
   initialVote?: 'up' | 'down' | null;
@@ -11,7 +12,7 @@ interface VoteModeProps {
   labels?: { up: string; down: string };
 }
 
-export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = false, labels }: VoteModeProps) {
+export function VoteMode({ resolvedTheme: t, isLoading, onSubmit, initialVote, isEditing = false, labels }: VoteModeProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(initialVote || null);
   const [previousVote, setPreviousVote] = useState<'up' | 'down' | null>(initialVote || null);
@@ -20,7 +21,6 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
     setIsTouch(isTouchDevice());
   }, []);
 
-  // Update when initialVote changes (e.g., after loading existing response)
   useEffect(() => {
     if (initialVote !== undefined) {
       setPreviousVote(initialVote);
@@ -28,7 +28,6 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
     }
   }, [initialVote]);
 
-  // Reset active vote when loading completes (but keep previous vote for edit mode)
   useEffect(() => {
     if (!isLoading && !isEditing) {
       setActiveVote(null);
@@ -40,33 +39,29 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
     onSubmit({ vote });
   };
 
-  const isDark = theme === 'dark';
-
   const getButtonStyles = (voteType: 'up' | 'down'): React.CSSProperties => {
     const isSelected = previousVote === voteType;
-    const selectedColor = voteType === 'up' ? '#10b981' : '#ef4444';
+    const color = voteType === 'up' ? t.colors.voteUp : t.colors.voteDown;
+    const surface = voteType === 'up' ? t.colors.voteUpSurface : t.colors.voteDownSurface;
+    const border = voteType === 'up' ? t.colors.voteUpBorder : t.colors.voteDownBorder;
+
     return {
       flex: 1,
       minWidth: 0,
       overflow: 'hidden' as const,
       padding: isTouch ? '14px 18px' : '10px 14px',
-      border: `1px solid ${isSelected
-        ? (voteType === 'up'
-          ? (isDark ? 'rgba(16,185,129,0.3)' : 'rgba(16,185,129,0.25)')
-          : (isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.25)'))
-        : (isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0')}`,
-      borderRadius: isTouch ? 10 : 8,
-      backgroundColor: isSelected
-        ? (voteType === 'up'
-          ? (isDark ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.06)')
-          : (isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)'))
-        : (isDark ? 'rgba(55,65,81,0.5)' : '#fafbfc'),
-      color: isSelected
-        ? selectedColor
-        : (isDark ? '#d1d5db' : '#64748b'),
+      border: isSelected
+        ? `2px solid ${border}`
+        : `1px solid ${t.colors.border}`,
+      borderRadius: t.borders.radius.lg - 2,
+      background: isSelected
+        ? `linear-gradient(135deg, ${surface}, ${surface})`
+        : t.colors.surface,
+      color: isSelected ? color : t.colors.textSecondary,
       fontSize: isTouch ? 28 : 24,
+      fontFamily: t.typography.fontFamily,
       cursor: isLoading ? 'not-allowed' : 'pointer',
-      transition: 'background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s',
+      transition: `all 0.2s ${t.animation.easing.default}`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -94,26 +89,26 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
         aria-pressed={previousVote === 'up'}
         onMouseEnter={(e) => {
           if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
           e.currentTarget.style.boxShadow = 'none';
         }}
       >
         {isLoading && activeVote === 'up' ? (
           <>
-            <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
+            <Spinner size={iconSize} color={t.colors.text} />
+            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
               {isEditing ? 'Updating...' : 'Sending...'}
             </span>
           </>
         ) : (
           <>
             <ThumbsUpIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
+            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
               {labels?.up || (previousVote === 'up' ? 'Liked' : 'Like')}
             </span>
           </>
@@ -129,26 +124,26 @@ export function VoteMode({ theme, isLoading, onSubmit, initialVote, isEditing = 
         aria-pressed={previousVote === 'down'}
         onMouseEnter={(e) => {
           if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
           e.currentTarget.style.boxShadow = 'none';
         }}
       >
         {isLoading && activeVote === 'down' ? (
           <>
-            <Spinner size={iconSize} color={isDark ? '#f9fafb' : '#111827'} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
+            <Spinner size={iconSize} color={t.colors.text} />
+            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
               {isEditing ? 'Updating...' : 'Sending...'}
             </span>
           </>
         ) : (
           <>
             <ThumbsDownIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: 500, letterSpacing: '0.01em' }}>
+            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
               {labels?.down || (previousVote === 'down' ? 'Disliked' : 'Dislike')}
             </span>
           </>
