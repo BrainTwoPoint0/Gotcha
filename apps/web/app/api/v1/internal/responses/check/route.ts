@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createHash } from 'crypto';
-import { isInternalOriginAllowed } from '@/lib/origin-check';
+import { isOriginAllowed } from '@/lib/origin-check';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     // Only allow requests from the same origin (our own website)
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (!isInternalOriginAllowed(origin, host)) {
+    // Lenient: same-origin GET requests don't always include Origin header
+    if (!isOriginAllowed(origin, host)) {
       return NextResponse.json(
         { error: { code: 'FORBIDDEN', message: 'Cross-origin requests not allowed' } },
         { status: 403 }
