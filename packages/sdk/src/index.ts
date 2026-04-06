@@ -5,6 +5,7 @@ export { GotchaScore } from './components/GotchaScore';
 
 // Hooks
 export { useGotcha } from './hooks/useGotcha';
+export { useGotchaTrigger } from './hooks/useGotchaTrigger';
 
 // Theme
 export { createTheme } from './theme/tokens';
@@ -22,6 +23,7 @@ export type {
   GotchaResponse,
   GotchaError,
   ScoreData,
+  SubmissionContext,
 } from './types';
 
 export type { GotchaThemeConfig } from './theme/tokens';

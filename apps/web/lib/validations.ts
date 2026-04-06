@@ -31,6 +31,15 @@ export const contextSchema = z
   .object({
     url: z.string().url().optional(),
     userAgent: z.string().optional(),
+    viewport: z.object({ width: z.number(), height: z.number() }).optional(),
+    language: z.string().max(20).optional(),
+    timezone: z.string().max(100).optional(),
+    screenResolution: z.object({ width: z.number(), height: z.number() }).optional(),
+    recentErrors: z.array(z.object({
+      message: z.string().max(200),
+      source: z.string().max(200).optional(),
+      timestamp: z.number(),
+    })).max(10).optional(),
   })
   .optional();
 

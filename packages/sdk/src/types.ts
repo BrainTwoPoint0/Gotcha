@@ -55,6 +55,16 @@ export interface GotchaStyles {
 // API REQUEST/RESPONSE TYPES
 // ============================================
 
+export interface SubmissionContext {
+  url?: string;
+  userAgent?: string;
+  viewport?: { width: number; height: number };
+  language?: string;
+  timezone?: string;
+  screenResolution?: { width: number; height: number };
+  recentErrors?: Array<{ message: string; source?: string; timestamp: number }>;
+}
+
 export interface SubmitResponsePayload {
   elementId: string;
   mode: ResponseMode;
@@ -66,10 +76,7 @@ export interface SubmitResponsePayload {
   pollSelected?: string[];
   isBug?: boolean;
   user?: GotchaUser;
-  context?: {
-    url?: string;
-    userAgent?: string;
-  };
+  context?: SubmissionContext;
 }
 
 export interface GotchaResponse {

@@ -183,6 +183,13 @@ export async function POST(request: NextRequest) {
           endUserMeta: (data.user || {}) as object,
           url: data.context?.url,
           userAgent: data.context?.userAgent,
+          contextMeta: data.context ? {
+            viewport: data.context.viewport,
+            language: data.context.language,
+            timezone: data.context.timezone,
+            screenResolution: data.context.screenResolution,
+            recentErrors: data.context.recentErrors,
+          } : undefined,
           idempotencyKey: idempotencyKey,
           createdAt: createdAt,
           gated,
@@ -204,6 +211,15 @@ export async function POST(request: NextRequest) {
         if (data.content) descParts.push(data.content);
         if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
         if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
+        if (data.context?.viewport) descParts.push(`Viewport: ${data.context.viewport.width}x${data.context.viewport.height}`);
+        if (data.context?.timezone) descParts.push(`Timezone: ${data.context.timezone}`);
+        if (data.context?.recentErrors?.length) {
+          const errorList = data.context.recentErrors
+            .slice(0, 5)
+            .map(e => `- ${e.message}${e.source ? ` (${e.source})` : ''}`)
+            .join('\n');
+          descParts.push(`Recent Errors:\n${errorList}`);
+        }
 
         const bugDescription = descParts.join('\n\n') || 'No details provided';
         const bugTicket = await prisma.bugTicket.create({

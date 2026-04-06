@@ -5,7 +5,7 @@ import { useGotchaContext } from '../components/GotchaProvider';
  * Must be used within a GotchaProvider
  */
 export function useGotcha() {
-  const { client, disabled, defaultUser, debug } = useGotchaContext();
+  const { client, disabled, defaultUser, debug, openModal, closeModal, activeModalId } = useGotchaContext();
 
   return {
     /** The API client for manual submissions */
@@ -18,5 +18,11 @@ export function useGotcha() {
     debug,
     /** Submit feedback programmatically */
     submitFeedback: client.submitResponse.bind(client),
+    /** Open a specific Gotcha modal by elementId */
+    openModal,
+    /** Close the currently open modal */
+    closeModal,
+    /** The currently open modal's elementId, or null */
+    activeModalId,
   };
 }

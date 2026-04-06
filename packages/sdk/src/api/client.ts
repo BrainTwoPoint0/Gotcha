@@ -1,6 +1,7 @@
 import { API_BASE_URL, RETRY_CONFIG } from '../constants';
 import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType, ScoreData } from '../types';
 import { getAnonymousId } from '../utils/anonymous';
+import { collectContext } from '../utils/contextCollector';
 
 interface ApiClientConfig {
   apiKey: string;
@@ -143,10 +144,7 @@ export function createApiClient(config: ApiClientConfig) {
       const fullPayload: SubmitResponsePayload = {
         ...payload,
         user,
-        context: {
-          url: typeof window !== 'undefined' ? window.location.origin + window.location.pathname : undefined,
-          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-        },
+        context: collectContext(),
         // Only include isBug if true
         ...(payload.isBug ? { isBug: true } : {}),
       };

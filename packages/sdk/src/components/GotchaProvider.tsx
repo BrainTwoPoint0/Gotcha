@@ -4,6 +4,7 @@ import { GotchaUser } from '../types';
 import { GotchaThemeConfig } from '../theme/tokens';
 import { resolveTheme } from '../theme/resolveTheme';
 import { injectStyles } from '../theme/styles';
+import { startErrorCapture, stopErrorCapture } from '../utils/errorBuffer';
 
 export interface GotchaProviderProps {
   /** Your Gotcha API key */
@@ -72,6 +73,12 @@ export function GotchaProvider({
     const resolved = resolveTheme('light', 'light', themeConfig);
     injectStyles(resolved);
   }, [themeConfig]);
+
+  // Capture JS errors for context enrichment
+  useEffect(() => {
+    startErrorCapture();
+    return () => stopErrorCapture();
+  }, []);
 
   const openModal = useCallback((elementId: string) => {
     setActiveModalId(elementId);
