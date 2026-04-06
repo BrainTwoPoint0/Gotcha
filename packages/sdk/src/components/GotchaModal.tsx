@@ -10,6 +10,7 @@ import { VoteMode } from './modes/VoteMode';
 import { PollMode } from './modes/PollMode';
 import { Spinner } from './Spinner';
 import { NpsMode } from './modes/NpsMode';
+import { FollowUpPrompt } from './FollowUpPrompt';
 
 export interface GotchaModalProps {
   mode: ResponseMode;
@@ -23,6 +24,10 @@ export interface GotchaModalProps {
   isLoading: boolean;
   isCheckingExisting?: boolean;
   isSubmitted: boolean;
+  phase?: 'form' | 'followUp' | 'success';
+  followUpConfig?: { promptText: string; placeholder?: string };
+  followUpLoading?: boolean;
+  onFollowUpSubmit?: (content: string) => void;
   error: string | null;
   // Edit mode
   existingResponse?: ExistingResponse | null;
@@ -67,6 +72,10 @@ export function GotchaModal({
   isLoading,
   isCheckingExisting = false,
   isSubmitted,
+  phase = 'form',
+  followUpConfig,
+  followUpLoading = false,
+  onFollowUpSubmit,
   error,
   existingResponse,
   isEditing = false,
@@ -429,8 +438,21 @@ export function GotchaModal({
         </div>
       )}
 
+      {/* Follow-up question */}
+      {phase === 'followUp' && followUpConfig && onFollowUpSubmit && (
+        <div style={fadeUpStyle(1)}>
+          <FollowUpPrompt
+            resolvedTheme={t}
+            promptText={followUpConfig.promptText}
+            placeholder={followUpConfig.placeholder}
+            isLoading={followUpLoading}
+            onSubmit={onFollowUpSubmit}
+          />
+        </div>
+      )}
+
       {/* Loading state while checking for existing response */}
-      {!isSubmitted && isCheckingExisting && (
+      {phase === 'form' && isCheckingExisting && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -442,7 +464,7 @@ export function GotchaModal({
       )}
 
       {/* Form content based on mode */}
-      {!isSubmitted && !isCheckingExisting && (
+      {phase === 'form' && !isCheckingExisting && (
         <div style={fadeUpStyle(1)}>
           {mode === 'feedback' && (
             <FeedbackMode

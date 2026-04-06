@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
   ANONYMOUS_ID: 'gotcha_anonymous_id',
   OFFLINE_QUEUE: 'gotcha_offline_queue',
   HIDDEN_UNTIL: 'gotcha_hidden',
+  VISIT_COUNT: 'gotcha_visits',
 } as const;
 
 // Default values

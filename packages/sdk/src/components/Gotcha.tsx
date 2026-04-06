@@ -15,6 +15,7 @@ import { DEFAULTS } from '../constants';
 import { useGotchaContext } from './GotchaProvider';
 import { useSubmit } from '../hooks/useSubmit';
 import { useHideAfterSubmit } from '../hooks/useHideAfterSubmit';
+import { useTriggerConditions } from '../hooks/useTriggerConditions';
 import { GotchaButton } from './GotchaButton';
 import { GotchaModal } from './GotchaModal';
 
@@ -99,6 +100,27 @@ export interface GotchaProps {
    *  Independent of cooldownDays — the widget stays hidden for the full duration even if cooldown expires sooner. */
   hideAfterSubmitDays?: number;
 
+  // Trigger conditions
+  /** Delay showing widget by N seconds after page load */
+  showAfterSeconds?: number;
+  /** Show widget after user scrolls past this percentage (0-100) */
+  showAfterScrollPercent?: number;
+  /** Show widget after user has visited N times (uses localStorage) */
+  showAfterVisits?: number;
+
+  // Follow-up
+  /** Show a follow-up question after low rating or negative vote */
+  followUp?: {
+    /** Rating threshold (inclusive) — e.g., 2 means ratings 1-2 trigger follow-up */
+    ratingThreshold?: number;
+    /** Also trigger on negative vote */
+    onNegativeVote?: boolean;
+    /** The prompt text shown */
+    promptText: string;
+    /** Placeholder for the follow-up textarea */
+    placeholder?: string;
+  };
+
   // Animation
   /** Enable entrance animations on the button and modal (default: true) */
   animated?: boolean;
@@ -133,6 +155,10 @@ export function Gotcha({
   onePerUser = false,
   cooldownDays,
   hideAfterSubmitDays,
+  showAfterSeconds,
+  showAfterScrollPercent,
+  showAfterVisits,
+  followUp,
   animated = true,
   position = DEFAULTS.POSITION,
   size = DEFAULTS.SIZE,
@@ -150,20 +176,30 @@ export function Gotcha({
   onClose,
   onError,
 }: GotchaProps) {
-  const { disabled, activeModalId, openModal, closeModal, defaultUser } = useGotchaContext();
+  const { disabled, activeModalId, openModal, closeModal, defaultUser, client } = useGotchaContext();
+
+  const { conditionsMet } = useTriggerConditions({
+    elementId,
+    showAfterSeconds,
+    showAfterScrollPercent,
+    showAfterVisits,
+  });
 
   const { isHidden, markHidden } = useHideAfterSubmit({
     elementId,
     userId: user?.id || defaultUser?.id,
     hideAfterSubmitDays,
   });
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [phase, setPhase] = useState<'form' | 'followUp' | 'success'>('form');
+  const [lastResponseId, setLastResponseId] = useState<string | null>(null);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
   const [isParentHovered, setIsParentHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastSubmitDataRef = useRef<{ rating?: number; vote?: 'up' | 'down' } | null>(null);
 
   // SSR-safe mount detection
   useEffect(() => {
@@ -214,13 +250,26 @@ export function Gotcha({
     onePerUser,
     cooldownDays,
     onSuccess: (response) => {
-      setIsSubmitted(true);
+      setLastResponseId(response.id);
       if (hideAfterSubmitDays) markHidden();
       onSubmit?.(response);
-      autoCloseTimerRef.current = setTimeout(() => {
-        closeModal();
-        setIsSubmitted(false);
-      }, 3000);
+
+      // Check if follow-up should trigger
+      const shouldFollowUp = followUp && lastSubmitDataRef.current && (
+        (followUp.ratingThreshold != null && lastSubmitDataRef.current.rating != null &&
+         lastSubmitDataRef.current.rating <= followUp.ratingThreshold) ||
+        (followUp.onNegativeVote && lastSubmitDataRef.current.vote === 'down')
+      );
+
+      if (shouldFollowUp && mode !== 'poll') {
+        setPhase('followUp');
+      } else {
+        setPhase('success');
+        autoCloseTimerRef.current = setTimeout(() => {
+          closeModal();
+          setPhase('form');
+        }, 3000);
+      }
     },
     onError: (err) => {
       console.warn('[Gotcha] Submission failed:', err instanceof Error ? err.message : err);
@@ -239,13 +288,43 @@ export function Gotcha({
   const handleClose = useCallback(() => {
     clearTimeout(autoCloseTimerRef.current);
     closeModal();
-    setIsSubmitted(false);
+    setPhase('form');
     onClose?.();
   }, [closeModal, onClose]);
 
+  // Wrap submit to capture rating/vote for follow-up check
+  const handleSubmit = useCallback(
+    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => {
+      lastSubmitDataRef.current = { rating: data.rating, vote: data.vote };
+      submit(data);
+    },
+    [submit]
+  );
+
+  // Handle follow-up submission
+  const handleFollowUpSubmit = useCallback(
+    async (content: string) => {
+      if (!lastResponseId) return;
+      setFollowUpLoading(true);
+      try {
+        await client.updateResponse(lastResponseId, { content });
+      } catch {
+        // If follow-up fails, still show success — initial response is saved
+      } finally {
+        setFollowUpLoading(false);
+        setPhase('success');
+        autoCloseTimerRef.current = setTimeout(() => {
+          closeModal();
+          setPhase('form');
+        }, 3000);
+      }
+    },
+    [lastResponseId, closeModal, client]
+  );
+
   const effectiveSubmitText = (onePerUser && isEditing) ? 'Update' : submitText;
 
-  if (disabled || !visible || isHidden) return null;
+  if (disabled || !visible || isHidden || !conditionsMet) return null;
 
   const positionStyles: Record<Position, React.CSSProperties> = {
     'top-right': { position: 'absolute', top: 0, right: 0, transform: 'translate(50%, -50%)' },
@@ -265,7 +344,11 @@ export function Gotcha({
     thankYouMessage,
     isLoading,
     isCheckingExisting: onePerUser && isCheckingExisting,
-    isSubmitted,
+    isSubmitted: phase === 'success',
+    phase,
+    followUpConfig: followUp,
+    followUpLoading,
+    onFollowUpSubmit: handleFollowUpSubmit,
     error,
     existingResponse: onePerUser ? existingResponse : null,
     isEditing: onePerUser && isEditing,
@@ -281,7 +364,7 @@ export function Gotcha({
     npsHighLabel,
     enableBugFlag,
     bugFlagLabel,
-    onSubmit: submit,
+    onSubmit: handleSubmit,
     onClose: handleClose,
     anchorRect: anchorRect || undefined,
     useFixedPosition: !isMobile,
