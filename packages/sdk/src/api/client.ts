@@ -2,6 +2,7 @@ import { API_BASE_URL, RETRY_CONFIG } from '../constants';
 import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType, ScoreData } from '../types';
 import { getAnonymousId } from '../utils/anonymous';
 import { collectContext } from '../utils/contextCollector';
+import { enqueue, getQueuedItems, dequeue, incrementRetries, getQueueLength } from '../utils/offlineQueue';
 
 interface ApiClientConfig {
   apiKey: string;
@@ -149,7 +150,30 @@ export function createApiClient(config: ApiClientConfig) {
         ...(payload.isBug ? { isBug: true } : {}),
       };
 
-      return request<GotchaResponse>('POST', '/responses', fullPayload);
+      // Queue if offline
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        enqueue(fullPayload as unknown as Record<string, unknown>, 'create');
+        return {
+          id: crypto.randomUUID(),
+          status: 'queued' as const,
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      try {
+        return await request<GotchaResponse>('POST', '/responses', fullPayload);
+      } catch (err) {
+        // On network failure, queue for later
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+          enqueue(fullPayload as unknown as Record<string, unknown>, 'create');
+          return {
+            id: crypto.randomUUID(),
+            status: 'queued' as const,
+            createdAt: new Date().toISOString(),
+          };
+        }
+        throw err;
+      }
     },
 
     /**
@@ -316,6 +340,28 @@ export function createApiClient(config: ApiClientConfig) {
 
       return data as { ticketId: string; status: string };
     },
+
+    /**
+     * Flush queued offline submissions
+     */
+    async flushQueue(): Promise<void> {
+      const items = getQueuedItems();
+      if (items.length === 0) return;
+
+      for (const item of items) {
+        try {
+          await request('POST', '/responses', item.payload);
+          dequeue(item.id);
+        } catch {
+          incrementRetries(item.id);
+        }
+      }
+    },
+
+    /**
+     * Get count of queued offline submissions
+     */
+    getQueueLength,
 
     /**
      * Get the base URL (for debugging)

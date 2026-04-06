@@ -49,8 +49,9 @@ export interface GotchaModalProps {
   // Bug flagging
   enableBugFlag?: boolean;
   bugFlagLabel?: string;
+  enableScreenshot?: boolean;
   // Handlers
-  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => void;
+  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean; screenshot?: string }) => void;
   onClose: () => void;
   // Position info from parent
   anchorRect?: DOMRect;
@@ -91,6 +92,7 @@ export function GotchaModal({
   npsHighLabel,
   enableBugFlag = false,
   bugFlagLabel,
+  enableScreenshot = false,
   onSubmit,
   onClose,
   anchorRect,
@@ -483,6 +485,7 @@ export function GotchaModal({
               showRating={showRating}
               enableBugFlag={enableBugFlag}
               bugFlagLabel={bugFlagLabel}
+              enableScreenshot={enableScreenshot}
             />
           )}
           {mode === 'vote' && (

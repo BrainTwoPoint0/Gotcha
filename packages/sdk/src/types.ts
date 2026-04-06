@@ -75,13 +75,14 @@ export interface SubmitResponsePayload {
   pollOptions?: string[];
   pollSelected?: string[];
   isBug?: boolean;
+  screenshot?: string;
   user?: GotchaUser;
   context?: SubmissionContext;
 }
 
 export interface GotchaResponse {
   id: string;
-  status: 'created' | 'duplicate' | 'updated';
+  status: 'created' | 'duplicate' | 'updated' | 'queued';
   createdAt: string;
   results?: PollResults;
 }

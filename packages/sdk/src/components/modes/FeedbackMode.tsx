@@ -3,13 +3,14 @@ import { GotchaStyles } from '../../types';
 import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
 import { Spinner } from '../Spinner';
+import { ScreenshotPreview } from '../ScreenshotPreview';
 
 interface FeedbackModeProps {
   resolvedTheme: ResolvedTheme;
   placeholder?: string;
   submitText: string;
   isLoading: boolean;
-  onSubmit: (data: { content?: string; rating?: number; isBug?: boolean }) => void;
+  onSubmit: (data: { content?: string; rating?: number; isBug?: boolean; screenshot?: string }) => void;
   customStyles?: GotchaStyles;
   initialValues?: {
     content?: string | null;
@@ -20,6 +21,7 @@ interface FeedbackModeProps {
   showRating?: boolean;
   enableBugFlag?: boolean;
   bugFlagLabel?: string;
+  enableScreenshot?: boolean;
 }
 
 export function FeedbackMode({
@@ -35,11 +37,14 @@ export function FeedbackMode({
   showRating = true,
   enableBugFlag = false,
   bugFlagLabel,
+  enableScreenshot = false,
 }: FeedbackModeProps) {
   const [content, setContent] = useState(initialValues?.content || '');
   const [rating, setRating] = useState<number | null>(initialValues?.rating ?? null);
   const [isBug, setIsBug] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [capturingScreenshot, setCapturingScreenshot] = useState(false);
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
@@ -61,6 +66,19 @@ export function FeedbackMode({
     return false;
   })();
 
+  const handleScreenshotCapture = async () => {
+    setCapturingScreenshot(true);
+    try {
+      const { captureScreenshot } = await import('../../utils/screenshot');
+      const result = await captureScreenshot();
+      if (result) setScreenshot(result);
+    } catch {
+      // Capture failed silently
+    } finally {
+      setCapturingScreenshot(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
@@ -68,6 +86,7 @@ export function FeedbackMode({
       content: showText && content.trim() ? content.trim() : undefined,
       rating: showRating && rating !== null ? rating : undefined,
       isBug: isBug || undefined,
+      screenshot: screenshot || undefined,
     });
   };
 
@@ -227,6 +246,53 @@ export function FeedbackMode({
             />
           </div>
         </button>
+      )}
+
+      {/* Screenshot capture — shown when bug flag is active */}
+      {enableBugFlag && enableScreenshot && isBug && !screenshot && (
+        <button
+          type="button"
+          onClick={handleScreenshotCapture}
+          disabled={capturingScreenshot}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            width: '100%',
+            marginTop: 8,
+            padding: '7px 10px',
+            border: `1px solid ${t.colors.border}`,
+            borderRadius: 7,
+            backgroundColor: 'transparent',
+            cursor: capturingScreenshot ? 'not-allowed' : 'pointer',
+            fontFamily: t.typography.fontFamily,
+            fontSize: 12,
+            color: t.colors.textSecondary,
+            transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = t.colors.surfaceHover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+        >
+          {capturingScreenshot ? (
+            <Spinner size={14} color={t.colors.textSecondary} />
+          ) : (
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <circle cx="12" cy="10" r="3" />
+              <path d="M2 17l4-4 3 3 4-4 9 9" />
+            </svg>
+          )}
+          {capturingScreenshot ? 'Capturing...' : 'Capture screenshot'}
+        </button>
+      )}
+
+      {/* Screenshot preview */}
+      {enableBugFlag && enableScreenshot && isBug && screenshot && (
+        <ScreenshotPreview
+          src={screenshot}
+          onRemove={() => setScreenshot(null)}
+          resolvedTheme={t}
+        />
       )}
 
       {/* Submit button */}

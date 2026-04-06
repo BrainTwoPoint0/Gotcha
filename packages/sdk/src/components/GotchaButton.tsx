@@ -16,6 +16,8 @@ export interface GotchaButtonProps {
   isParentHovered?: boolean;
   /** Enable entrance animations (default: true) */
   animated?: boolean;
+  /** Number of queued offline submissions */
+  queuedCount?: number;
 }
 
 function getInitialSystemTheme(): 'light' | 'dark' {
@@ -35,6 +37,7 @@ export function GotchaButton({
   isOpen,
   isParentHovered = false,
   animated = true,
+  queuedCount = 0,
 }: GotchaButtonProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [tapRevealed, setTapRevealed] = useState(false);
@@ -136,6 +139,21 @@ export function GotchaButton({
       aria-haspopup="dialog"
     >
       <GotchaIcon size={buttonSize * 0.65} animated={animated} />
+      {queuedCount > 0 && (
+        <div
+          aria-label={`${queuedCount} queued`}
+          style={{
+            position: 'absolute',
+            top: -2,
+            right: -2,
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: t.colors.warning,
+            border: '1.5px solid rgba(255,255,255,0.9)',
+          }}
+        />
+      )}
     </button>
   );
 }

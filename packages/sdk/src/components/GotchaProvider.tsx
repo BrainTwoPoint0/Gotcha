@@ -80,6 +80,14 @@ export function GotchaProvider({
     return () => stopErrorCapture();
   }, []);
 
+  // Flush offline queue on reconnect and on mount
+  useEffect(() => {
+    client.flushQueue();
+    const handleOnline = () => client.flushQueue();
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [client]);
+
   const openModal = useCallback((elementId: string) => {
     setActiveModalId(elementId);
   }, []);

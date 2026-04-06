@@ -21,6 +21,7 @@ interface SubmitData {
   vote?: VoteType;
   pollSelected?: string[];
   isBug?: boolean;
+  screenshot?: string;
 }
 
 function isResponseExpired(createdAt: string, cooldownDays: number): boolean {
@@ -116,6 +117,7 @@ export function useSubmit(options: UseSubmitOptions) {
             pollOptions: options.pollOptions,
             pollSelected: data.pollSelected,
             isBug: data.isBug,
+            screenshot: data.screenshot,
             user: { ...defaultUser, ...options.user },
           });
         }

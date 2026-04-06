@@ -90,6 +90,8 @@ export interface GotchaProps {
   enableBugFlag?: boolean;
   /** Custom label for the bug flag toggle (default: "Report an issue") */
   bugFlagLabel?: string;
+  /** Enable screenshot capture when bug flag is toggled (requires html2canvas peer dep, falls back to native API) */
+  enableScreenshot?: boolean;
 
   // Deduplication
   /** When true and user has already responded, show submitted state and allow review/edit instead of new submission */
@@ -152,6 +154,7 @@ export function Gotcha({
   npsHighLabel,
   enableBugFlag = false,
   bugFlagLabel,
+  enableScreenshot = false,
   onePerUser = false,
   cooldownDays,
   hideAfterSubmitDays,
@@ -193,6 +196,7 @@ export function Gotcha({
   const [phase, setPhase] = useState<'form' | 'followUp' | 'success'>('form');
   const [lastResponseId, setLastResponseId] = useState<string | null>(null);
   const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [queuedCount, setQueuedCount] = useState(0);
   const [isParentHovered, setIsParentHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -209,6 +213,17 @@ export function Gotcha({
       clearTimeout(autoCloseTimerRef.current);
     };
   }, []);
+
+  // Track offline queue length
+  useEffect(() => {
+    setQueuedCount(client.getQueueLength());
+    const handleOnline = () => {
+      // Queue will be flushed by provider; update count after a delay
+      setTimeout(() => setQueuedCount(client.getQueueLength()), 2000);
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [client]);
 
   const isOpen = activeModalId === elementId;
 
@@ -364,6 +379,7 @@ export function Gotcha({
     npsHighLabel,
     enableBugFlag,
     bugFlagLabel,
+    enableScreenshot,
     onSubmit: handleSubmit,
     onClose: handleClose,
     anchorRect: anchorRect || undefined,
@@ -390,6 +406,7 @@ export function Gotcha({
         isOpen={isOpen}
         isParentHovered={isParentHovered}
         animated={animated}
+        queuedCount={queuedCount}
       />
 
       {/* Desktop: portal without backdrop, anchored via fixed positioning */}
