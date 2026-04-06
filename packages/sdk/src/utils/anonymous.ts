@@ -1,33 +1,22 @@
 import { STORAGE_KEYS } from '../constants';
+import { safeGetItem, safeSetItem, safeRemoveItem } from './localStorage';
 
 /**
  * Get or create an anonymous user ID
  * Stored in localStorage for consistency across sessions
  */
 export function getAnonymousId(): string {
-  if (typeof window === 'undefined') {
-    // SSR fallback - generate but don't persist
-    return `anon_${crypto.randomUUID()}`;
-  }
+  const stored = safeGetItem(STORAGE_KEYS.ANONYMOUS_ID);
+  if (stored) return stored;
 
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.ANONYMOUS_ID);
-    if (stored) return stored;
-
-    const id = `anon_${crypto.randomUUID()}`;
-    localStorage.setItem(STORAGE_KEYS.ANONYMOUS_ID, id);
-    return id;
-  } catch {
-    // localStorage unavailable (incognito Safari, sandboxed iframes)
-    return `anon_${crypto.randomUUID()}`;
-  }
+  const id = `anon_${crypto.randomUUID()}`;
+  safeSetItem(STORAGE_KEYS.ANONYMOUS_ID, id);
+  return id;
 }
 
 /**
  * Clear the anonymous ID (useful for testing)
  */
 export function clearAnonymousId(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEYS.ANONYMOUS_ID);
-  }
+  safeRemoveItem(STORAGE_KEYS.ANONYMOUS_ID);
 }

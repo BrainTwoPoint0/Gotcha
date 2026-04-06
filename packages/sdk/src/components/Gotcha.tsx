@@ -14,6 +14,7 @@ import {
 import { DEFAULTS } from '../constants';
 import { useGotchaContext } from './GotchaProvider';
 import { useSubmit } from '../hooks/useSubmit';
+import { useHideAfterSubmit } from '../hooks/useHideAfterSubmit';
 import { GotchaButton } from './GotchaButton';
 import { GotchaModal } from './GotchaModal';
 
@@ -92,6 +93,11 @@ export interface GotchaProps {
   // Deduplication
   /** When true and user has already responded, show submitted state and allow review/edit instead of new submission */
   onePerUser?: boolean;
+  /** When onePerUser is true, allow a new submission after this many days. Has no effect without onePerUser. */
+  cooldownDays?: number;
+  /** After submission, hide the widget for this many days (client-side, localStorage).
+   *  Independent of cooldownDays — the widget stays hidden for the full duration even if cooldown expires sooner. */
+  hideAfterSubmitDays?: number;
 
   // Animation
   /** Enable entrance animations on the button and modal (default: true) */
@@ -125,6 +131,8 @@ export function Gotcha({
   enableBugFlag = false,
   bugFlagLabel,
   onePerUser = false,
+  cooldownDays,
+  hideAfterSubmitDays,
   animated = true,
   position = DEFAULTS.POSITION,
   size = DEFAULTS.SIZE,
@@ -142,7 +150,13 @@ export function Gotcha({
   onClose,
   onError,
 }: GotchaProps) {
-  const { disabled, activeModalId, openModal, closeModal } = useGotchaContext();
+  const { disabled, activeModalId, openModal, closeModal, defaultUser } = useGotchaContext();
+
+  const { isHidden, markHidden } = useHideAfterSubmit({
+    elementId,
+    userId: user?.id || defaultUser?.id,
+    hideAfterSubmitDays,
+  });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isParentHovered, setIsParentHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
@@ -192,13 +206,16 @@ export function Gotcha({
     };
   }, [showOnHover]);
 
-  const { submit, isLoading, error, existingResponse, isEditing } = useSubmit({
+  const { submit, isLoading, isCheckingExisting, error, existingResponse, isEditing } = useSubmit({
     elementId,
     mode,
     pollOptions: options,
     user,
+    onePerUser,
+    cooldownDays,
     onSuccess: (response) => {
       setIsSubmitted(true);
+      if (hideAfterSubmitDays) markHidden();
       onSubmit?.(response);
       autoCloseTimerRef.current = setTimeout(() => {
         closeModal();
@@ -226,16 +243,9 @@ export function Gotcha({
     onClose?.();
   }, [closeModal, onClose]);
 
-  const handleSubmit = useCallback(
-    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => {
-      submit(data);
-    },
-    [submit]
-  );
+  const effectiveSubmitText = (onePerUser && isEditing) ? 'Update' : submitText;
 
-  const effectiveSubmitText = isEditing ? 'Update' : submitText;
-
-  if (disabled || !visible) return null;
+  if (disabled || !visible || isHidden) return null;
 
   const positionStyles: Record<Position, React.CSSProperties> = {
     'top-right': { position: 'absolute', top: 0, right: 0, transform: 'translate(50%, -50%)' },
@@ -254,10 +264,11 @@ export function Gotcha({
     submitText: effectiveSubmitText,
     thankYouMessage,
     isLoading,
+    isCheckingExisting: onePerUser && isCheckingExisting,
     isSubmitted,
     error,
-    existingResponse,
-    isEditing,
+    existingResponse: onePerUser ? existingResponse : null,
+    isEditing: onePerUser && isEditing,
     showText,
     showRating,
     voteLabels,
@@ -270,7 +281,7 @@ export function Gotcha({
     npsHighLabel,
     enableBugFlag,
     bugFlagLabel,
-    onSubmit: handleSubmit,
+    onSubmit: submit,
     onClose: handleClose,
     anchorRect: anchorRect || undefined,
     useFixedPosition: !isMobile,

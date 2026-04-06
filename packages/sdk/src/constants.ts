@@ -16,6 +16,7 @@ export const ERROR_CODES = {
 export const STORAGE_KEYS = {
   ANONYMOUS_ID: 'gotcha_anonymous_id',
   OFFLINE_QUEUE: 'gotcha_offline_queue',
+  HIDDEN_UNTIL: 'gotcha_hidden',
 } as const;
 
 // Default values

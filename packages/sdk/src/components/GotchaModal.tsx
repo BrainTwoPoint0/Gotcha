@@ -8,6 +8,7 @@ import { useGotchaContext } from './GotchaProvider';
 import { FeedbackMode } from './modes/FeedbackMode';
 import { VoteMode } from './modes/VoteMode';
 import { PollMode } from './modes/PollMode';
+import { Spinner } from './Spinner';
 import { NpsMode } from './modes/NpsMode';
 
 export interface GotchaModalProps {
@@ -20,6 +21,7 @@ export interface GotchaModalProps {
   thankYouMessage: string;
   // State
   isLoading: boolean;
+  isCheckingExisting?: boolean;
   isSubmitted: boolean;
   error: string | null;
   // Edit mode
@@ -63,6 +65,7 @@ export function GotchaModal({
   submitText,
   thankYouMessage,
   isLoading,
+  isCheckingExisting = false,
   isSubmitted,
   error,
   existingResponse,
@@ -426,8 +429,20 @@ export function GotchaModal({
         </div>
       )}
 
+      {/* Loading state while checking for existing response */}
+      {!isSubmitted && isCheckingExisting && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '24px 0',
+          ...fadeUpStyle(1),
+        }}>
+          <Spinner size={24} color={t.colors.textSecondary} />
+        </div>
+      )}
+
       {/* Form content based on mode */}
-      {!isSubmitted && (
+      {!isSubmitted && !isCheckingExisting && (
         <div style={fadeUpStyle(1)}>
           {mode === 'feedback' && (
             <FeedbackMode

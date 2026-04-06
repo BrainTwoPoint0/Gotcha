@@ -7,6 +7,9 @@ interface UseSubmitOptions {
   mode: ResponseMode;
   pollOptions?: string[];
   user?: GotchaUser;
+  onePerUser?: boolean;
+  /** When onePerUser is true, allow a new submission after this many days */
+  cooldownDays?: number;
   onSuccess?: (response: GotchaResponse) => void;
   onError?: (error: Error) => void;
 }
@@ -20,6 +23,14 @@ interface SubmitData {
   isBug?: boolean;
 }
 
+function isResponseExpired(createdAt: string, cooldownDays: number): boolean {
+  const createdTime = new Date(createdAt).getTime();
+  if (isNaN(createdTime)) return true;
+  const ageMs = Date.now() - createdTime;
+  const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000;
+  return ageMs >= cooldownMs;
+}
+
 export function useSubmit(options: UseSubmitOptions) {
   const { client, defaultUser } = useGotchaContext();
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +38,14 @@ export function useSubmit(options: UseSubmitOptions) {
   const [error, setError] = useState<string | null>(null);
   const [existingResponse, setExistingResponse] = useState<ExistingResponse | null>(null);
 
-  // Check for existing response when user ID is provided
+  // Check for existing response when user ID is provided and onePerUser is enabled
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && options.cooldownDays && !options.onePerUser) {
+      console.warn('[Gotcha] cooldownDays has no effect without onePerUser=true');
+    }
+
     const userId = options.user?.id || defaultUser?.id;
-    if (!userId) {
+    if (!userId || !options.onePerUser) {
       setExistingResponse(null);
       return;
     }
@@ -42,7 +57,12 @@ export function useSubmit(options: UseSubmitOptions) {
       try {
         const existing = await client.checkExistingResponse(options.elementId, userId);
         if (!cancelled) {
-          setExistingResponse(existing);
+          if (existing && options.cooldownDays && options.cooldownDays > 0 &&
+              isResponseExpired(existing.createdAt, options.cooldownDays)) {
+            setExistingResponse(null);
+          } else {
+            setExistingResponse(existing);
+          }
         }
       } catch {
         // Ignore errors - just means no existing response found
@@ -61,7 +81,7 @@ export function useSubmit(options: UseSubmitOptions) {
     return () => {
       cancelled = true;
     };
-  }, [client, options.elementId, options.user?.id, defaultUser?.id]);
+  }, [client, options.elementId, options.user?.id, defaultUser?.id, options.onePerUser, options.cooldownDays]);
 
   const submit = useCallback(
     async (data: SubmitData) => {
@@ -72,8 +92,8 @@ export function useSubmit(options: UseSubmitOptions) {
         const userId = options.user?.id || defaultUser?.id;
         let response: GotchaResponse;
 
-        // If we have an existing response and a user ID, update instead of create
-        if (existingResponse && userId) {
+        // If onePerUser is enabled and we have an existing response, update instead of create
+        if (options.onePerUser && existingResponse && userId) {
           response = await client.updateResponse(
             existingResponse.id,
             {
@@ -100,17 +120,19 @@ export function useSubmit(options: UseSubmitOptions) {
           });
         }
 
-        // Update existingResponse so isEditing flips to true after first submit
-        setExistingResponse({
-          id: response.id,
-          mode: options.mode,
-          content: data.content ?? null,
-          title: data.title ?? null,
-          rating: data.rating ?? null,
-          vote: data.vote ?? null,
-          pollSelected: data.pollSelected ?? null,
-          createdAt: response.createdAt,
-        });
+        // Update existingResponse so isEditing flips to true after first submit (only for onePerUser)
+        if (options.onePerUser) {
+          setExistingResponse({
+            id: response.id,
+            mode: options.mode,
+            content: data.content ?? null,
+            title: data.title ?? null,
+            rating: data.rating ?? null,
+            vote: data.vote ?? null,
+            pollSelected: data.pollSelected ?? null,
+            createdAt: response.createdAt,
+          });
+        }
 
         options.onSuccess?.(response);
         return response;
