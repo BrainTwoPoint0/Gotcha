@@ -25,7 +25,7 @@ export async function captureScreenshot(): Promise<string | null> {
 
   // Fallback: native Screen Capture API
   try {
-    if (!navigator.mediaDevices?.getDisplayMedia) return null;
+    if (!navigator.mediaDevices?.getDisplayMedia || typeof ImageCapture === 'undefined') return null;
 
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: { displaySurface: 'browser' } as MediaTrackConstraints,

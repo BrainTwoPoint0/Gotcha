@@ -227,6 +227,14 @@ export function Gotcha({
 
   const isOpen = activeModalId === elementId;
 
+  // Reset phase when modal is closed externally (e.g., another modal opens)
+  useEffect(() => {
+    if (!isOpen) {
+      setPhase('form');
+      clearTimeout(autoCloseTimerRef.current);
+    }
+  }, [isOpen]);
+
   // Scroll lock on mobile when modal is open
   useEffect(() => {
     if (!isOpen || !isMobile) return;
@@ -323,8 +331,9 @@ export function Gotcha({
       setFollowUpLoading(true);
       try {
         await client.updateResponse(lastResponseId, { content });
-      } catch {
-        // If follow-up fails, still show success — initial response is saved
+      } catch (err) {
+        // If follow-up fails, still show success — initial response is already saved
+        console.warn('[Gotcha] Follow-up submission failed:', err instanceof Error ? err.message : err);
       } finally {
         setFollowUpLoading(false);
         setPhase('success');
