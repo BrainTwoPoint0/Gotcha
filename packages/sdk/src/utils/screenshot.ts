@@ -8,7 +8,8 @@ const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 export async function captureScreenshot(): Promise<string | null> {
   // Try html2canvas first (silent, no user prompt)
   try {
-    const html2canvas = (await import('html2canvas')).default;
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const html2canvas = (await (new Function('return import("html2canvas")'))()).default;
     const canvas = await html2canvas(document.body, {
       logging: false,
       useCORS: true,
