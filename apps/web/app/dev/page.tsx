@@ -584,6 +584,60 @@ export default function DevPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">Default: fresh form on each open</p>
               </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border" data-testid="vote-follow-up-card">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Vote + Follow-up
+                  <Gotcha
+                    elementId="dev-vote-follow-up"
+                    mode="vote"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Was this helpful?"
+                    followUp={{
+                      onNegativeVote: true,
+                      promptText: "What went wrong?",
+                      placeholder: "Help us understand...",
+                    }}
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">followUp with onNegativeVote</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border" data-testid="rating-only-card">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Rating Only (for submit test)
+                  <Gotcha
+                    elementId="dev-rating-only"
+                    mode="feedback"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    showText={false}
+                    promptText="Quick rating"
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">showText=false, for testing submit flow</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Scroll trigger — placed at bottom so page is long enough */}
+          <section className="mb-8 md:mb-12" data-testid="scroll-trigger-section" style={{ marginTop: '100vh' }}>
+            <h2 className="text-xl font-semibold mb-4">Scroll Trigger</h2>
+            <div className="bg-white p-6 rounded-lg shadow-md border" data-testid="scroll-trigger-card">
+              <h3 className="font-medium mb-2 flex items-center gap-2">
+                Shows after 30% scroll
+                <Gotcha
+                  elementId="dev-scroll-trigger"
+                  mode="feedback"
+                  size="sm"
+                  position="inline"
+                  showOnHover={false}
+                  promptText="Scroll-triggered feedback"
+                  showAfterScrollPercent={30}
+                />
+              </h3>
+              <p className="text-gray-500 text-sm">showAfterScrollPercent=30</p>
             </div>
           </section>
         </div>
