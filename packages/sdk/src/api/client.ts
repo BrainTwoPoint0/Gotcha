@@ -1,6 +1,7 @@
 import { API_BASE_URL, RETRY_CONFIG } from '../constants';
 import { SubmitResponsePayload, GotchaResponse, GotchaError, ExistingResponse, VoteType, ScoreData } from '../types';
 import { getAnonymousId } from '../utils/anonymous';
+import { generateId } from '../utils/generateId';
 import { collectContext } from '../utils/contextCollector';
 import { enqueue, getQueuedItems, dequeue, incrementRetries, getQueueLength } from '../utils/offlineQueue';
 
@@ -76,6 +77,8 @@ async function fetchWithRetry(
 export function createApiClient(config: ApiClientConfig) {
   const { apiKey, baseUrl = API_BASE_URL, debug = false } = config;
 
+  let flushing = false;
+
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${apiKey}`,
@@ -87,7 +90,7 @@ export function createApiClient(config: ApiClientConfig) {
     body?: unknown
   ): Promise<T> {
     const url = `${baseUrl}${endpoint}`;
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = generateId();
 
     if (debug) {
       console.log(`[Gotcha] ${method} ${endpoint}`, body);
@@ -154,7 +157,7 @@ export function createApiClient(config: ApiClientConfig) {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         enqueue(fullPayload as unknown as Record<string, unknown>, 'create');
         return {
-          id: crypto.randomUUID(),
+          id: generateId(),
           status: 'queued' as const,
           createdAt: new Date().toISOString(),
         };
@@ -164,10 +167,10 @@ export function createApiClient(config: ApiClientConfig) {
         return await request<GotchaResponse>('POST', '/responses', fullPayload);
       } catch (err) {
         // On network failure, queue for later
-        if (err instanceof TypeError && err.message.includes('fetch')) {
+        if (err instanceof TypeError && typeof navigator !== 'undefined' && !navigator.onLine) {
           enqueue(fullPayload as unknown as Record<string, unknown>, 'create');
           return {
-            id: crypto.randomUUID(),
+            id: generateId(),
             status: 'queued' as const,
             createdAt: new Date().toISOString(),
           };
@@ -345,16 +348,25 @@ export function createApiClient(config: ApiClientConfig) {
      * Flush queued offline submissions
      */
     async flushQueue(): Promise<void> {
-      const items = getQueuedItems();
-      if (items.length === 0) return;
-
-      for (const item of items) {
-        try {
-          await request('POST', '/responses', item.payload);
-          dequeue(item.id);
-        } catch {
-          incrementRetries(item.id);
+      if (flushing) return;
+      flushing = true;
+      try {
+        const items = getQueuedItems();
+        for (const item of items) {
+          try {
+            if (item.type === 'update' && item.payload.responseId) {
+              const { responseId, ...updatePayload } = item.payload;
+              await request('PATCH', `/responses/${responseId}`, updatePayload);
+            } else {
+              await request('POST', '/responses', item.payload);
+            }
+            dequeue(item.id);
+          } catch {
+            incrementRetries(item.id);
+          }
         }
+      } finally {
+        flushing = false;
       }
     },
 

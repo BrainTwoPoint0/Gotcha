@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '../constants';
 import { safeGetItem, safeSetItem, safeRemoveItem } from './localStorage';
+import { generateId } from './generateId';
 
 /**
  * Get or create an anonymous user ID
@@ -9,7 +10,7 @@ export function getAnonymousId(): string {
   const stored = safeGetItem(STORAGE_KEYS.ANONYMOUS_ID);
   if (stored) return stored;
 
-  const id = `anon_${crypto.randomUUID()}`;
+  const id = `anon_${generateId()}`;
   safeSetItem(STORAGE_KEYS.ANONYMOUS_ID, id);
   return id;
 }

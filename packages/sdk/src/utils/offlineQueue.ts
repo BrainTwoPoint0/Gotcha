@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '../constants';
 import { safeGetItem, safeSetItem } from './localStorage';
+import { generateId } from './generateId';
 
 const MAX_QUEUE_SIZE = 50;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -33,7 +34,7 @@ export function enqueue(payload: Record<string, unknown>, type: 'create' | 'upda
   const items = readQueue();
   if (items.length >= MAX_QUEUE_SIZE) return;
   items.push({
-    id: crypto.randomUUID(),
+    id: generateId(),
     payload,
     type,
     queuedAt: Date.now(),
