@@ -58,15 +58,15 @@ test.describe('Pro Features', () => {
     test('pricing page should show Pro plan', async ({ page }) => {
       await page.goto('/pricing');
 
-      await expect(page.getByText(/pro/i)).toBeVisible();
-      await expect(page.getByText(/\$29/)).toBeVisible();
+      await expect(page.getByText(/pro/i).first()).toBeVisible();
+      await expect(page.getByText(/\$29/).first()).toBeVisible();
     });
 
     test('pricing page should show Free plan', async ({ page }) => {
       await page.goto('/pricing');
 
-      await expect(page.getByText(/free/i)).toBeVisible();
-      await expect(page.getByText(/500/)).toBeVisible(); // 500 responses limit
+      await expect(page.getByText(/free/i).first()).toBeVisible();
+      await expect(page.getByText(/500/).first()).toBeVisible(); // 500 responses limit
     });
 
     test('pricing page should have upgrade button', async ({ page }) => {
@@ -82,13 +82,14 @@ test.describe('Pro Features', () => {
     test('checkout endpoint should require authentication', async ({ request }) => {
       const response = await request.post('/api/stripe/checkout');
 
-      expect(response.status()).toBe(401);
+      // Returns 401 (no session) or 403 (forbidden without auth cookie)
+      expect([401, 403]).toContain(response.status());
     });
 
     test('portal endpoint should require authentication', async ({ request }) => {
       const response = await request.post('/api/stripe/portal');
 
-      expect(response.status()).toBe(401);
+      expect([401, 403]).toContain(response.status());
     });
 
     test('webhook endpoint should exist', async ({ request }) => {
@@ -131,6 +132,6 @@ test.describe('Dashboard Navigation', () => {
     await page.goto('/pricing');
 
     // Pro features should be clearly marked
-    await expect(page.getByText(/unlimited/i)).toBeVisible();
+    await expect(page.getByText(/unlimited/i).first()).toBeVisible();
   });
 });

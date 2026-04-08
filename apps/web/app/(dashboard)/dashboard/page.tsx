@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization, fetchActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
@@ -35,23 +34,15 @@ interface ProjectItem {
 
 export default async function DashboardPage() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
 
-    // Get user's profile data
-    let dbUser = user?.email
-      ? await prisma.user.findUnique({
-          where: { email: user.email },
-        })
-      : null;
+    // Get active org (cache hit from layout). If null, user may be new — create them.
+    let activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
 
-    // If user is authenticated but doesn't exist in our database, create them
-    if (user?.email && !dbUser) {
+    if (user?.email && !activeOrg) {
       try {
         // Use upsert to avoid race condition with concurrent requests
-        dbUser = await prisma.user.upsert({
+        const dbUser = await prisma.user.upsert({
           where: { email: user.email },
           update: {},
           create: {
@@ -85,6 +76,9 @@ export default async function DashboardPage() {
             },
           },
         });
+
+        // Re-fetch after creation (bypass cache to get fresh DB state)
+        activeOrg = await fetchActiveOrganization(user.email);
       } catch (createError) {
         console.error(
           'Error creating user in database:',
@@ -93,17 +87,16 @@ export default async function DashboardPage() {
         // Continue anyway - user can still see the dashboard, just without org data
       }
     }
-
-    const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
     const organization = activeOrg?.organization;
 
-    // Fetch projects and recent responses in parallel
-    const [projects, recentResponses]: [ProjectItem[], ResponseItem[]] = organization
+    // Fetch user profile, projects, and recent responses in parallel
+    const [dbUser, projects, recentResponses] = organization
       ? await Promise.all([
+          prisma.user.findUnique({ where: { email: user!.email! } }),
           prisma.project.findMany({
             where: { organizationId: organization.id },
             include: { _count: { select: { responses: true } } },
-          }),
+          }) as Promise<ProjectItem[]>,
           prisma.response.findMany({
             where: {
               project: {
@@ -117,9 +110,9 @@ export default async function DashboardPage() {
                 select: { name: true, slug: true },
               },
             },
-          }),
+          }) as Promise<ResponseItem[]>,
         ])
-      : [[], []];
+      : [null, [] as ProjectItem[], [] as ResponseItem[]];
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
     const overLimit = subscription

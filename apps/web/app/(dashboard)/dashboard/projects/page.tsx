@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { ProjectCard } from './project-card';
 
@@ -14,10 +13,7 @@ interface ProjectItem {
 }
 
 export default async function ProjectsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
   const organization = activeOrg?.organization;

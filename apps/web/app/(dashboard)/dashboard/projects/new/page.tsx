@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { isOverProjectLimit, getProjectLimitDisplay } from '@/lib/plan-limits';
 import Link from 'next/link';
 import { NewProjectForm } from './new-project-form';
@@ -7,10 +6,7 @@ import { NewProjectForm } from './new-project-form';
 export const dynamic = 'force-dynamic';
 
 export default async function NewProjectPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
   const organization = activeOrg?.organization;

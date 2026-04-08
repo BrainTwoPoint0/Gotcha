@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { ProfileForm, OrganizationForm } from './settings-forms';
 import { TeamManagement } from './team-management';
 import { PlanActions } from './plan-actions';
@@ -13,10 +12,7 @@ import { Label } from '@/components/ui/label';
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const dbUser = user
     ? await prisma.user.findUnique({
@@ -35,24 +31,22 @@ export default async function SettingsPage() {
 
   const projectIds = organization?.projects?.map((p: { id: string }) => p.id) || [];
 
-  const responsesThisMonth =
+  const [responsesThisMonth, totalResponses] =
     projectIds.length > 0
-      ? await prisma.response.count({
-          where: {
-            projectId: { in: projectIds },
-            createdAt: { gte: startOfMonth },
-          },
-        })
-      : 0;
-
-  const totalResponses =
-    projectIds.length > 0
-      ? await prisma.response.count({
-          where: {
-            projectId: { in: projectIds },
-          },
-        })
-      : 0;
+      ? await Promise.all([
+          prisma.response.count({
+            where: {
+              projectId: { in: projectIds },
+              createdAt: { gte: startOfMonth },
+            },
+          }),
+          prisma.response.count({
+            where: {
+              projectId: { in: projectIds },
+            },
+          }),
+        ])
+      : [0, 0];
 
   return (
     <div>

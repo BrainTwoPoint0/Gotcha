@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { SegmentCharts } from './segment-charts';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
@@ -15,10 +14,7 @@ interface PageProps {
 
 export default async function SegmentsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const dbUser = user
     ? await prisma.user.findUnique({

@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { ResponsesFilter } from './responses-filter';
 import { Pagination } from './pagination';
 import { ExportButton } from './export-button';
@@ -44,10 +43,7 @@ interface PageProps {
 
 export default async function ResponsesPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const dbUser = user
     ? await prisma.user.findUnique({

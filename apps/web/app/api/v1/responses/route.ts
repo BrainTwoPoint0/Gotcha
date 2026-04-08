@@ -119,24 +119,24 @@ export async function POST(request: NextRequest) {
     // DB writes (element lookup, response creation, usage tracking)
     // No inner try/catch — errors propagate to the outer catch which returns 500
     const asyncWrite = async () => {
-      // Get or create element (upsert to avoid race conditions)
-      const element = await prisma.element.upsert({
-        where: {
-          projectId_elementId: {
+      // Element upsert + usage increment are independent — run in parallel
+      const [element, _usage] = await Promise.all([
+        prisma.element.upsert({
+          where: {
+            projectId_elementId: {
+              projectId: apiKey.projectId,
+              elementId: data.elementId,
+            },
+          },
+          update: {},
+          create: {
             projectId: apiKey.projectId,
             elementId: data.elementId,
           },
-        },
-        update: {},
-        create: {
-          projectId: apiKey.projectId,
-          elementId: data.elementId,
-        },
-      });
+        }),
+        atomicIncrementUsage(apiKey.organizationId),
+      ]);
       const elementDbId = element.id;
-
-      // Atomically reset (if new month) and increment usage counter
-      await atomicIncrementUsage(apiKey.organizationId);
 
       // Check if this response exceeds the free limit
       let gated = false;

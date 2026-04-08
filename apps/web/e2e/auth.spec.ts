@@ -5,7 +5,7 @@ test.describe('Authentication', () => {
     test('should display login form', async ({ page }) => {
       await page.goto('/login');
 
-      await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
       await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
@@ -20,7 +20,7 @@ test.describe('Authentication', () => {
     test('should show link to signup page', async ({ page }) => {
       await page.goto('/login');
 
-      const signupLink = page.getByRole('link', { name: /create a new account/i });
+      const signupLink = page.getByRole('link', { name: /sign up/i });
       await expect(signupLink).toBeVisible();
       await signupLink.click();
 

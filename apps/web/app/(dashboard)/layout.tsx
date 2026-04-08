@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Footer } from '../components/Footer';
@@ -7,13 +6,10 @@ import { Button } from '@/components/ui/button';
 import { MobileMoreMenu } from './mobile-more-menu';
 import { WorkspaceSwitcher } from './workspace-switcher';
 import { GlobalBugReporter } from './global-bug-reporter';
-import { getActiveOrganization, getUserWorkspaces } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect('/login');
@@ -23,11 +19,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login');
   }
 
-  // Get active workspace and all workspaces for the switcher
-  const [activeOrg, workspaces] = await Promise.all([
-    getActiveOrganization(user.email),
-    getUserWorkspaces(user.email),
-  ]);
+  const activeOrg = await getActiveOrganization(user.email);
+  const workspaces = activeOrg?.workspaces ?? [];
   const isPro = activeOrg?.isPro ?? false;
   const proBadge = isPro ? undefined : 'Pro';
 

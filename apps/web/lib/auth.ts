@@ -1,7 +1,16 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/lib/supabase/server';
 
 const ORG_COOKIE = 'gotcha_org';
+
+export interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+}
 
 interface ActiveOrg {
   organization: {
@@ -23,14 +32,26 @@ interface ActiveOrg {
     role: string;
   };
   isPro: boolean;
+  workspaces: Workspace[];
 }
 
 /**
- * Get the active organization for the current user.
- * Reads the `gotcha_org` cookie for the selected workspace.
- * Falls back to the first membership if no cookie or invalid.
+ * Cached auth user lookup. Deduplicates supabase.auth.getUser()
+ * across layout and page within a single request.
  */
-export async function getActiveOrganization(userEmail: string): Promise<ActiveOrg | null> {
+export const getAuthUser = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+});
+
+/**
+ * Uncached implementation — use getActiveOrganization for normal reads.
+ * Only call this directly when you need a fresh DB read (e.g. after creating a new user/org).
+ */
+export async function fetchActiveOrganization(userEmail: string): Promise<ActiveOrg | null> {
   const dbUser = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
@@ -70,6 +91,14 @@ export async function getActiveOrganization(userEmail: string): Promise<ActiveOr
     sub?.plan === 'PRO' &&
     (sub?.status === 'ACTIVE' || sub?.status === 'TRIALING' || sub?.status === 'PAST_DUE');
 
+  // Derive workspaces from the memberships we already fetched
+  const workspaces: Workspace[] = dbUser.memberships.map((m) => ({
+    id: m.organization.id,
+    name: m.organization.name,
+    slug: m.organization.slug,
+    role: m.role,
+  }));
+
   return {
     organization: {
       id: organization.id,
@@ -84,33 +113,12 @@ export async function getActiveOrganization(userEmail: string): Promise<ActiveOr
       role: membership.role,
     },
     isPro,
+    workspaces,
   };
 }
 
 /**
- * Get all workspaces for a user (for the switcher dropdown).
+ * Cached version — deduplicates across layout + page within a single request.
  */
-export async function getUserWorkspaces(userEmail: string) {
-  const dbUser = await prisma.user.findUnique({
-    where: { email: userEmail },
-    include: {
-      memberships: {
-        include: {
-          organization: {
-            select: { id: true, name: true, slug: true },
-          },
-        },
-        orderBy: { createdAt: 'asc' },
-      },
-    },
-  });
+export const getActiveOrganization = cache(fetchActiveOrganization);
 
-  if (!dbUser) return [];
-
-  return dbUser.memberships.map((m) => ({
-    id: m.organization.id,
-    name: m.organization.name,
-    slug: m.organization.slug,
-    role: m.role,
-  }));
-}

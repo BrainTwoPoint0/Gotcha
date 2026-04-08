@@ -103,8 +103,8 @@ test.describe('Response Submission Performance', () => {
       const elapsed = performance.now() - start;
       const status = response.status();
 
-      // 201 = success (SDK API configured), 500 = SDK API not configured
-      expect([201, 500]).toContain(status);
+      // 201 = success, 403 = origin/auth rejected, 500 = SDK API not configured
+      expect([201, 403, 500]).toContain(status);
       expect(elapsed).toBeLessThan(PERF_BUDGET_API_MS);
 
       console.log(

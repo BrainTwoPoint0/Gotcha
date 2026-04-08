@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
@@ -58,10 +57,7 @@ interface PageProps {
 
 export default async function BugDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const dbUser = user
     ? await prisma.user.findUnique({

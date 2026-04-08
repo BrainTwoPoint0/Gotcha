@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
@@ -35,10 +34,7 @@ interface ResponseItem {
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
   const organization = activeOrg?.organization;

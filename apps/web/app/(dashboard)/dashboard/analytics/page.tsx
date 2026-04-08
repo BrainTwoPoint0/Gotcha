@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganization } from '@/lib/auth';
+import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
 import { AnalyticsFilter } from './analytics-filter';
@@ -28,10 +27,7 @@ interface PageProps {
 
 export default async function AnalyticsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const dbUser = user
     ? await prisma.user.findUnique({
@@ -110,31 +106,31 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   // ── Resolve active tab ──────────────────────────────────────────
   const activeTab = params.tab || 'overview';
 
-  // Fetch projects for filter dropdown
-  const projects = await prisma.project.findMany({
-    where: { organizationId: organization.id },
-    select: { id: true, name: true, slug: true },
-    orderBy: { name: 'asc' },
-  });
-
-  // Fetch unique elements for filter
-  const elementsData = await prisma.response.groupBy({
-    by: ['elementIdRaw'],
-    where: {
-      project: {
-        organizationId: organization.id,
-        ...(params.projectId && { id: params.projectId }),
+  // Fetch projects and elements for filter dropdowns in parallel
+  const [projects, elementsData] = await Promise.all([
+    prisma.project.findMany({
+      where: { organizationId: organization.id },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.response.groupBy({
+      by: ['elementIdRaw'],
+      where: {
+        project: {
+          organizationId: organization.id,
+          ...(params.projectId && { id: params.projectId }),
+        },
       },
-    },
-    _count: {
-      elementIdRaw: true,
-    },
-    orderBy: {
       _count: {
-        elementIdRaw: 'desc',
+        elementIdRaw: true,
       },
-    },
-  });
+      orderBy: {
+        _count: {
+          elementIdRaw: 'desc',
+        },
+      },
+    }),
+  ]);
 
   const archivedElementIds = organization.archivedElementIds ?? [];
 
@@ -202,7 +198,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       dailyTrendRaw,
       elementPerfRaw,
       pollResponses,
-      npsRatings,
+      npsAggRaw,
       ratingDistRaw,
       heatmapRaw,
       prevCount,
@@ -254,11 +250,23 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           pollSelected: true,
         },
       }),
-      prisma.response.findMany({
-        where: { ...where, mode: 'NPS', rating: { not: null } },
-        select: { rating: true },
-        take: 10000,
-      }),
+      // NPS: count promoters/passives/detractors in SQL instead of fetching 10K rows
+      prisma.$queryRaw<Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>>`
+        SELECT
+          COUNT(*) FILTER (WHERE rating >= 9) as promoters,
+          COUNT(*) FILTER (WHERE rating >= 7 AND rating < 9) as passives,
+          COUNT(*) FILTER (WHERE rating < 7) as detractors,
+          COUNT(*) as total
+        FROM "Response"
+        WHERE mode = 'NPS' AND rating IS NOT NULL
+        AND "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate}
+        AND "createdAt" <= ${endDate}
+      `.catch(() => [] as Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>),
       // Rating distribution (1–5)
       prisma.response.groupBy({
         by: ['rating'],
@@ -382,7 +390,29 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       if (v.vote === 'DOWN') elementVoteMap[v.elementIdRaw].down = v._count.vote;
     });
 
-    const npsResult = calculateNPS(npsRatings.map((r) => r.rating!));
+    // Build NPS result from SQL aggregation
+    const npsRow = npsAggRaw[0];
+    const npsResult = npsRow && Number(npsRow.total) > 0
+      ? (() => {
+          const promoters = Number(npsRow.promoters);
+          const passives = Number(npsRow.passives);
+          const detractors = Number(npsRow.detractors);
+          const total = Number(npsRow.total);
+          const promoterPct = Math.round((promoters / total) * 100);
+          const passivePct = Math.round((passives / total) * 100);
+          const detractorPct = Math.round((detractors / total) * 100);
+          return {
+            score: promoterPct - detractorPct,
+            promoters,
+            passives,
+            detractors,
+            promoterPct,
+            passivePct,
+            detractorPct,
+            total,
+          };
+        })()
+      : null;
 
     // Rating distribution — fill in all 1–5 values
     const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => {
