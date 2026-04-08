@@ -22,7 +22,7 @@ interface DashboardFeedbackProps {
   options?: string[];
   allowMultiple?: boolean;
   npsQuestion?: string;
-  /** When true, shows submitted state and allows review/edit instead of new submission (default: true for dashboard) */
+  /** When true, shows submitted state and allows review/edit instead of new submission (default: false) */
   onePerUser?: boolean;
 }
 
@@ -37,7 +37,7 @@ export function DashboardFeedback({
   options,
   allowMultiple,
   npsQuestion,
-  onePerUser = true,
+  onePerUser = false,
 }: DashboardFeedbackProps) {
   return (
     <Gotcha

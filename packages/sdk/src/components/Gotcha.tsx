@@ -302,7 +302,9 @@ export function Gotcha({
 
   const handleOpen = useCallback(() => {
     if (containerRef.current) {
-      setAnchorRect(containerRef.current.getBoundingClientRect());
+      // Anchor to the actual button element, not the container wrapper
+      const button = containerRef.current.querySelector('.gotcha-button');
+      setAnchorRect((button || containerRef.current).getBoundingClientRect());
     }
     openModal(elementId);
     onOpen?.();
