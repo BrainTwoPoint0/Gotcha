@@ -183,13 +183,6 @@ export async function POST(request: NextRequest) {
           endUserMeta: (data.user || {}) as object,
           url: data.context?.url,
           userAgent: data.context?.userAgent,
-          contextMeta: data.context ? {
-            viewport: data.context.viewport,
-            language: data.context.language,
-            timezone: data.context.timezone,
-            screenResolution: data.context.screenResolution,
-            recentErrors: data.context.recentErrors,
-          } : undefined,
           idempotencyKey: idempotencyKey,
           createdAt: createdAt,
           gated,

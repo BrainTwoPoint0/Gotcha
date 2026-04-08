@@ -199,9 +199,8 @@ model Response {
   endUserMeta Json    @default("{}")
 
   // Context
-  url         String? // Page URL where feedback was given
-  userAgent   String?
-  contextMeta Json?   // Extended context (viewport, errors, etc.)
+  url       String? // Page URL where feedback was given
+  userAgent String?
 
   // Idempotency
   idempotencyKey String?
