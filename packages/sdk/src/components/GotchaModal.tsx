@@ -213,24 +213,32 @@ export function GotchaModal({
         textAlign: 'left' as const,
       }
     : useFixedPosition && anchorRect && viewportHeight
-    ? {
-        position: 'fixed',
-        left: anchorRect.left + anchorRect.width / 2,
-        width: modalWidth,
-        padding: modalPadding,
-        borderRadius: t.borders.radius.lg,
-        background: t.colors.backgroundGradient,
-        color: t.colors.text,
-        boxShadow: t.shadows.modal,
-        border: `${t.borders.width}px solid ${t.colors.border}`,
-        zIndex: 99999,
-        fontFamily: t.typography.fontFamily,
-        ...(showAbove
-          ? { bottom: viewportHeight - anchorRect.top + 8, transform: 'translateX(-50%)' }
-          : { top: anchorRect.bottom + 8, transform: 'translateX(-50%)' }),
-        ...customStyles?.modal,
-        textAlign: 'left' as const,
-      }
+    ? (() => {
+        const viewportWidth = window.innerWidth;
+        const edgePadding = 12;
+        const centerX = anchorRect.left + anchorRect.width / 2;
+        // Clamp so modal stays within viewport
+        const idealLeft = centerX - modalWidth / 2;
+        const clampedLeft = Math.max(edgePadding, Math.min(idealLeft, viewportWidth - modalWidth - edgePadding));
+        return {
+          position: 'fixed' as const,
+          left: clampedLeft,
+          width: modalWidth,
+          padding: modalPadding,
+          borderRadius: t.borders.radius.lg,
+          background: t.colors.backgroundGradient,
+          color: t.colors.text,
+          boxShadow: t.shadows.modal,
+          border: `${t.borders.width}px solid ${t.colors.border}`,
+          zIndex: 99999,
+          fontFamily: t.typography.fontFamily,
+          ...(showAbove
+            ? { bottom: viewportHeight - anchorRect.top + 8 }
+            : { top: anchorRect.bottom + 8 }),
+          ...customStyles?.modal,
+          textAlign: 'left' as const,
+        };
+      })()
     : {
         position: 'absolute' as const,
         left: '50%',
