@@ -1,0 +1,1 @@
+-- Migration already applied, SQL file was missing from directory
