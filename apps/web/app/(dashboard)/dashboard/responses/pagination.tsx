@@ -7,16 +7,18 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   total: number;
+  basePath?: string;
+  itemLabel?: string;
 }
 
-export function Pagination({ currentPage, totalPages, total }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, total, basePath = '/dashboard/responses', itemLabel = 'responses' }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', page.toString());
-    router.push(`/dashboard/responses?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   if (totalPages <= 1) return null;
@@ -24,7 +26,7 @@ export function Pagination({ currentPage, totalPages, total }: PaginationProps) 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-4 py-3 bg-white border-t border-gray-200 rounded-b-lg">
       <div className="text-sm text-gray-500">
-        Page {currentPage} of {totalPages} ({total} total responses)
+        Page {currentPage} of {totalPages} ({total} total {itemLabel})
       </div>
       <div className="flex gap-2">
         <Button

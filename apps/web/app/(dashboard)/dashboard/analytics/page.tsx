@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
@@ -12,6 +13,298 @@ import { calculateNPS } from '@/lib/nps';
 import { parseDevice, parseBrowser } from '@/lib/ua-parser';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Cached overview data fetcher — revalidates every 60 seconds.
+ * All args must be serializable (strings/numbers only).
+ */
+const fetchOverviewData = unstable_cache(
+  async (
+    orgId: string,
+    pId: string, // empty string = no filter
+    eId: string, // empty string = no filter
+    startISO: string,
+    endISO: string,
+    daysDiff: number
+  ) => {
+    const startDate = new Date(startISO);
+    const endDate = new Date(endISO);
+    const projectId = pId || undefined;
+    const elementId = eId || undefined;
+
+    const where = {
+      project: {
+        organizationId: orgId,
+        ...(projectId && { id: projectId }),
+      },
+      ...(elementId && { elementIdRaw: elementId }),
+      createdAt: { gte: startDate, lte: endDate },
+    };
+
+    // Comparison period
+    const periodMs = endDate.getTime() - startDate.getTime();
+    const prevEnd = new Date(startDate.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - periodMs);
+    const prevWhere = {
+      project: {
+        organizationId: orgId,
+        ...(projectId && { id: projectId }),
+      },
+      ...(elementId && { elementIdRaw: elementId }),
+      createdAt: { gte: prevStart, lte: prevEnd },
+    };
+
+    const [
+      modeCountsRaw,
+      ratingAgg,
+      voteCountsRaw,
+      dailyTrendRaw,
+      elementPerfRaw,
+      pollCountsRaw,
+      pollOptionsRaw,
+      npsAggRaw,
+      ratingDistRaw,
+      heatmapRaw,
+      prevCount,
+      prevRatingAgg,
+      prevVoteCountsRaw,
+    ] = await Promise.all([
+      prisma.response.groupBy({ by: ['mode'], where, _count: { mode: true } }),
+      prisma.response.aggregate({
+        where: { ...where, rating: { not: null } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      prisma.response.groupBy({
+        by: ['vote'],
+        where: { ...where, vote: { not: null } },
+        _count: { vote: true },
+      }),
+      prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
+        SELECT DATE("createdAt") as day, COUNT(*) as count
+        FROM "Response"
+        WHERE "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY DATE("createdAt") ORDER BY day
+      `.catch(() => [] as Array<{ day: string; count: bigint }>),
+      prisma.response.groupBy({
+        by: ['elementIdRaw'],
+        where,
+        _count: { elementIdRaw: true },
+        _avg: { rating: true },
+        orderBy: { _count: { elementIdRaw: 'desc' } },
+        take: 10,
+      }),
+      prisma.$queryRaw<Array<{ elementIdRaw: string; selected_option: string; count: bigint }>>`
+        SELECT "elementIdRaw", jsonb_array_elements_text("pollSelected") as selected_option, COUNT(*) as count
+        FROM "Response"
+        WHERE mode = 'POLL' AND "pollSelected" IS NOT NULL
+        AND "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY "elementIdRaw", selected_option
+      `.catch(() => [] as Array<{ elementIdRaw: string; selected_option: string; count: bigint }>),
+      prisma.$queryRaw<Array<{ elementIdRaw: string; option: string }>>`
+        SELECT DISTINCT "elementIdRaw", jsonb_array_elements_text("pollOptions") as option
+        FROM "Response"
+        WHERE mode = 'POLL' AND "pollOptions" IS NOT NULL
+        AND "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+      `.catch(() => [] as Array<{ elementIdRaw: string; option: string }>),
+      prisma.$queryRaw<Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>>`
+        SELECT
+          COUNT(*) FILTER (WHERE rating >= 9) as promoters,
+          COUNT(*) FILTER (WHERE rating >= 7 AND rating < 9) as passives,
+          COUNT(*) FILTER (WHERE rating < 7) as detractors,
+          COUNT(*) as total
+        FROM "Response"
+        WHERE mode = 'NPS' AND rating IS NOT NULL
+        AND "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+      `.catch(() => [] as Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>),
+      prisma.response.groupBy({
+        by: ['rating'],
+        where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
+        _count: { rating: true },
+      }),
+      prisma.$queryRaw<Array<{ dow: number; hour: number; count: bigint }>>`
+        SELECT EXTRACT(DOW FROM "createdAt")::int as dow, EXTRACT(HOUR FROM "createdAt")::int as hour, COUNT(*) as count
+        FROM "Response"
+        WHERE "projectId" IN (
+          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
+          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
+        )
+        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
+        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY 1, 2
+      `.catch(() => [] as Array<{ dow: number; hour: number; count: bigint }>),
+      prisma.response.count({ where: prevWhere }),
+      prisma.response.aggregate({
+        where: { ...prevWhere, rating: { not: null } },
+        _avg: { rating: true },
+      }),
+      prisma.response.groupBy({
+        by: ['vote'],
+        where: { ...prevWhere, vote: { not: null } },
+        _count: { vote: true },
+      }),
+    ]);
+
+    // Post-processing
+    const totalResponses = modeCountsRaw.reduce((sum, m) => sum + m._count.mode, 0);
+    const modeData = modeCountsRaw.map((m) => ({
+      name: m.mode.toLowerCase().replace('_', ' '),
+      value: m._count.mode,
+    }));
+
+    const voteCounts = { UP: 0, DOWN: 0 };
+    voteCountsRaw.forEach((v) => {
+      if (v.vote === 'UP') voteCounts.UP = v._count.vote;
+      if (v.vote === 'DOWN') voteCounts.DOWN = v._count.vote;
+    });
+    const sentimentData = [
+      { name: 'Positive', value: voteCounts.UP, color: '#22c55e' },
+      { name: 'Negative', value: voteCounts.DOWN, color: '#ef4444' },
+    ].filter((d) => d.value > 0);
+    const avgRating = ratingAgg._avg.rating ? ratingAgg._avg.rating.toFixed(1) : null;
+    const positiveRate =
+      voteCounts.UP + voteCounts.DOWN > 0
+        ? Math.round((voteCounts.UP / (voteCounts.UP + voteCounts.DOWN)) * 100)
+        : null;
+
+    // Daily trend
+    const dailyCounts: Record<string, number> = {};
+    const daysToShow = Math.min(daysDiff, 90);
+    for (let i = daysToShow - 1; i >= 0; i--) {
+      const date = new Date(endDate);
+      date.setDate(date.getDate() - i);
+      dailyCounts[date.toISOString().split('T')[0]] = 0;
+    }
+    dailyTrendRaw.forEach((row) => {
+      const key = typeof row.day === 'string' ? row.day.split('T')[0] : new Date(row.day).toISOString().split('T')[0];
+      if (dailyCounts[key] !== undefined) dailyCounts[key] = Number(row.count);
+    });
+    const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      responses: count,
+    }));
+
+    // Poll
+    const pollMap: Record<string, Record<string, number>> = {};
+    for (const row of pollOptionsRaw) {
+      if (!pollMap[row.elementIdRaw]) pollMap[row.elementIdRaw] = {};
+      if (!(row.option in pollMap[row.elementIdRaw])) pollMap[row.elementIdRaw][row.option] = 0;
+    }
+    for (const row of pollCountsRaw) {
+      if (!pollMap[row.elementIdRaw]) pollMap[row.elementIdRaw] = {};
+      pollMap[row.elementIdRaw][row.selected_option] = Number(row.count);
+    }
+    const pollData = Object.entries(pollMap).map(([elId, optionCounts]) => ({
+      elementId: elId,
+      options: Object.entries(optionCounts).map(([name, count]) => ({ name, count })),
+    }));
+
+    // Element performance + vote breakdown
+    const topElementIds = elementPerfRaw.map((e) => e.elementIdRaw);
+    const elementVotes = topElementIds.length > 0
+      ? await prisma.response.groupBy({
+          by: ['elementIdRaw', 'vote'],
+          where: { ...where, elementIdRaw: { in: topElementIds }, vote: { not: null } },
+          _count: { vote: true },
+        })
+      : [];
+    const elementVoteMap: Record<string, { up: number; down: number }> = {};
+    elementVotes.forEach((v) => {
+      if (!elementVoteMap[v.elementIdRaw]) elementVoteMap[v.elementIdRaw] = { up: 0, down: 0 };
+      if (v.vote === 'UP') elementVoteMap[v.elementIdRaw].up = v._count.vote;
+      if (v.vote === 'DOWN') elementVoteMap[v.elementIdRaw].down = v._count.vote;
+    });
+
+    // NPS
+    const npsRow = npsAggRaw[0];
+    const npsResult = npsRow && Number(npsRow.total) > 0
+      ? (() => {
+          const promoters = Number(npsRow.promoters);
+          const passives = Number(npsRow.passives);
+          const detractors = Number(npsRow.detractors);
+          const total = Number(npsRow.total);
+          const promoterPct = Math.round((promoters / total) * 100);
+          const passivePct = Math.round((passives / total) * 100);
+          const detractorPct = Math.round((detractors / total) * 100);
+          return { score: promoterPct - detractorPct, promoters, passives, detractors, promoterPct, passivePct, detractorPct, total };
+        })()
+      : null;
+
+    const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => {
+      const found = ratingDistRaw.find((r) => r.rating === rating);
+      return { rating, count: found ? found._count.rating : 0 };
+    });
+
+    const heatmapData = heatmapRaw.map((row) => ({
+      dow: row.dow === 0 ? 6 : row.dow - 1,
+      hour: row.hour,
+      count: Number(row.count),
+    }));
+
+    // Deltas
+    const prevVoteCounts = { UP: 0, DOWN: 0 };
+    prevVoteCountsRaw.forEach((v) => {
+      if (v.vote === 'UP') prevVoteCounts.UP = v._count.vote;
+      if (v.vote === 'DOWN') prevVoteCounts.DOWN = v._count.vote;
+    });
+    const prevPositiveRate = prevVoteCounts.UP + prevVoteCounts.DOWN > 0
+      ? Math.round((prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100)
+      : null;
+    const prevAvgRating = prevRatingAgg._avg.rating ? Number(prevRatingAgg._avg.rating.toFixed(1)) : null;
+
+    const elementPerformance = elementPerfRaw.map((e) => {
+      const votes = elementVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
+      const totalVotes = votes.up + votes.down;
+      return {
+        elementId: e.elementIdRaw,
+        total: e._count.elementIdRaw,
+        avgRating: e._avg.rating ? Number(e._avg.rating.toFixed(1)) : null,
+        positiveRate: totalVotes > 0 ? Math.round((votes.up / totalVotes) * 100) : null,
+      };
+    });
+
+    return {
+      totalResponses,
+      avgRating,
+      positiveRate,
+      modeData,
+      sentimentData,
+      trendData,
+      pollData,
+      elementPerformance,
+      npsResult,
+      ratingDistribution,
+      heatmapData,
+      deltas: {
+        totalResponses: prevCount > 0 ? Math.round(((totalResponses - prevCount) / prevCount) * 100) : null,
+        avgRating: avgRating !== null && prevAvgRating !== null ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1)) : null,
+        positiveRate: positiveRate !== null && prevPositiveRate !== null ? positiveRate - prevPositiveRate : null,
+      },
+    };
+  },
+  ['analytics-overview'],
+  { revalidate: 60 }
+);
 
 interface PageProps {
   searchParams: Promise<{
@@ -174,309 +467,17 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
   // ── Tab-specific data fetching ──────────────────────────────────
 
-  // Overview tab data
+  // Overview tab data (cached — 60s revalidation)
   let overviewData = null;
   if (activeTab === 'overview') {
-    // ── Comparison period ──────────────────────────────────────────
-    const periodMs = endDate.getTime() - startDate.getTime();
-    const prevEnd = new Date(startDate.getTime() - 1);
-    const prevStart = new Date(prevEnd.getTime() - periodMs);
-
-    const prevWhere = {
-      project: {
-        organizationId: organization.id,
-        ...(projectId && { id: projectId }),
-      },
-      ...(elementId && { elementIdRaw: elementId }),
-      createdAt: { gte: prevStart, lte: prevEnd },
-    };
-
-    const [
-      modeCountsRaw,
-      ratingAgg,
-      voteCountsRaw,
-      dailyTrendRaw,
-      elementPerfRaw,
-      pollResponses,
-      npsAggRaw,
-      ratingDistRaw,
-      heatmapRaw,
-      prevCount,
-      prevRatingAgg,
-      prevVoteCountsRaw,
-    ] = await Promise.all([
-      prisma.response.groupBy({
-        by: ['mode'],
-        where,
-        _count: { mode: true },
-      }),
-      prisma.response.aggregate({
-        where: { ...where, rating: { not: null } },
-        _avg: { rating: true },
-        _count: { rating: true },
-      }),
-      prisma.response.groupBy({
-        by: ['vote'],
-        where: { ...where, vote: { not: null } },
-        _count: { vote: true },
-      }),
-      prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
-        SELECT DATE("createdAt") as day, COUNT(*) as count
-        FROM "Response"
-        WHERE "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate}
-        AND "createdAt" <= ${endDate}
-        GROUP BY DATE("createdAt")
-        ORDER BY day
-      `.catch(() => [] as Array<{ day: string; count: bigint }>),
-      prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where,
-        _count: { elementIdRaw: true },
-        _avg: { rating: true },
-        orderBy: { _count: { elementIdRaw: 'desc' } },
-        take: 10,
-      }),
-      prisma.response.findMany({
-        where: { ...where, mode: 'POLL' },
-        take: 10000,
-        select: {
-          elementIdRaw: true,
-          pollOptions: true,
-          pollSelected: true,
-        },
-      }),
-      // NPS: count promoters/passives/detractors in SQL instead of fetching 10K rows
-      prisma.$queryRaw<Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>>`
-        SELECT
-          COUNT(*) FILTER (WHERE rating >= 9) as promoters,
-          COUNT(*) FILTER (WHERE rating >= 7 AND rating < 9) as passives,
-          COUNT(*) FILTER (WHERE rating < 7) as detractors,
-          COUNT(*) as total
-        FROM "Response"
-        WHERE mode = 'NPS' AND rating IS NOT NULL
-        AND "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate}
-        AND "createdAt" <= ${endDate}
-      `.catch(() => [] as Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>),
-      // Rating distribution (1–5)
-      prisma.response.groupBy({
-        by: ['rating'],
-        where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
-        _count: { rating: true },
-      }),
-      // Heatmap: day-of-week x hour
-      prisma.$queryRaw<Array<{ dow: number; hour: number; count: bigint }>>`
-        SELECT EXTRACT(DOW FROM "createdAt")::int as dow,
-               EXTRACT(HOUR FROM "createdAt")::int as hour,
-               COUNT(*) as count
-        FROM "Response"
-        WHERE "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate}
-        AND "createdAt" <= ${endDate}
-        GROUP BY 1, 2
-      `.catch(() => [] as Array<{ dow: number; hour: number; count: bigint }>),
-      // Previous period: total count
-      prisma.response.count({ where: prevWhere }),
-      // Previous period: avg rating
-      prisma.response.aggregate({
-        where: { ...prevWhere, rating: { not: null } },
-        _avg: { rating: true },
-      }),
-      // Previous period: vote counts
-      prisma.response.groupBy({
-        by: ['vote'],
-        where: { ...prevWhere, vote: { not: null } },
-        _count: { vote: true },
-      }),
-    ]);
-
-    const totalResponses = modeCountsRaw.reduce((sum, m) => sum + m._count.mode, 0);
-
-    const modeData = modeCountsRaw.map((m) => ({
-      name: m.mode.toLowerCase().replace('_', ' '),
-      value: m._count.mode,
-    }));
-
-    const voteCounts = { UP: 0, DOWN: 0 };
-    voteCountsRaw.forEach((v) => {
-      if (v.vote === 'UP') voteCounts.UP = v._count.vote;
-      if (v.vote === 'DOWN') voteCounts.DOWN = v._count.vote;
-    });
-
-    const sentimentData = [
-      { name: 'Positive', value: voteCounts.UP, color: '#22c55e' },
-      { name: 'Negative', value: voteCounts.DOWN, color: '#ef4444' },
-    ].filter((d) => d.value > 0);
-
-    const avgRating = ratingAgg._avg.rating ? ratingAgg._avg.rating.toFixed(1) : null;
-
-    const positiveRate =
-      voteCounts.UP + voteCounts.DOWN > 0
-        ? Math.round((voteCounts.UP / (voteCounts.UP + voteCounts.DOWN)) * 100)
-        : null;
-
-    // Format daily trend
-    const dailyCounts: Record<string, number> = {};
-    const daysToShow = Math.min(daysDiff, 90);
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(endDate);
-      date.setDate(date.getDate() - i);
-      const key = date.toISOString().split('T')[0];
-      dailyCounts[key] = 0;
-    }
-    dailyTrendRaw.forEach((row) => {
-      const key =
-        typeof row.day === 'string'
-          ? row.day.split('T')[0]
-          : new Date(row.day).toISOString().split('T')[0];
-      if (dailyCounts[key] !== undefined) {
-        dailyCounts[key] = Number(row.count);
-      }
-    });
-
-    const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      responses: count,
-    }));
-
-    // Poll aggregation
-    const pollMap: Record<string, { elementId: string; optionCounts: Record<string, number> }> = {};
-    pollResponses.forEach((r) => {
-      if (!Array.isArray(r.pollSelected) || r.pollSelected.length === 0) return;
-      if (!pollMap[r.elementIdRaw]) {
-        const allOptions = Array.isArray(r.pollOptions) ? (r.pollOptions as string[]) : [];
-        const optionCounts: Record<string, number> = {};
-        allOptions.forEach((opt) => (optionCounts[opt] = 0));
-        pollMap[r.elementIdRaw] = { elementId: r.elementIdRaw, optionCounts };
-      }
-      (r.pollSelected as string[]).forEach((sel) => {
-        pollMap[r.elementIdRaw].optionCounts[sel] =
-          (pollMap[r.elementIdRaw].optionCounts[sel] || 0) + 1;
-      });
-    });
-    const pollData = Object.values(pollMap).map((p) => ({
-      elementId: p.elementId,
-      options: Object.entries(p.optionCounts).map(([name, count]) => ({ name, count })),
-    }));
-
-    // Element performance — get vote breakdown per element for top 10
-    const topElementIds = elementPerfRaw.map((e) => e.elementIdRaw);
-    const elementVotes =
-      topElementIds.length > 0
-        ? await prisma.response.groupBy({
-            by: ['elementIdRaw', 'vote'],
-            where: { ...where, elementIdRaw: { in: topElementIds }, vote: { not: null } },
-            _count: { vote: true },
-          })
-        : [];
-
-    const elementVoteMap: Record<string, { up: number; down: number }> = {};
-    elementVotes.forEach((v) => {
-      if (!elementVoteMap[v.elementIdRaw]) elementVoteMap[v.elementIdRaw] = { up: 0, down: 0 };
-      if (v.vote === 'UP') elementVoteMap[v.elementIdRaw].up = v._count.vote;
-      if (v.vote === 'DOWN') elementVoteMap[v.elementIdRaw].down = v._count.vote;
-    });
-
-    // Build NPS result from SQL aggregation
-    const npsRow = npsAggRaw[0];
-    const npsResult = npsRow && Number(npsRow.total) > 0
-      ? (() => {
-          const promoters = Number(npsRow.promoters);
-          const passives = Number(npsRow.passives);
-          const detractors = Number(npsRow.detractors);
-          const total = Number(npsRow.total);
-          const promoterPct = Math.round((promoters / total) * 100);
-          const passivePct = Math.round((passives / total) * 100);
-          const detractorPct = Math.round((detractors / total) * 100);
-          return {
-            score: promoterPct - detractorPct,
-            promoters,
-            passives,
-            detractors,
-            promoterPct,
-            passivePct,
-            detractorPct,
-            total,
-          };
-        })()
-      : null;
-
-    // Rating distribution — fill in all 1–5 values
-    const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => {
-      const found = ratingDistRaw.find((r) => r.rating === rating);
-      return { rating, count: found ? found._count.rating : 0 };
-    });
-
-    // Heatmap — convert DOW (Postgres: 0=Sun) to Mon-first (0=Mon)
-    const heatmapData = heatmapRaw.map((row) => ({
-      dow: row.dow === 0 ? 6 : row.dow - 1, // Sun(0)->6, Mon(1)->0, etc.
-      hour: row.hour,
-      count: Number(row.count),
-    }));
-
-    // Comparison deltas
-    const prevVoteCounts = { UP: 0, DOWN: 0 };
-    prevVoteCountsRaw.forEach((v) => {
-      if (v.vote === 'UP') prevVoteCounts.UP = v._count.vote;
-      if (v.vote === 'DOWN') prevVoteCounts.DOWN = v._count.vote;
-    });
-    const prevPositiveRate =
-      prevVoteCounts.UP + prevVoteCounts.DOWN > 0
-        ? Math.round((prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100)
-        : null;
-    const prevAvgRating = prevRatingAgg._avg.rating
-      ? Number(prevRatingAgg._avg.rating.toFixed(1))
-      : null;
-
-    const deltas = {
-      totalResponses:
-        prevCount > 0 ? Math.round(((totalResponses - prevCount) / prevCount) * 100) : null,
-      avgRating:
-        avgRating !== null && prevAvgRating !== null
-          ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1))
-          : null,
-      positiveRate:
-        positiveRate !== null && prevPositiveRate !== null ? positiveRate - prevPositiveRate : null,
-    };
-
-    const elementPerformance = elementPerfRaw.map((e) => {
-      const votes = elementVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
-      const totalVotes = votes.up + votes.down;
-      return {
-        elementId: e.elementIdRaw,
-        total: e._count.elementIdRaw,
-        avgRating: e._avg.rating ? Number(e._avg.rating.toFixed(1)) : null,
-        positiveRate: totalVotes > 0 ? Math.round((votes.up / totalVotes) * 100) : null,
-      };
-    });
-
-    overviewData = {
-      totalResponses,
-      avgRating,
-      positiveRate,
-      modeData,
-      sentimentData,
-      trendData,
-      pollData,
-      elementPerformance,
-      npsResult,
-      ratingDistribution,
-      heatmapData,
-      deltas,
-    };
+    overviewData = await fetchOverviewData(
+      organization.id,
+      projectId ?? '',
+      elementId ?? '',
+      startDate.toISOString(),
+      endDate.toISOString(),
+      daysDiff
+    );
   }
 
   // Elements tab data

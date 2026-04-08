@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { Pagination } from '../responses/pagination';
 import {
   Table,
   TableBody,
@@ -57,8 +58,10 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   CRITICAL: { label: 'Critical', className: 'bg-red-50/80 text-red-700 border-red-200/60' },
 };
 
+const LIMIT = 20;
+
 interface PageProps {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }
 
 export default async function BugsPage({ searchParams }: PageProps) {
@@ -146,6 +149,9 @@ export default async function BugsPage({ searchParams }: PageProps) {
 
   const projectIds = (organization.projects ?? []).map((p) => p.id);
 
+  // Parse pagination
+  const page = Math.max(1, parseInt(params.page || '1', 10));
+
   // Filter by status tab
   const statusFilter = params.status || 'active';
   const where: Record<string, unknown> = {
@@ -160,11 +166,13 @@ export default async function BugsPage({ searchParams }: PageProps) {
     where.status = statusFilter;
   }
 
-  // Get bugs + counts in parallel
-  const [bugs, counts] = await Promise.all([
+  // Get bugs (paginated) + total count + status counts in parallel
+  const [bugs, filteredCount, counts] = await Promise.all([
     prisma.bugTicket.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: LIMIT,
+      skip: (page - 1) * LIMIT,
       include: {
         response: {
           select: { mode: true, content: true, rating: true, vote: true },
@@ -172,12 +180,14 @@ export default async function BugsPage({ searchParams }: PageProps) {
         project: { select: { name: true } },
       },
     }),
+    prisma.bugTicket.count({ where }),
     prisma.bugTicket.groupBy({
       by: ['status'],
       where: { projectId: { in: projectIds } },
       _count: true,
     }),
   ]);
+  const totalPages = Math.ceil(filteredCount / LIMIT);
 
   const countMap: Record<string, number> = {};
   let totalCount = 0;
@@ -358,6 +368,13 @@ export default async function BugsPage({ searchParams }: PageProps) {
                 })}
               </TableBody>
             </Table>
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              total={filteredCount}
+              basePath="/dashboard/bugs"
+              itemLabel="bugs"
+            />
           </div>
         </Card>
       )}

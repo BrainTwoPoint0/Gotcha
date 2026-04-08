@@ -23,7 +23,7 @@ interface ActiveOrg {
       status: string;
       responsesThisMonth: number;
       stripeCustomerId?: string | null;
-      [key: string]: unknown;
+      stripeSubId?: string | null;
     } | null;
     projects?: { id: string }[];
   };
@@ -59,7 +59,15 @@ export async function fetchActiveOrganization(userEmail: string): Promise<Active
         include: {
           organization: {
             include: {
-              subscription: true,
+              subscription: {
+                select: {
+                  plan: true,
+                  status: true,
+                  responsesThisMonth: true,
+                  stripeCustomerId: true,
+                  stripeSubId: true,
+                },
+              },
               projects: { select: { id: true } },
             },
           },
