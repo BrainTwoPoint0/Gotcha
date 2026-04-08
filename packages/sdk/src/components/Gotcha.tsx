@@ -302,7 +302,12 @@ export function Gotcha({
 
   const handleOpen = useCallback(() => {
     if (containerRef.current) {
-      setAnchorRect(containerRef.current.getBoundingClientRect());
+      // Measure the actual button element, not the container div.
+      // The container (inline-flex) can be larger than the button due to
+      // line-height, baseline alignment, or inherited layout styles from
+      // the parent — causing the modal to appear with a gap.
+      const button = containerRef.current.querySelector('button');
+      setAnchorRect((button ?? containerRef.current).getBoundingClientRect());
     }
     openModal(elementId);
     onOpen?.();

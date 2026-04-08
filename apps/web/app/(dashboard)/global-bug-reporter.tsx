@@ -25,7 +25,7 @@ export function GlobalBugReporter({ userEmail, userName, plan }: GlobalBugReport
         customStyles={{
           modal: {
             left: 'auto',
-            right: 0,
+            right: 40,
             transform: 'none',
           },
         }}
