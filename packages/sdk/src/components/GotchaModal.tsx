@@ -215,7 +215,7 @@ export function GotchaModal({
     : useFixedPosition && anchorRect && viewportHeight
     ? (() => {
         const viewportWidth = window.innerWidth;
-        const edgePadding = 12;
+        const edgePadding = 24;
         const centerX = anchorRect.left + anchorRect.width / 2;
         // Clamp so modal stays within viewport
         const idealLeft = centerX - modalWidth / 2;
