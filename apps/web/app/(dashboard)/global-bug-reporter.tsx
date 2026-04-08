@@ -22,13 +22,6 @@ export function GlobalBugReporter({ userEmail, userName, plan }: GlobalBugReport
         enableBugFlag
         showOnHover={false}
         onePerUser={false}
-        customStyles={{
-          modal: {
-            left: 'auto',
-            right: 40,
-            transform: 'none',
-          },
-        }}
         user={
           userEmail
             ? {
