@@ -352,7 +352,7 @@ export default function DemoPage() {
             </div>
           </section>
 
-          {/* New in 1.1.6 */}
+          {/* New Features */}
           <section className="mb-12">
             <h2 className="text-xl font-semibold mb-1">New Features</h2>
             <p className="text-gray-500 text-sm mb-4">Added in the latest release</p>
