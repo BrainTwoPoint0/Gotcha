@@ -7,6 +7,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: ['react', 'react-dom'],
+  noExternal: ['modern-screenshot'],
   minify: true,
   treeshake: true,
 });

@@ -4,16 +4,16 @@ import { HoverEffect } from '@/app/components/ui/aceternity/card-hover-effect';
 
 const features = [
   {
-    title: 'Feedback Where It Matters',
+    title: 'Automatic Context on Every Response',
     description:
-      'Users speak up right where they experience features — not in a separate survey buried in email.',
+      'Every submission captures page URL, viewport, timezone, language, and recent JS errors — automatically. No setup required.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
         />
       </svg>
     ),
@@ -79,16 +79,16 @@ const features = [
     ),
   },
   {
-    title: 'Built for How You Already Work',
+    title: 'Follow-Up Questions',
     description:
-      'TypeScript, React hooks, customizable themes, and full API access. ~11KB gzipped.',
+      'When a user gives a low rating or downvote, automatically ask why. Turn a number into an insight without a second survey.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
         />
       </svg>
     ),

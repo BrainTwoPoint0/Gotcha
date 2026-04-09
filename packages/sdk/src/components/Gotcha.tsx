@@ -90,7 +90,7 @@ export interface GotchaProps {
   enableBugFlag?: boolean;
   /** Custom label for the bug flag toggle (default: "Report an issue") */
   bugFlagLabel?: string;
-  /** Enable screenshot capture when bug flag is toggled (requires html2canvas peer dep, falls back to native API) */
+  /** Enable screenshot capture when bug flag is toggled (uses modern-screenshot, bundled — no extra install needed) */
   enableScreenshot?: boolean;
 
   // Deduplication

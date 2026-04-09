@@ -14,8 +14,8 @@ export default function HomePage() {
       <section className="py-24 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Integrate in 3 lines of code</h2>
-            <p className="text-gray-400">Seriously, that&apos;s all it takes.</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Integrate in minutes</h2>
+            <p className="text-gray-400">One provider, one component. Advanced features are one prop away.</p>
           </div>
           <div className="bg-white/[0.06] backdrop-blur-md border border-white/[0.08] shadow-[0_4px_12px_rgba(0,0,0,0.3)] rounded-2xl p-6 overflow-hidden">
             <div className="flex items-center gap-2 mb-4">
@@ -31,10 +31,12 @@ export default function HomePage() {
   <App />
 </GotchaProvider>
 
-// Star ratings, votes, NPS, polls, or bug reports
+// Ratings, votes, NPS, polls, bug reports, smart triggers
 <Gotcha elementId="new-feature" />
 <Gotcha elementId="checkout" mode="nps" />
-<Gotcha elementId="search" mode="vote" />`}</code>
+<Gotcha elementId="search" mode="vote" />
+<Gotcha elementId="pricing" showAfterScrollPercent={75} />
+<Gotcha elementId="app" enableBugFlag enableScreenshot />`}</code>
             </pre>
           </div>
           <div className="text-center mt-6">
@@ -105,6 +107,10 @@ export default function HomePage() {
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 mt-0.5">✓</span>Team workspaces, export, and
                   analytics
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">✓</span>Auto-captures browser context,
+                  screenshots & JS errors
                 </li>
               </ul>
             </div>

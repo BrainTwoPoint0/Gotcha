@@ -45,6 +45,7 @@ export function FeedbackMode({
   const [isTouch, setIsTouch] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [capturingScreenshot, setCapturingScreenshot] = useState(false);
+  const [screenshotError, setScreenshotError] = useState(false);
 
   useEffect(() => {
     setIsTouch(isTouchDevice());
@@ -68,12 +69,19 @@ export function FeedbackMode({
 
   const handleScreenshotCapture = async () => {
     setCapturingScreenshot(true);
+    setScreenshotError(false);
     try {
       const { captureScreenshot } = await import('../../utils/screenshot');
       const result = await captureScreenshot();
-      if (result) setScreenshot(result);
+      if (result) {
+        setScreenshot(result);
+      } else {
+        setScreenshotError(true);
+        setTimeout(() => setScreenshotError(false), 3000);
+      }
     } catch {
-      // Capture failed silently
+      setScreenshotError(true);
+      setTimeout(() => setScreenshotError(false), 3000);
     } finally {
       setCapturingScreenshot(false);
     }
@@ -284,6 +292,18 @@ export function FeedbackMode({
           )}
           {capturingScreenshot ? 'Capturing...' : 'Capture screenshot'}
         </button>
+      )}
+
+      {screenshotError && (
+        <div style={{
+          fontSize: 11,
+          color: t.colors.textSecondary,
+          marginTop: 4,
+          padding: '4px 0',
+          fontFamily: t.typography.fontFamily,
+        }}>
+          Screenshot capture unavailable
+        </div>
       )}
 
       {/* Screenshot preview */}

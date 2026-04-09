@@ -95,6 +95,78 @@ export default function DemoPage() {
             </div>
           </section>
 
+          {/* Smart Behaviors */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold mb-4">Smart Behaviors</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Follow-up Questions
+                  <Gotcha
+                    elementId="demo-follow-up"
+                    mode="feedback"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Rate this feature"
+                    followUp={{
+                      ratingThreshold: 2,
+                      promptText: "What could we improve?",
+                      placeholder: "Tell us more...",
+                    }}
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Give 1-2 stars to see the follow-up prompt</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Bug Report + Screenshot
+                  <Gotcha
+                    elementId="demo-bug-screenshot"
+                    mode="feedback"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Report a bug"
+                    enableBugFlag
+                    enableScreenshot
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Toggle the bug flag to see screenshot capture</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Delayed Trigger
+                  <Gotcha
+                    elementId="demo-delayed"
+                    mode="feedback"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Delayed feedback"
+                    showAfterSeconds={3}
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Widget appears after 3 seconds</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  Scroll Trigger
+                  <Gotcha
+                    elementId="demo-scroll-trigger"
+                    mode="feedback"
+                    size="sm"
+                    position="inline"
+                    showOnHover={false}
+                    promptText="Scroll-triggered feedback"
+                    showAfterScrollPercent={50}
+                  />
+                </h3>
+                <p className="text-gray-500 text-sm">Widget appears after scrolling 50% of the page</p>
+              </div>
+            </div>
+          </section>
+
           {/* Sizes */}
           <section className="mb-8 md:mb-12">
             <h2 className="text-xl font-semibold mb-4">Sizes</h2>
@@ -348,64 +420,6 @@ export default function DemoPage() {
                     promptText="How do you like dark mode?"
                   />
                 </div>
-              </div>
-            </div>
-          </section>
-
-          {/* New Features */}
-          <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-1">New Features</h2>
-            <p className="text-gray-500 text-sm mb-4">Added in the latest release</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-6 rounded-lg shadow-md border">
-                <h3 className="font-medium mb-2 flex items-center gap-2">
-                  Follow-up Questions
-                  <Gotcha
-                    elementId="demo-follow-up"
-                    mode="feedback"
-                    size="sm"
-                    position="inline"
-                    showOnHover={false}
-                    promptText="Rate this feature"
-                    followUp={{
-                      ratingThreshold: 2,
-                      promptText: "What could we improve?",
-                      placeholder: "Tell us more...",
-                    }}
-                  />
-                </h3>
-                <p className="text-gray-500 text-sm">Give 1-2 stars to see the follow-up prompt</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
-                <h3 className="font-medium mb-2 flex items-center gap-2">
-                  Bug Report + Screenshot
-                  <Gotcha
-                    elementId="demo-bug-screenshot"
-                    mode="feedback"
-                    size="sm"
-                    position="inline"
-                    showOnHover={false}
-                    promptText="Report a bug"
-                    enableBugFlag
-                    enableScreenshot
-                  />
-                </h3>
-                <p className="text-gray-500 text-sm">Toggle the bug flag to see screenshot capture</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border">
-                <h3 className="font-medium mb-2 flex items-center gap-2">
-                  Delayed Trigger
-                  <Gotcha
-                    elementId="demo-delayed"
-                    mode="feedback"
-                    size="sm"
-                    position="inline"
-                    showOnHover={false}
-                    promptText="Delayed feedback"
-                    showAfterSeconds={3}
-                  />
-                </h3>
-                <p className="text-gray-500 text-sm">Widget appears after 3 seconds</p>
               </div>
             </div>
           </section>

@@ -80,8 +80,8 @@ export function HeroSection() {
           </motion.div>
           <motion.div variants={itemVariants}>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Attach feedback to any component — right where your users experience your features. No
-              surveys. No guessing.
+              Ratings, votes, NPS, polls, and bug reports — attached to any component with smart
+              triggers, automatic context capture, and follow-up questions built in.
             </p>
           </motion.div>
           <motion.div variants={itemVariants}>

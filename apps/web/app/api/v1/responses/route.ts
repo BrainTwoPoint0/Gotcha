@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
         }
 
         const bugDescription = descParts.join('\n\n') || 'No details provided';
-        prisma.bugTicket.create({
+        const bugTicket = await prisma.bugTicket.create({
           data: {
             projectId: apiKey.projectId,
             responseId,
@@ -241,18 +241,19 @@ export async function POST(request: NextRequest) {
                   : null,
             reporterName: typeof data.user?.name === 'string' ? data.user.name : null,
           },
-        }).then((bugTicket) => {
-          if (apiKey.plan === 'PRO') {
-            sendBugReportEmail(apiKey.organizationId, {
-              id: bugTicket.id,
-              title: bugTitle,
-              description: bugDescription,
-              elementId: data.elementId,
-              pageUrl: data.context?.url || null,
-              projectId: apiKey.projectId,
-            }).catch(console.error);
-          }
-        }).catch(console.error);
+        });
+
+        // Send bug report email (PRO only, non-blocking)
+        if (apiKey.plan === 'PRO') {
+          sendBugReportEmail(apiKey.organizationId, {
+            id: bugTicket.id,
+            title: bugTitle,
+            description: bugDescription,
+            elementId: data.elementId,
+            pageUrl: data.context?.url || null,
+            projectId: apiKey.projectId,
+          }).catch(console.error);
+        }
       }
     };
 

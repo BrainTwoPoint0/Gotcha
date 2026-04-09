@@ -69,17 +69,17 @@ const fetchOverviewData = unstable_cache(
       prevRatingAgg,
       prevVoteCountsRaw,
     ] = await Promise.all([
-      prisma.response.groupBy({ by: ['mode'], where, _count: { mode: true } }),
+      prisma.response.groupBy({ by: ['mode'], where, _count: { mode: true } }).catch(() => []),
       prisma.response.aggregate({
         where: { ...where, rating: { not: null } },
         _avg: { rating: true },
         _count: { rating: true },
-      }),
+      }).catch(() => ({ _avg: { rating: null }, _count: { rating: 0 } })),
       prisma.response.groupBy({
         by: ['vote'],
         where: { ...where, vote: { not: null } },
         _count: { vote: true },
-      }),
+      }).catch(() => []),
       prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
         SELECT DATE("createdAt") as day, COUNT(*) as count
         FROM "Response"
@@ -98,7 +98,7 @@ const fetchOverviewData = unstable_cache(
         _avg: { rating: true },
         orderBy: { _count: { elementIdRaw: 'desc' } },
         take: 10,
-      }),
+      }).catch(() => []),
       prisma.$queryRaw<Array<{ elementIdRaw: string; selected_option: string; count: bigint }>>`
         SELECT "elementIdRaw", jsonb_array_elements_text("pollSelected") as selected_option, COUNT(*) as count
         FROM "Response"
@@ -141,7 +141,7 @@ const fetchOverviewData = unstable_cache(
         by: ['rating'],
         where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
         _count: { rating: true },
-      }),
+      }).catch(() => []),
       prisma.$queryRaw<Array<{ dow: number; hour: number; count: bigint }>>`
         SELECT EXTRACT(DOW FROM "createdAt")::int as dow, EXTRACT(HOUR FROM "createdAt")::int as hour, COUNT(*) as count
         FROM "Response"
@@ -153,16 +153,16 @@ const fetchOverviewData = unstable_cache(
         AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
         GROUP BY 1, 2
       `.catch(() => [] as Array<{ dow: number; hour: number; count: bigint }>),
-      prisma.response.count({ where: prevWhere }),
+      prisma.response.count({ where: prevWhere }).catch(() => 0),
       prisma.response.aggregate({
         where: { ...prevWhere, rating: { not: null } },
         _avg: { rating: true },
-      }),
+      }).catch(() => ({ _avg: { rating: null } })),
       prisma.response.groupBy({
         by: ['vote'],
         where: { ...prevWhere, vote: { not: null } },
         _count: { vote: true },
-      }),
+      }).catch(() => []),
     ]);
 
     // Post-processing
