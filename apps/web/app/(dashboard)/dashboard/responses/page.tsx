@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
+import { getAvailableTags } from '@/lib/analytics-queries';
 import { ResponsesFilter } from './responses-filter';
-import { Pagination } from './pagination';
+import { Pagination } from '../../components/pagination';
 import { ExportButton } from './export-button';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Card } from '@/components/ui/card';
@@ -134,12 +135,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
             },
           },
         }) as unknown as Promise<ResponseItem[]>,
-        prisma.$queryRaw<{ tag: string; count: bigint }[]>`
-          SELECT unnest(tags) as tag, COUNT(*) as count
-          FROM "Response"
-          WHERE "projectId" IN (SELECT id FROM "Project" WHERE "organizationId" = ${organization.id})
-          GROUP BY tag ORDER BY count DESC
-        `,
+        getAvailableTags(organization.id),
       ])
     : [[], 0, 0, [] as ResponseItem[], [] as { tag: string; count: bigint }[]];
 

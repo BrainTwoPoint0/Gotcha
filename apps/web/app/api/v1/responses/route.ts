@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey, apiError, apiSuccess, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import {
@@ -259,6 +260,9 @@ export async function POST(request: NextRequest) {
 
     // Await DB writes to ensure they complete before Lambda freezes
     await asyncWrite();
+
+    // Invalidate cached analytics so dashboards show fresh data
+    try { revalidateTag('analytics-overview'); } catch { /* no-op outside Next.js request context */ }
 
     // Fire webhooks for PRO orgs (non-blocking, OK to lose on Lambda freeze)
     if (apiKey.plan === 'PRO') {

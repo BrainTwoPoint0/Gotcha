@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
-import { Pagination } from '../responses/pagination';
+import { Pagination } from '../../components/pagination';
 import {
   Table,
   TableBody,

@@ -1,7 +1,11 @@
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
+import {
+  getDailyTrend, getPollSelectedCounts, getPollAvailableOptions,
+  getNpsAggregation, getHeatmap, getElementSparklines,
+  getDailyTrends, getDailyNpsRatings, getPivotData,
+} from '@/lib/analytics-queries';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
 import { AnalyticsFilter } from './analytics-filter';
@@ -80,17 +84,7 @@ const fetchOverviewData = unstable_cache(
         where: { ...where, vote: { not: null } },
         _count: { vote: true },
       }).catch(() => []),
-      prisma.$queryRaw<Array<{ day: string; count: bigint }>>`
-        SELECT DATE("createdAt") as day, COUNT(*) as count
-        FROM "Response"
-        WHERE "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-        GROUP BY DATE("createdAt") ORDER BY day
-      `.catch(() => [] as Array<{ day: string; count: bigint }>),
+      getDailyTrend(orgId, projectId, elementId, startDate, endDate),
       prisma.response.groupBy({
         by: ['elementIdRaw'],
         where,
@@ -99,60 +93,15 @@ const fetchOverviewData = unstable_cache(
         orderBy: { _count: { elementIdRaw: 'desc' } },
         take: 10,
       }).catch(() => []),
-      prisma.$queryRaw<Array<{ elementIdRaw: string; selected_option: string; count: bigint }>>`
-        SELECT "elementIdRaw", jsonb_array_elements_text("pollSelected") as selected_option, COUNT(*) as count
-        FROM "Response"
-        WHERE mode = 'POLL' AND "pollSelected" IS NOT NULL
-        AND "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-        GROUP BY "elementIdRaw", selected_option
-      `.catch(() => [] as Array<{ elementIdRaw: string; selected_option: string; count: bigint }>),
-      prisma.$queryRaw<Array<{ elementIdRaw: string; option: string }>>`
-        SELECT DISTINCT "elementIdRaw", jsonb_array_elements_text("pollOptions") as option
-        FROM "Response"
-        WHERE mode = 'POLL' AND "pollOptions" IS NOT NULL
-        AND "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-      `.catch(() => [] as Array<{ elementIdRaw: string; option: string }>),
-      prisma.$queryRaw<Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>>`
-        SELECT
-          COUNT(*) FILTER (WHERE rating >= 9) as promoters,
-          COUNT(*) FILTER (WHERE rating >= 7 AND rating < 9) as passives,
-          COUNT(*) FILTER (WHERE rating < 7) as detractors,
-          COUNT(*) as total
-        FROM "Response"
-        WHERE mode = 'NPS' AND rating IS NOT NULL
-        AND "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-      `.catch(() => [] as Array<{ promoters: bigint; passives: bigint; detractors: bigint; total: bigint }>),
+      getPollSelectedCounts(orgId, projectId, elementId, startDate, endDate),
+      getPollAvailableOptions(orgId, projectId, elementId, startDate, endDate),
+      getNpsAggregation(orgId, projectId, elementId, startDate, endDate),
       prisma.response.groupBy({
         by: ['rating'],
         where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
         _count: { rating: true },
       }).catch(() => []),
-      prisma.$queryRaw<Array<{ dow: number; hour: number; count: bigint }>>`
-        SELECT EXTRACT(DOW FROM "createdAt")::int as dow, EXTRACT(HOUR FROM "createdAt")::int as hour, COUNT(*) as count
-        FROM "Response"
-        WHERE "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${orgId}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-        GROUP BY 1, 2
-      `.catch(() => [] as Array<{ dow: number; hour: number; count: bigint }>),
+      getHeatmap(orgId, projectId, elementId, startDate, endDate),
       prisma.response.count({ where: prevWhere }).catch(() => 0),
       prisma.response.aggregate({
         where: { ...prevWhere, rating: { not: null } },
@@ -303,7 +252,7 @@ const fetchOverviewData = unstable_cache(
     };
   },
   ['analytics-overview'],
-  { revalidate: 60 }
+  { revalidate: 60, tags: ['analytics-overview'] }
 );
 
 interface PageProps {
@@ -497,34 +446,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         where: { ...where, vote: { not: null } },
         _count: { vote: true },
       }),
-      // Sparkline: daily avg rating per element (top 20)
-      prisma.$queryRaw<Array<{ element: string; day: string; avg: number }>>`
-          SELECT "elementIdRaw" as element, DATE("createdAt") as day, AVG("rating") as avg
-          FROM "Response"
-          WHERE "projectId" IN (
-            SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-            ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-          )
-          ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-          AND "createdAt" >= ${startDate}
-          AND "createdAt" <= ${endDate}
-          AND "rating" IS NOT NULL
-          AND "elementIdRaw" IN (
-            SELECT "elementIdRaw" FROM "Response"
-            WHERE "projectId" IN (
-              SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-              ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-            )
-            ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-            AND "createdAt" >= ${startDate}
-            AND "createdAt" <= ${endDate}
-            GROUP BY "elementIdRaw"
-            ORDER BY COUNT(*) DESC
-            LIMIT 20
-          )
-          GROUP BY 1, 2
-          ORDER BY 1, 2
-        `.catch(() => [] as Array<{ element: string; day: string; avg: number }>),
+      getElementSparklines(organization.id, projectId, elementId, startDate, endDate),
     ]);
 
     // Overall averages (exclude archived elements so benchmarks reflect visible data only)
@@ -809,51 +731,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   // Trends tab data
   let trendsTabData = null;
   if (activeTab === 'trends') {
-    const trendsRaw = await prisma.$queryRaw<
-      Array<{
-        day: string;
-        avg_rating: number | null;
-        response_count: bigint;
-        up_count: bigint;
-        down_count: bigint;
-      }>
-    >`
-      SELECT
-        DATE("createdAt") as day,
-        AVG(CASE WHEN "rating" IS NOT NULL THEN "rating" END) as avg_rating,
-        COUNT(*) as response_count,
-        COUNT(CASE WHEN "vote" = 'UP' THEN 1 END) as up_count,
-        COUNT(CASE WHEN "vote" = 'DOWN' THEN 1 END) as down_count
-      FROM "Response"
-      WHERE "projectId" IN (
-        SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-        ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-      )
-      ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-      AND "createdAt" >= ${startDate}
-      AND "createdAt" <= ${endDate}
-      GROUP BY DATE("createdAt")
-      ORDER BY day
-    `.catch(() => []);
-
-    // NPS per day (separate query since NPS calc is special)
-    const npsRaw = await prisma.$queryRaw<Array<{ day: string; ratings: number[] }>>`
-      SELECT
-        DATE("createdAt") as day,
-        array_agg("rating") as ratings
-      FROM "Response"
-      WHERE "projectId" IN (
-        SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-        ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-      )
-      ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-      AND "createdAt" >= ${startDate}
-      AND "createdAt" <= ${endDate}
-      AND "mode" = 'NPS'
-      AND "rating" IS NOT NULL
-      GROUP BY DATE("createdAt")
-      ORDER BY day
-    `.catch(() => []);
+    const [trendsRaw, npsRaw] = await Promise.all([
+      getDailyTrends(organization.id, projectId, elementId, startDate, endDate),
+      getDailyNpsRatings(organization.id, projectId, elementId, startDate, endDate),
+    ]);
 
     const npsMap: Record<string, number> = {};
     npsRaw.forEach((row) => {
@@ -934,37 +815,17 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
   if (activeTab === 'pivot' && pivotRow && pivotCol) {
     // DB-native columns we can GROUP BY directly
-    const DB_COLS: Record<string, string> = {
-      mode: '"mode"',
-      rating: '"rating"::text',
-      vote: '"vote"',
-      status: '"status"',
-      element: '"elementIdRaw"',
-    };
+    const DB_PIVOT_KEYS = ['mode', 'rating', 'vote', 'status', 'element'];
 
-    const rowIsDb = pivotRow in DB_COLS;
-    const colIsDb = pivotCol in DB_COLS;
+    const rowIsDb = DB_PIVOT_KEYS.includes(pivotRow);
+    const colIsDb = DB_PIVOT_KEYS.includes(pivotCol);
 
     if (rowIsDb && colIsDb) {
-      // Pure SQL pivot
-      const rawRows = await prisma.$queryRaw<
-        Array<{ row_val: string; col_val: string; cnt: bigint }>
-      >`
-        SELECT
-          ${Prisma.raw(DB_COLS[pivotRow])} as row_val,
-          ${Prisma.raw(DB_COLS[pivotCol])} as col_val,
-          COUNT(*) as cnt
-        FROM "Response"
-        WHERE "projectId" IN (
-          SELECT id FROM "Project" WHERE "organizationId" = ${organization.id}
-          ${projectId ? Prisma.sql`AND id = ${projectId}` : Prisma.empty}
-        )
-        ${elementId ? Prisma.sql`AND "elementIdRaw" = ${elementId}` : Prisma.empty}
-        AND "createdAt" >= ${startDate}
-        AND "createdAt" <= ${endDate}
-        GROUP BY 1, 2
-        ORDER BY 1, 2
-      `.catch(() => []);
+      // Pure SQL pivot (getPivotData validates keys against its own allowlist)
+      const rawRows = await getPivotData(
+        organization.id, projectId, elementId, startDate, endDate,
+        pivotRow, pivotCol
+      );
 
       const cells: Record<string, Record<string, number>> = {};
       const rowSet = new Set<string>();
