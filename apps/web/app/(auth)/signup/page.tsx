@@ -10,6 +10,7 @@ import {
   EditorialFormField,
   EditorialInput,
 } from '@/app/(dashboard)/components/editorial/form-field';
+import { EditorialPasswordInput } from '@/app/(dashboard)/components/editorial/password-input';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -165,11 +166,18 @@ export default function SignupPage() {
             />
           </EditorialFormField>
 
-          <EditorialFormField label="Password" htmlFor="password" hint="At least 6 characters.">
-            <EditorialInput
+          <EditorialFormField
+            label="Password"
+            htmlFor="password"
+            hint={
+              password && password.length < 6
+                ? `${6 - password.length} more character${6 - password.length === 1 ? '' : 's'} needed`
+                : 'At least 6 characters.'
+            }
+          >
+            <EditorialPasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               required
               value={password}
@@ -179,11 +187,19 @@ export default function SignupPage() {
             />
           </EditorialFormField>
 
-          <EditorialFormField label="Confirm password" htmlFor="confirmPassword">
-            <EditorialInput
+          <EditorialFormField
+            label="Confirm password"
+            htmlFor="confirmPassword"
+            hint={confirmPassword && password === confirmPassword ? 'Passwords match.' : undefined}
+            error={
+              confirmPassword && password !== confirmPassword
+                ? 'Passwords do not match.'
+                : undefined
+            }
+          >
+            <EditorialPasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               autoComplete="new-password"
               required
               value={confirmPassword}

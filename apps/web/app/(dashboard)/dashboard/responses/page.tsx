@@ -5,6 +5,7 @@ import { ResponsesFilter } from './responses-filter';
 import { Pagination } from '../../components/pagination';
 import { ExportButton } from './export-button';
 import { ResponseRow } from './response-row';
+import { FirstRunScaffold } from './first-run-scaffold';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import {
   EditorialTable,
@@ -16,7 +17,6 @@ import {
 import { EditorialCard } from '../../components/editorial/card';
 import { EditorialPageHeader } from '../../components/editorial/page-header';
 import { EditorialEmptyState } from '../../components/editorial/empty-state';
-import { EditorialLinkButton } from '../../components/editorial/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,40 +106,55 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     }),
   };
 
-  const [elements, total, gatedCount, responses, availableTags] = organization
-    ? await Promise.all([
-        prisma.response.groupBy({
-          by: ['elementIdRaw'],
-          where: {
-            project: {
-              organizationId: organization.id,
+  const [elements, total, gatedCount, responses, availableTags, projectCount, firstProject] =
+    organization
+      ? await Promise.all([
+          prisma.response.groupBy({
+            by: ['elementIdRaw'],
+            where: {
+              project: {
+                organizationId: organization.id,
+              },
             },
-          },
-          _count: {
-            elementIdRaw: true,
-          },
-          orderBy: {
             _count: {
-              elementIdRaw: 'desc',
+              elementIdRaw: true,
             },
-          },
-        }),
-        prisma.response.count({ where }),
-        !isPro ? prisma.response.count({ where: { ...where, gated: true } }) : Promise.resolve(0),
-        prisma.response.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * LIMIT,
-          take: LIMIT,
-          include: {
-            project: {
-              select: { name: true, slug: true },
+            orderBy: {
+              _count: {
+                elementIdRaw: 'desc',
+              },
             },
-          },
-        }) as unknown as Promise<ResponseItem[]>,
-        getAvailableTags(organization.id),
-      ])
-    : [[], 0, 0, [] as ResponseItem[], [] as { tag: string; count: bigint }[]];
+          }),
+          prisma.response.count({ where }),
+          !isPro ? prisma.response.count({ where: { ...where, gated: true } }) : Promise.resolve(0),
+          prisma.response.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            skip: (page - 1) * LIMIT,
+            take: LIMIT,
+            include: {
+              project: {
+                select: { name: true, slug: true },
+              },
+            },
+          }) as unknown as Promise<ResponseItem[]>,
+          getAvailableTags(organization.id),
+          prisma.project.count({ where: { organizationId: organization.id } }),
+          prisma.project.findFirst({
+            where: { organizationId: organization.id },
+            orderBy: { createdAt: 'asc' },
+            select: { slug: true },
+          }),
+        ])
+      : [
+          [],
+          0,
+          0,
+          [] as ResponseItem[],
+          [] as { tag: string; count: bigint }[],
+          0,
+          null as { slug: string } | null,
+        ];
 
   const availableTagOptions = availableTags.map((t) => ({
     tag: t.tag,
@@ -176,6 +191,10 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const hasActiveFilters = Boolean(
     params.startDate || params.endDate || params.elementId || params.search || params.tag
   );
+
+  // First-run: the organization has never received a response. The scaffold
+  // replaces the generic empty state and walks the user through install.
+  const isFirstRun = Boolean(organization) && total === 0 && !hasActiveFilters;
 
   return (
     <div>
@@ -227,23 +246,19 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
       )}
 
       {safeResponses.length === 0 ? (
-        <EditorialCard>
-          <EditorialEmptyState
-            title={hasActiveFilters ? 'No responses match these filters' : 'Nothing yet'}
-            body={
-              hasActiveFilters
-                ? 'Try widening your date range, clearing the status filter, or removing the tag.'
-                : 'Once users start leaving feedback through your SDK, their responses will appear here — one row per submission.'
-            }
-            action={
-              hasActiveFilters ? null : (
-                <EditorialLinkButton href="/dashboard/projects" variant="ink">
-                  Set up a project →
-                </EditorialLinkButton>
-              )
-            }
+        isFirstRun ? (
+          <FirstRunScaffold
+            hasProject={projectCount > 0}
+            firstProjectSlug={firstProject?.slug ?? null}
           />
-        </EditorialCard>
+        ) : (
+          <EditorialCard>
+            <EditorialEmptyState
+              title="No responses match these filters"
+              body="Try widening your date range, clearing the status filter, or removing the tag."
+            />
+          </EditorialCard>
+        )
       ) : (
         <EditorialCard className="overflow-hidden">
           <EditorialTable className="table-fixed">

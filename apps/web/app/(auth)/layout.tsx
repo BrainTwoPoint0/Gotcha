@@ -1,6 +1,23 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+function AuthFormSkeleton() {
+  return (
+    <div className="w-full max-w-sm space-y-6" aria-hidden="true">
+      <div className="space-y-3">
+        <div className="h-3 w-20 rounded-sm bg-editorial-neutral-2/60" />
+        <div className="h-10 w-48 rounded-sm bg-editorial-neutral-2/50" />
+        <div className="h-4 w-40 rounded-sm bg-editorial-neutral-2/40" />
+      </div>
+      <div className="space-y-3">
+        <div className="h-11 w-full rounded-md bg-editorial-neutral-2/40" />
+        <div className="h-11 w-full rounded-md bg-editorial-neutral-2/40" />
+        <div className="h-11 w-full rounded-md bg-editorial-neutral-2/60" />
+      </div>
+    </div>
+  );
+}
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="editorial flex min-h-screen bg-editorial-paper text-editorial-ink">
@@ -54,7 +71,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center px-6 py-12">
-          <Suspense>{children}</Suspense>
+          <Suspense fallback={<AuthFormSkeleton />}>{children}</Suspense>
         </div>
       </div>
     </div>

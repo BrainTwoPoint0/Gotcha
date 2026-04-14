@@ -21,14 +21,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const workspaces = activeOrg?.workspaces ?? [];
   const isPro = activeOrg?.isPro ?? false;
 
+  // Free items come first, Pro-locked trail. top-nav renders a hairline
+  // divider at the group boundary so the free set reads as the primary
+  // surface and Pro items don't dominate the navigation.
   const links: EditorialNavLink[] = [
     { href: '/dashboard', label: 'Overview' },
     { href: '/dashboard/projects', label: 'Projects' },
     { href: '/dashboard/responses', label: 'Responses' },
+    { href: '/dashboard/settings', label: 'Settings' },
     { href: '/dashboard/analytics', label: 'Analytics', proLocked: !isPro },
     { href: '/dashboard/analytics/segments', label: 'Segments', proLocked: !isPro },
     { href: '/dashboard/bugs', label: 'Bugs', proLocked: !isPro },
-    { href: '/dashboard/settings', label: 'Settings' },
   ];
 
   const workspaceNode =

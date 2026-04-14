@@ -48,35 +48,48 @@ export function EditorialTopNav({
         </div>
 
         <div className="hidden min-w-0 flex-1 items-center gap-1 md:flex">
-          {links.map((link) => {
+          {links.map((link, idx) => {
             const active =
               link.href === '/dashboard'
                 ? pathname === '/dashboard'
                 : pathname === link.href || pathname.startsWith(link.href + '/');
+            const prev = links[idx - 1];
+            // Hairline + mono "Pro" eyebrow at the first pro-locked link so the
+            // free items read as the primary set and the paywalled items read
+            // as a distinct, quieter group.
+            const isGroupBoundary = link.proLocked && !prev?.proLocked;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'relative flex h-16 items-center px-3 text-[14px] transition-colors duration-240 ease-page-turn',
-                  active
-                    ? 'text-editorial-ink'
-                    : 'text-editorial-neutral-3 hover:text-editorial-ink'
+              <React.Fragment key={link.href}>
+                {isGroupBoundary && (
+                  <div className="mx-2 flex h-5 items-center gap-2" aria-hidden="true">
+                    <span className="h-5 w-px bg-editorial-neutral-2" />
+                  </div>
                 )}
-              >
-                {link.label}
-                {link.proLocked && (
-                  <span className="ml-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent">
-                    Pro
-                  </span>
-                )}
-                {active && (
-                  <span
-                    className="absolute inset-x-3 bottom-0 h-px bg-editorial-ink"
-                    aria-hidden="true"
-                  />
-                )}
-              </Link>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    'relative flex h-16 items-center px-3 text-[14px] transition-colors duration-240 ease-page-turn',
+                    link.proLocked && !active
+                      ? 'text-editorial-neutral-3/80 hover:text-editorial-ink'
+                      : active
+                        ? 'text-editorial-ink'
+                        : 'text-editorial-neutral-3 hover:text-editorial-ink'
+                  )}
+                >
+                  {link.label}
+                  {link.proLocked && (
+                    <span className="ml-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent/80">
+                      Pro
+                    </span>
+                  )}
+                  {active && (
+                    <span
+                      className="absolute inset-x-3 bottom-0 h-px bg-editorial-ink"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
+              </React.Fragment>
             );
           })}
         </div>

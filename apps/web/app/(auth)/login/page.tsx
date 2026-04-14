@@ -10,6 +10,7 @@ import {
   EditorialFormField,
   EditorialInput,
 } from '@/app/(dashboard)/components/editorial/form-field';
+import { EditorialPasswordInput } from '@/app/(dashboard)/components/editorial/password-input';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -156,10 +157,9 @@ export default function LoginPage() {
           </EditorialFormField>
 
           <EditorialFormField label="Password" htmlFor="password">
-            <EditorialInput
+            <EditorialPasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
               value={password}

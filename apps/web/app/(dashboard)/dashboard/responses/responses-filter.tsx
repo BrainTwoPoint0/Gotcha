@@ -130,7 +130,10 @@ export function ResponsesFilter({
 
         <div className="flex flex-wrap items-center gap-2">
           <Select value={elementId} onValueChange={setElementId}>
-            <SelectTrigger className="h-9 w-[180px] rounded-md border-editorial-neutral-2 bg-editorial-paper text-[13px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25">
+            <SelectTrigger
+              aria-label="Filter by element"
+              className="h-9 w-[180px] rounded-md border-editorial-neutral-2 bg-editorial-paper text-[13px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25"
+            >
               <SelectValue placeholder="All elements" />
             </SelectTrigger>
             <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
@@ -143,7 +146,17 @@ export function ResponsesFilter({
             </SelectContent>
           </Select>
 
-          <div className="flex gap-0.5 rounded-md border border-editorial-neutral-2 p-0.5">
+          <div
+            role="group"
+            aria-label="Filter by status"
+            className="flex items-center gap-0.5 rounded-md border border-editorial-neutral-2 p-0.5"
+          >
+            <span
+              aria-hidden="true"
+              className="pl-2 pr-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
+            >
+              Status
+            </span>
             {ALL_STATUSES.map((s) => {
               const active = statuses.includes(s);
               return (
@@ -151,6 +164,7 @@ export function ResponsesFilter({
                   key={s}
                   type="button"
                   onClick={() => toggleStatus(s)}
+                  aria-pressed={active}
                   className={`h-8 rounded px-2.5 text-[12px] transition-colors duration-240 ease-page-turn ${
                     active
                       ? 'bg-editorial-ink text-editorial-paper'
@@ -166,6 +180,8 @@ export function ResponsesFilter({
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
+            aria-expanded={showAdvanced}
+            aria-controls="responses-filter-advanced"
             className={`inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors ${
               showAdvanced
                 ? 'bg-editorial-ink/[0.04] text-editorial-ink'
@@ -180,11 +196,11 @@ export function ResponsesFilter({
                 strokeLinecap="round"
               />
             </svg>
-            More
+            Date · Tag
           </button>
 
           <EditorialButton onClick={handleFilter} variant="ink" size="sm" className="h-9">
-            Apply
+            Apply filters
           </EditorialButton>
 
           {hasFilters && (
@@ -200,7 +216,10 @@ export function ResponsesFilter({
       </div>
 
       {showAdvanced && (
-        <div className="flex flex-col gap-3 border-t border-editorial-neutral-2 bg-editorial-ink/[0.02] p-4 sm:flex-row sm:flex-wrap sm:items-center">
+        <div
+          id="responses-filter-advanced"
+          className="flex flex-col gap-3 border-t border-editorial-neutral-2 bg-editorial-ink/[0.02] p-4 sm:flex-row sm:flex-wrap sm:items-center"
+        >
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
               Range

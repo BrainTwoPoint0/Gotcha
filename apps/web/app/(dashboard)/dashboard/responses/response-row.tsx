@@ -40,10 +40,21 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
   const detailRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
 
+  // Observe the detail panel's natural height so tag edits, comment loads,
+  // or any child layout change keep `maxHeight` in sync while expanded.
   useEffect(() => {
-    if (detailRef.current) {
-      setHeight(detailRef.current.scrollHeight);
-    }
+    if (!expanded) return;
+    const el = detailRef.current;
+    if (!el) return;
+    setHeight(el.scrollHeight);
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setHeight(entry.target.scrollHeight);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [expanded]);
 
   const modeLabel = MODE_LABELS[response.mode] ?? response.mode.toLowerCase();
