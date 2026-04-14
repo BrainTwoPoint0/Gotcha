@@ -21,20 +21,43 @@ export function EditorialMobileDrawer({ links, topSlot, bottomSlot }: EditorialM
     setOpen(false);
   }, [pathname]);
 
-  // Lock body scroll while open
+  // Lock body scroll + mark non-drawer content as inert while open. `inert`
+  // hides the main content from the accessibility tree and blocks keyboard
+  // focus from escaping the drawer.
   React.useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const main = document.querySelector('main');
+    main?.setAttribute('inert', '');
+    return () => {
+      document.body.style.overflow = prev;
+      main?.removeAttribute('inert');
+    };
+  }, [open]);
+
+  // ESC to close + focus the close affordance when the drawer opens so
+  // keyboard users can dismiss without a mouse.
+  const closeBtnRef = React.useRef<HTMLButtonElement>(null);
+  const toggleBtnRef = React.useRef<HTMLButtonElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+        toggleBtnRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    closeBtnRef.current?.focus();
+    return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
   return (
     <>
       <button
+        ref={toggleBtnRef}
         type="button"
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
@@ -87,6 +110,7 @@ export function EditorialMobileDrawer({ links, topSlot, bottomSlot }: EditorialM
             <span className="text-editorial-accent">.</span>
           </span>
           <button
+            ref={closeBtnRef}
             type="button"
             aria-label="Close menu"
             onClick={() => setOpen(false)}

@@ -13,8 +13,9 @@ module.exports = {
         mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
+        // Editorial spec: sm=4 / md=8 / lg=12. `--radius` base is 0.5rem (8px).
+        lg: 'calc(var(--radius) + 4px)',
+        md: 'var(--radius)',
         sm: 'calc(var(--radius) - 4px)',
       },
       spacing: {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,10 +17,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
+  // Read the invite cookie client-only so SSR and first client render agree.
+  // Reading it inline during render caused hydration mismatch (document is
+  // undefined on the server → false, then true on the client).
+  const [hasInviteCookie, setHasInviteCookie] = useState(false);
+  useEffect(() => {
+    setHasInviteCookie(document.cookie.includes('gotcha_has_invite=1'));
+  }, []);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasInviteCookie =
-    typeof document !== 'undefined' && document.cookie.includes('gotcha_has_invite=1');
   const inviteToken = searchParams.get('invite') || (hasInviteCookie ? '__cookie__' : null);
   const supabase = createClient();
 
@@ -86,7 +91,6 @@ export default function LoginPage() {
 
       <h1 className="font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink">
         Sign in
-        <span className="text-editorial-accent">.</span>
       </h1>
       <p className="mt-3 text-[14px] text-editorial-neutral-3">
         New here?{' '}

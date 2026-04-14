@@ -76,8 +76,14 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
   const [status, setStatus] = useState<Status>(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Sync from parent when prop changes (e.g., pagination or router.refresh),
+  // but never clobber an in-flight optimistic update — the PATCH's rollback
+  // is the source of truth while a request is pending.
   useEffect(() => {
-    setStatus(initialStatus);
+    if (!isUpdating) {
+      setStatus(initialStatus);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialStatus]);
 
   const config = STATUS_CONFIG[status];

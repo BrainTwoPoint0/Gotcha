@@ -59,11 +59,27 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
   const preview = getPreview();
   const hasExpandableContent = !isGated && (preview || response.rating || response.vote);
 
+  const toggleExpanded = () => {
+    if (hasExpandableContent) setExpanded((v) => !v);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+    if (!hasExpandableContent) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setExpanded((v) => !v);
+    }
+  };
+
   return (
     <>
       <EditorialTR
-        className={`group ${isGated ? 'opacity-60' : 'cursor-pointer'} ${expanded ? 'bg-editorial-ink/[0.02]' : ''}`}
-        onClick={() => hasExpandableContent && setExpanded(!expanded)}
+        className={`group ${isGated ? 'opacity-60' : 'cursor-pointer'} ${expanded ? 'bg-editorial-ink/[0.02]' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-editorial-accent/40`}
+        role={hasExpandableContent ? 'button' : undefined}
+        tabIndex={hasExpandableContent ? 0 : undefined}
+        aria-expanded={hasExpandableContent ? expanded : undefined}
+        onClick={toggleExpanded}
+        onKeyDown={handleKeyDown}
       >
         {/* Response column */}
         <EditorialTD className="!py-3">

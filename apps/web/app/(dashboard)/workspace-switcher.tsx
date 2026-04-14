@@ -42,8 +42,10 @@ export function WorkspaceSwitcher({
 
       if (res.ok) {
         setOpen(false);
-        router.refresh();
-        setTimeout(() => window.location.reload(), 100);
+        // Hard reload rather than router.refresh so every cookie-scoped lookup
+        // (active org, plan gates, etc.) picks up the new workspace ID in a
+        // single pass. router.refresh alone leaves RSC-cached branches stale.
+        window.location.reload();
       }
     } catch {
       // silent

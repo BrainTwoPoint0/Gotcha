@@ -192,34 +192,37 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         availableTags={availableTagOptions}
       />
 
-      {(gatedCount > 0 || (!isPro && gatedCount === 0)) && (
-        <div className="mb-6 rounded-md border-l-2 border-editorial-accent bg-editorial-accent/[0.04] px-5 py-4 text-[14px] text-editorial-ink">
-          {gatedCount > 0 ? (
-            <>
-              <span className="font-medium">
-                {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free
-                limit.
-              </span>{' '}
-              <a
-                href="/dashboard/settings"
-                className="underline decoration-editorial-accent decoration-1 underline-offset-4 hover:text-editorial-accent"
-              >
-                Upgrade to Pro
-              </a>{' '}
-              to unlock all your data.
-            </>
-          ) : (
-            <>
-              Showing responses from the last 30 days.{' '}
-              <a
-                href="/dashboard/settings"
-                className="underline decoration-editorial-accent decoration-1 underline-offset-4 hover:text-editorial-accent"
-              >
-                Upgrade to Pro
-              </a>{' '}
-              to view all historical data.
-            </>
-          )}
+      {!isPro && (
+        <div className="mb-6 flex items-center gap-3 border-t border-editorial-neutral-2 pt-4 text-[13px] text-editorial-neutral-3">
+          <span className="h-1 w-1 shrink-0 rounded-full bg-editorial-accent" aria-hidden="true" />
+          <span>
+            {gatedCount > 0 ? (
+              <>
+                <span className="text-editorial-ink">
+                  {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the
+                  free limit.
+                </span>{' '}
+                <a
+                  href="/dashboard/settings"
+                  className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+                >
+                  Upgrade to Pro
+                </a>{' '}
+                to unlock all your data.
+              </>
+            ) : (
+              <>
+                Showing responses from the last 30 days.{' '}
+                <a
+                  href="/dashboard/settings"
+                  className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+                >
+                  Upgrade to Pro
+                </a>{' '}
+                to view all historical data.
+              </>
+            )}
+          </span>
         </div>
       )}
 
