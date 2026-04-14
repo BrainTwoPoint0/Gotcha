@@ -5,11 +5,15 @@ import { getPlanLimit, isOverLimit, shouldShowUpgradeWarning } from '@/lib/plan-
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { OnboardingBanner } from './onboarding-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle } from 'lucide-react';
 import { StatCard } from './stat-card';
+import { EditorialPageHeader } from '../components/editorial/page-header';
+import {
+  EditorialCard,
+  EditorialCardHeader,
+  EditorialCardBody,
+} from '../components/editorial/card';
+import { EditorialLinkButton } from '../components/editorial/button';
+import { EditorialEmptyState } from '../components/editorial/empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +40,10 @@ export default async function DashboardPage() {
   try {
     const user = await getAuthUser();
 
-    // Get active org (cache hit from layout). If null, user may be new — create them.
     let activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
 
     if (user?.email && !activeOrg) {
       try {
-        // Use upsert to avoid race condition with concurrent requests
         const dbUser = await prisma.user.upsert({
           where: { email: user.email },
           update: {},
@@ -52,7 +54,6 @@ export default async function DashboardPage() {
           },
         });
 
-        // Create a default organization for the user (unique slug prevents duplicates)
         const orgSlug = user.email
           .split('@')[0]
           .toLowerCase()
@@ -77,19 +78,16 @@ export default async function DashboardPage() {
           },
         });
 
-        // Re-fetch after creation (bypass cache to get fresh DB state)
         activeOrg = await fetchActiveOrganization(user.email);
       } catch (createError) {
         console.error(
           'Error creating user in database:',
           createError instanceof Error ? createError.message : 'Unknown error'
         );
-        // Continue anyway - user can still see the dashboard, just without org data
       }
     }
     const organization = activeOrg?.organization;
 
-    // Fetch user profile, projects, and recent responses in parallel
     const [dbUser, projects, recentResponses] = organization
       ? await Promise.all([
           prisma.user.findUnique({ where: { email: user!.email! } }),
@@ -113,19 +111,26 @@ export default async function DashboardPage() {
           }) as Promise<ResponseItem[]>,
         ])
       : [null, [] as ProjectItem[], [] as ResponseItem[]];
+
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
     const overLimit = subscription
       ? isOverLimit(subscription.plan, subscription.responsesThisMonth)
       : false;
+    const warnLimit =
+      subscription &&
+      !overLimit &&
+      shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth);
 
     return (
       <div>
         {!dbUser?.onboardedAt && <OnboardingBanner userName={dbUser?.name ?? undefined} />}
 
-        <div className="pb-6 border-b border-gray-200/60 mb-8">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <EditorialPageHeader
+          eyebrow={dbUser?.name ? `Welcome back, ${dbUser.name}` : 'Welcome back'}
+          title="Overview"
+          subtitle="Everything that is happening across your projects, in one place."
+          action={
             <DashboardFeedback
               elementId="dashboard-nps"
               mode="nps"
@@ -146,45 +151,56 @@ export default async function DashboardPage() {
                 totalResponses,
               }}
             />
-          </div>
-          <p className="text-gray-600">Welcome back{dbUser?.name ? `, ${dbUser.name}` : ''}!</p>
-        </div>
+          }
+        />
 
-        {/* Plan Limit Warnings */}
-        {subscription && overLimit && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Response limit exceeded</AlertTitle>
-            <AlertDescription>
-              You've exceeded the 500 response limit for the Free plan. Your responses are still
-              being collected, but you need to upgrade to Pro to view new data.{' '}
-              <a href="/dashboard/settings" className="font-medium underline">
-                Upgrade to Pro &rarr;
-              </a>
-            </AlertDescription>
-          </Alert>
+        {overLimit && (
+          <div className="mb-6 flex items-start gap-3 border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-5 py-4 text-[14px] text-editorial-ink">
+            <div className="flex-1">
+              <p className="font-medium">Response limit exceeded.</p>
+              <p className="mt-1 text-editorial-neutral-3">
+                You have exceeded the {getPlanLimit(subscription!.plan)} response limit. Your
+                responses are still being collected, but you need to upgrade to Pro to view new
+                data.{' '}
+                <Link
+                  href="/dashboard/settings"
+                  className="underline decoration-editorial-alert decoration-1 underline-offset-4 transition-colors hover:text-editorial-alert"
+                >
+                  Upgrade to Pro →
+                </Link>
+              </p>
+            </div>
+          </div>
         )}
 
-        {subscription &&
-          !overLimit &&
-          shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth) && (
-            <Alert className="mb-6 border-yellow-200 bg-yellow-50 text-yellow-800 [&>svg]:text-yellow-600">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Approaching response limit</AlertTitle>
-              <AlertDescription>
-                You've used {subscription.responsesThisMonth} of 500 responses this month (
-                {Math.round((subscription.responsesThisMonth / 500) * 100)}%). Upgrade to Pro for
-                unlimited responses.{' '}
-                <a href="/dashboard/settings" className="font-medium underline">
-                  Upgrade to Pro &rarr;
-                </a>
-              </AlertDescription>
-            </Alert>
-          )}
+        {warnLimit && (
+          <div className="mb-6 flex items-center gap-3 border-t border-editorial-neutral-2 pt-4 text-[13px] text-editorial-neutral-3">
+            <span
+              className="h-1 w-1 shrink-0 rounded-full bg-editorial-accent"
+              aria-hidden="true"
+            />
+            <span>
+              <span className="text-editorial-ink">
+                {subscription.responsesThisMonth} of {getPlanLimit(subscription.plan)} responses
+                used this month.
+              </span>{' '}
+              <Link
+                href="/dashboard/settings"
+                className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+              >
+                Upgrade to Pro
+              </Link>{' '}
+              for unlimited.
+            </span>
+          </div>
+        )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatCard label="Total Responses" value={totalResponses.toString()} subtext="All time" />
+        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total responses"
+            value={totalResponses.toLocaleString()}
+            subtext="All time"
+          />
           <StatCard label="Projects" value={projects.length.toString()} subtext="Active" />
           <StatCard
             label="Plan"
@@ -196,179 +212,161 @@ export default async function DashboardPage() {
             }
           />
           <StatCard
-            label="This Month"
-            value={(subscription?.responsesThisMonth || 0).toString()}
+            label="This month"
+            value={(subscription?.responsesThisMonth || 0).toLocaleString()}
             subtext="Responses collected"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Activity */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <EditorialCard>
+            <EditorialCardHeader className="flex items-center justify-between">
+              <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+                Recent responses
+              </h2>
               <Link
                 href="/dashboard/responses"
-                className="text-sm text-slate-600 hover:text-slate-500"
+                className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
               >
-                View all
+                View all →
               </Link>
-            </div>
+            </EditorialCardHeader>
+            <EditorialCardBody>
+              {recentResponses.length === 0 ? (
+                <EditorialEmptyState
+                  title="No responses yet"
+                  body="Create a project and install the SDK to start collecting."
+                  action={
+                    <EditorialLinkButton href="/dashboard/responses" variant="ghost" size="sm">
+                      How to set up →
+                    </EditorialLinkButton>
+                  }
+                />
+              ) : (
+                <ul className="-my-2 divide-y divide-editorial-neutral-2">
+                  {recentResponses.map((response) => (
+                    <li key={response.id} className="flex items-start gap-4 py-3">
+                      <span
+                        aria-hidden="true"
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-accent/70"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] text-editorial-ink">
+                          {Array.isArray(response.pollSelected) && response.pollSelected.length
+                            ? response.pollSelected.join(', ')
+                            : response.content ||
+                              response.title ||
+                              `${response.mode.toLowerCase()} response`}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[11px] text-editorial-neutral-3">
+                          {response.project.name} · {formatTimeAgo(response.createdAt)}
+                        </p>
+                      </div>
+                      {response.rating && response.mode === 'NPS' && (
+                        <span className="shrink-0 font-display text-[14px] text-editorial-ink">
+                          {response.rating}
+                          <span className="text-editorial-neutral-3">/10</span>
+                        </span>
+                      )}
+                      {response.rating && response.mode !== 'NPS' && (
+                        <span className="shrink-0 font-display text-[14px] text-editorial-accent">
+                          {'★'.repeat(response.rating)}
+                        </span>
+                      )}
+                      {response.vote && (
+                        <span
+                          className={`shrink-0 text-[13px] ${response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
+                        >
+                          {response.vote === 'UP' ? 'Up' : 'Down'}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </EditorialCardBody>
+          </EditorialCard>
 
-            {recentResponses.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No responses yet.</p>
-                <p className="text-sm mt-1">
-                  Create a project and integrate the SDK to start collecting feedback.
-                </p>
-                <div className="mt-4">
-                  <DashboardFeedback
-                    elementId="empty-state-responses"
-                    mode="vote"
-                    promptText="Do you know how to start collecting responses?"
-                    voteLabels={{ up: 'Yes', down: 'Need help' }}
-                    userEmail={dbUser?.email}
-                    userName={dbUser?.name ?? undefined}
-                    userProfile={{
-                      companySize: dbUser?.companySize ?? undefined,
-                      role: dbUser?.role ?? undefined,
-                      plan: activeOrg?.isPro ? 'PRO' : 'FREE',
-                      onboarded: !!dbUser?.onboardedAt,
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentResponses.map((response) => (
-                  <div
-                    key={response.id}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50"
-                  >
-                    <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">
-                        {Array.isArray(response.pollSelected) && response.pollSelected.length
-                          ? response.pollSelected.join(', ')
-                          : response.content ||
-                            response.title ||
-                            `${response.mode.toLowerCase()} response`}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {response.project.name} · {formatTimeAgo(response.createdAt)}
-                      </p>
-                    </div>
-                    {response.rating && response.mode === 'NPS' && (
-                      <span className="text-sm font-medium text-teal-600">
-                        {response.rating}/10
-                      </span>
-                    )}
-                    {response.rating && response.mode !== 'NPS' && (
-                      <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
-                    )}
-                    {response.vote && (
-                      <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
-                        {response.vote === 'UP' ? '👍' : '👎'}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* Projects */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
+          <EditorialCard>
+            <EditorialCardHeader className="flex items-center justify-between">
+              <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+                Projects
+              </h2>
               <Link
                 href="/dashboard/projects"
-                className="text-sm text-slate-600 hover:text-slate-500"
+                className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
               >
-                View all
+                View all →
               </Link>
-            </div>
-
-            {projects.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No projects yet.</p>
-                <Link
-                  href="/dashboard/projects/new"
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90"
-                >
-                  Create your first project
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {projects.slice(0, 5).map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/dashboard/projects/${project.slug}`}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{project.name}</p>
-                      <p className="text-sm text-gray-500">{project._count.responses} responses</p>
-                    </div>
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </Card>
+            </EditorialCardHeader>
+            <EditorialCardBody>
+              {projects.length === 0 ? (
+                <EditorialEmptyState
+                  title="No projects yet"
+                  body="A project groups feedback from one surface — create your first to get going."
+                  action={
+                    <EditorialLinkButton href="/dashboard/projects/new" variant="ink" size="sm">
+                      Create project →
+                    </EditorialLinkButton>
+                  }
+                />
+              ) : (
+                <ul className="-my-2 divide-y divide-editorial-neutral-2">
+                  {projects.slice(0, 5).map((project) => (
+                    <li key={project.id}>
+                      <Link
+                        href={`/dashboard/projects/${project.slug}`}
+                        className="group flex items-center justify-between gap-4 py-3 transition-colors duration-240 ease-page-turn"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-[14px] text-editorial-ink">{project.name}</p>
+                          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                            {project._count.responses.toLocaleString()} response
+                            {project._count.responses === 1 ? '' : 's'}
+                          </p>
+                        </div>
+                        <span
+                          aria-hidden="true"
+                          className="text-editorial-neutral-3 transition-all duration-240 ease-page-turn group-hover:translate-x-0.5 group-hover:text-editorial-ink"
+                        >
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </EditorialCardBody>
+          </EditorialCard>
         </div>
 
-        {/* Onboarding Checklist */}
         {totalResponses === 0 && (
-          <OnboardingChecklist
-            hasProjects={projects.length > 0}
-            hasResponses={totalResponses > 0}
-            projectSlug={projects[0]?.slug}
-            apiKey={undefined}
-          />
+          <div className="mt-12">
+            <OnboardingChecklist
+              hasProjects={projects.length > 0}
+              hasResponses={totalResponses > 0}
+              projectSlug={projects[0]?.slug}
+              apiKey={undefined}
+            />
+          </div>
         )}
       </div>
     );
   } catch (error) {
     console.error('Dashboard error:', error);
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Dashboard Error</h1>
-        <p className="text-gray-700">
-          Something went wrong loading the dashboard. Please try refreshing the page.
+      <div className="rounded-md border border-editorial-alert/30 bg-editorial-alert/[0.04] p-8 text-editorial-ink">
+        <h1 className="font-display text-2xl text-editorial-alert">Dashboard error</h1>
+        <p className="mt-2 text-[14px] text-editorial-neutral-3">
+          Something went wrong loading the dashboard. Please refresh the page.
         </p>
       </div>
     );
   }
 }
 
-function getModeColor(mode: string): string {
-  const colors: Record<string, string> = {
-    FEEDBACK: 'bg-slate-500',
-    VOTE: 'bg-green-500',
-    POLL: 'bg-purple-500',
-    FEATURE_REQUEST: 'bg-orange-500',
-    AB: 'bg-pink-500',
-  };
-  return colors[mode] || 'bg-gray-500';
-}
-
 function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return 'just now';
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;

@@ -2,8 +2,24 @@ import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { isOverProjectLimit, getProjectLimitDisplay } from '@/lib/plan-limits';
 import Link from 'next/link';
 import { NewProjectForm } from './new-project-form';
+import { EditorialPageHeader } from '../../../components/editorial/page-header';
+import { EditorialCard } from '../../../components/editorial/card';
+import { EditorialEmptyState } from '../../../components/editorial/empty-state';
+import { EditorialLinkButton } from '../../../components/editorial/button';
 
 export const dynamic = 'force-dynamic';
+
+function BackLink() {
+  return (
+    <Link
+      href="/dashboard/projects"
+      className="mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+    >
+      <span aria-hidden="true">←</span>
+      Back to projects
+    </Link>
+  );
+}
 
 export default async function NewProjectPage() {
   const user = await getAuthUser();
@@ -17,65 +33,45 @@ export default async function NewProjectPage() {
   if (isAtLimit) {
     return (
       <div className="max-w-2xl">
-        <div className="mb-8">
-          <Link
-            href="/dashboard/projects"
-            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to Projects
-          </Link>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">Project Limit Reached</h1>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-8 h-8 text-slate-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            You&apos;ve reached your project limit
-          </h2>
-          <p className="text-gray-600 mb-6">
-            The Free plan includes {getProjectLimitDisplay('FREE')} project. Upgrade to Pro for
-            unlimited projects.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/dashboard/projects"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Back to Projects
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="px-6 py-2 bg-slate-700 text-white text-sm font-medium rounded-md hover:bg-slate-800"
-            >
-              Upgrade to Pro
-            </Link>
-          </div>
-        </div>
+        <BackLink />
+        <EditorialPageHeader
+          eyebrow="Project limit reached"
+          title="You've hit the Free plan cap"
+          subtitle={`The Free plan includes ${getProjectLimitDisplay('FREE')} project. Pro is unlimited.`}
+        />
+        <EditorialCard>
+          <EditorialEmptyState
+            title="Upgrade to add more projects"
+            body="Pro lifts every project and response limit and unlocks analytics, segments, and bug intake."
+            action={
+              <div className="flex flex-wrap items-center gap-3">
+                <EditorialLinkButton href="/dashboard/settings" variant="ink">
+                  Upgrade to Pro →
+                </EditorialLinkButton>
+                <EditorialLinkButton href="/dashboard/projects" variant="ghost">
+                  Back to projects
+                </EditorialLinkButton>
+              </div>
+            }
+          />
+        </EditorialCard>
       </div>
     );
   }
 
-  return <NewProjectForm />;
+  return (
+    <div className="max-w-2xl">
+      <BackLink />
+      <EditorialPageHeader
+        eyebrow="New project"
+        title="Create a project"
+        subtitle="A project groups the feedback from one app or surface. Most teams start with one."
+      />
+      <EditorialCard>
+        <div className="px-6 py-6 sm:px-8 sm:py-8">
+          <NewProjectForm />
+        </div>
+      </EditorialCard>
+    </div>
+  );
 }

@@ -4,8 +4,14 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
 import { DeleteProjectCard } from './delete-project-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { EditorialPageHeader } from '../../../components/editorial/page-header';
+import { EditorialLinkButton } from '../../../components/editorial/button';
+import {
+  EditorialCard,
+  EditorialCardHeader,
+  EditorialCardBody,
+} from '../../../components/editorial/card';
+import { StatCard } from '../../stat-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +36,21 @@ interface ResponseItem {
   vote: string | null;
   elementIdRaw: string;
   createdAt: Date;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatDate(date: Date): string {
+  return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return formatDate(date);
 }
 
 export default async function ProjectPage({ params }: Props) {
@@ -71,188 +92,153 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <div>
-      <div className="mb-8">
-        <Link
-          href="/dashboard/projects"
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Projects
-        </Link>
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            {project.description && <p className="text-gray-600">{project.description}</p>}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={`/dashboard/projects/${slug}/webhooks`}>
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
-                  />
-                </svg>
-                Integrations
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={`/dashboard/projects/${slug}/settings/metadata`}>
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
-                  />
-                </svg>
-                Metadata Settings
-              </Link>
-            </Button>
-          </div>
-        </div>
+      <Link
+        href="/dashboard/projects"
+        className="mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+      >
+        <span aria-hidden="true">←</span>
+        Back to projects
+      </Link>
+
+      <EditorialPageHeader
+        eyebrow={`Project · ${slug}`}
+        title={project.name}
+        subtitle={project.description || undefined}
+        action={
+          <>
+            <EditorialLinkButton
+              href={`/dashboard/projects/${slug}/webhooks`}
+              variant="ghost"
+              size="md"
+            >
+              Integrations
+            </EditorialLinkButton>
+            <EditorialLinkButton
+              href={`/dashboard/projects/${slug}/settings/metadata`}
+              variant="ghost"
+              size="md"
+            >
+              Metadata
+            </EditorialLinkButton>
+          </>
+        }
+      />
+
+      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          label="Responses"
+          value={project._count.responses.toLocaleString()}
+          subtext="All time"
+        />
+        <StatCard
+          label="API Keys"
+          value={project.apiKeys.length.toString()}
+          subtext={project.apiKeys.length === 1 ? 'Active' : 'Active keys'}
+        />
+        <StatCard label="Created" value={formatDate(new Date(project.createdAt))} />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Total Responses</p>
-            <p className="mt-2 text-3xl font-semibold">{project._count.responses}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Active API Keys</p>
-            <p className="mt-2 text-3xl font-semibold">{project.apiKeys.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Created</p>
-            <p className="mt-2 text-xl font-semibold">
-              {new Date(project.createdAt).toLocaleDateString()}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* API Keys */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">API Keys</h2>
-
-          {project.apiKeys.length === 0 ? (
-            <p className="text-gray-500 text-sm">No API keys yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {(project.apiKeys as ApiKeyItem[]).map((apiKey) => (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <EditorialCard>
+          <EditorialCardHeader className="flex items-center justify-between">
+            <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+              API Keys
+            </h2>
+          </EditorialCardHeader>
+          <EditorialCardBody className="space-y-4">
+            {project.apiKeys.length === 0 ? (
+              <p className="text-[14px] text-editorial-neutral-3">
+                No API keys yet — create one to install the SDK.
+              </p>
+            ) : (
+              (project.apiKeys as ApiKeyItem[]).map((apiKey) => (
                 <ApiKeyCard key={apiKey.id} apiKey={apiKey} projectSlug={slug} />
-              ))}
+              ))
+            )}
+          </EditorialCardBody>
+          <div className="border-t border-editorial-neutral-2 bg-editorial-ink">
+            <div className="flex items-center justify-between px-5 py-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-paper/50">
+                Quick start
+              </span>
+              <span className="font-mono text-[10px] text-editorial-paper/40">app.tsx</span>
             </div>
-          )}
+            <pre className="overflow-x-auto px-5 py-4 font-mono text-[12.5px] leading-[1.7] text-editorial-paper/90">
+              <code>{`npm install gotcha-feedback
 
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Quick Start</h3>
-            <pre className="text-xs bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">
-              {`npm install gotcha-feedback
-
-import { GotchaProvider, Gotcha } from 'gotcha-feedback'
+import { GotchaProvider, Gotcha } from 'gotcha-feedback';
 
 <GotchaProvider apiKey="YOUR_API_KEY">
-  <Gotcha elementId="feature-card">
-    <YourComponent />
-  </Gotcha>
-</GotchaProvider>`}
+  <Gotcha elementId="checkout" mode="nps" />
+</GotchaProvider>`}</code>
             </pre>
           </div>
-        </Card>
+        </EditorialCard>
 
-        {/* Recent Responses */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Responses</h2>
+        <EditorialCard>
+          <EditorialCardHeader className="flex items-center justify-between">
+            <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+              Recent responses
+            </h2>
             <Link
               href="/dashboard/responses"
-              className="text-sm text-slate-600 hover:text-slate-500"
+              className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
             >
-              View all
+              View all →
             </Link>
-          </div>
-
-          {project.responses.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No responses yet.</p>
-              <p className="text-sm mt-1">Integrate the SDK to start collecting feedback.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {(project.responses as ResponseItem[]).map((response) => (
-                <div
-                  key={response.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50"
-                >
-                  <div className={`w-2 h-2 mt-2 rounded-full ${getModeColor(response.mode)}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 truncate">
-                      {response.content || `${response.mode.toLowerCase()} response`}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {response.elementIdRaw} · {formatTimeAgo(response.createdAt)}
-                    </p>
-                  </div>
-                  {response.rating && response.mode === 'NPS' && (
-                    <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
-                  )}
-                  {response.rating && response.mode !== 'NPS' && (
-                    <span className="text-sm text-yellow-600">{'★'.repeat(response.rating)}</span>
-                  )}
-                  {response.vote && (
-                    <span className={response.vote === 'UP' ? 'text-green-600' : 'text-red-600'}>
-                      {response.vote === 'UP' ? '👍' : '👎'}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+          </EditorialCardHeader>
+          <EditorialCardBody>
+            {project.responses.length === 0 ? (
+              <p className="py-6 text-center text-[14px] text-editorial-neutral-3">
+                No responses yet. Install the SDK and drop a{' '}
+                <code className="font-mono text-[12px]">&lt;Gotcha /&gt;</code> component to start
+                collecting.
+              </p>
+            ) : (
+              <ul className="-my-2 divide-y divide-editorial-neutral-2">
+                {(project.responses as ResponseItem[]).map((response) => (
+                  <li key={response.id} className="flex items-start gap-4 py-3">
+                    <span
+                      aria-hidden="true"
+                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-accent/70"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] text-editorial-ink">
+                        {response.content || `${response.mode.toLowerCase()} response`}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-editorial-neutral-3">
+                        {response.elementIdRaw} · {formatTimeAgo(new Date(response.createdAt))}
+                      </p>
+                    </div>
+                    {response.rating && response.mode === 'NPS' && (
+                      <span className="shrink-0 font-display text-[14px] text-editorial-ink">
+                        {response.rating}
+                        <span className="text-editorial-neutral-3">/10</span>
+                      </span>
+                    )}
+                    {response.rating && response.mode !== 'NPS' && (
+                      <span className="shrink-0 font-display text-[14px] text-editorial-accent">
+                        {'★'.repeat(response.rating)}
+                      </span>
+                    )}
+                    {response.vote && (
+                      <span
+                        className={`shrink-0 text-[13px] ${response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
+                      >
+                        {response.vote === 'UP' ? 'Up' : 'Down'}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </EditorialCardBody>
+        </EditorialCard>
       </div>
 
-      {/* Danger Zone */}
-      <div className="mt-12">
+      <div className="mt-16">
         <DeleteProjectCard projectName={project.name} projectSlug={slug} userEmail={user?.email} />
       </div>
     </div>
   );
-}
-
-function getModeColor(mode: string): string {
-  const colors: Record<string, string> = {
-    FEEDBACK: 'bg-slate-500',
-    VOTE: 'bg-green-500',
-    POLL: 'bg-purple-500',
-    FEATURE_REQUEST: 'bg-orange-500',
-    AB: 'bg-pink-500',
-  };
-  return colors[mode] || 'bg-gray-500';
-}
-
-function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return date.toLocaleDateString();
 }

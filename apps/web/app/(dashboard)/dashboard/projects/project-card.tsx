@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
 
 interface ProjectCardProps {
   slug: string;
@@ -10,6 +7,14 @@ interface ProjectCardProps {
   responseCount: number;
   apiKeyCount: number;
   createdAt: string;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 export function ProjectCard({
@@ -21,45 +26,48 @@ export function ProjectCard({
   createdAt,
 }: ProjectCardProps) {
   return (
-    <Link href={`/dashboard/projects/${slug}`}>
-      <SpotlightCard
-        className="p-6 h-full hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
-        spotlightColor="rgba(148, 163, 184, 0.08)"
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-900">{name}</h3>
-            <p className="text-sm text-gray-500 mt-1">{description || 'No description'}</p>
-          </div>
+    <Link
+      href={`/dashboard/projects/${slug}`}
+      className="group flex h-full flex-col rounded-md border border-editorial-neutral-2 bg-editorial-paper p-6 transition-all duration-240 ease-page-turn hover:border-editorial-ink/30"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+            {name}
+          </h3>
+          <p className="mt-1.5 line-clamp-2 text-[13px] leading-[1.55] text-editorial-neutral-3">
+            {description || 'No description'}
+          </p>
         </div>
-        <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-          <span className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            {responseCount} responses
-          </span>
-          <span className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-              />
-            </svg>
-            {apiKeyCount} keys
-          </span>
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-400">Created {createdAt}</p>
-        </div>
-      </SpotlightCard>
+        <span
+          aria-hidden="true"
+          className="mt-1 text-editorial-neutral-3 transition-all duration-240 ease-page-turn group-hover:translate-x-0.5 group-hover:text-editorial-ink"
+        >
+          →
+        </span>
+      </div>
+
+      <div className="mt-auto flex items-center gap-5 pt-6">
+        <Stat label="Responses" value={responseCount.toLocaleString()} />
+        <Stat label="Keys" value={apiKeyCount.toString()} />
+      </div>
+
+      <div className="mt-5 border-t border-editorial-neutral-2 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+        Created {formatDate(createdAt)}
+      </div>
     </Link>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="font-display text-[1.5rem] font-normal leading-none tracking-[-0.01em] text-editorial-ink tabular-nums">
+        {value}
+      </p>
+      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+        {label}
+      </p>
+    </div>
   );
 }
