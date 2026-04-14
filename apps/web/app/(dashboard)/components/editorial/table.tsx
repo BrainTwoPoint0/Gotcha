@@ -41,7 +41,7 @@ export function EditorialTH({ className, ...rest }: React.ThHTMLAttributes<HTMLT
   return (
     <th
       className={cn(
-        'px-4 py-3 font-mono text-[10px] font-normal uppercase tracking-[0.14em] text-editorial-neutral-3',
+        'px-4 py-3 font-mono text-[10px] font-normal uppercase tracking-[0.14em] text-editorial-neutral-3 first:pl-6 last:pr-6',
         className
       )}
       {...rest}
@@ -50,5 +50,10 @@ export function EditorialTH({ className, ...rest }: React.ThHTMLAttributes<HTMLT
 }
 
 export function EditorialTD({ className, ...rest }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('px-4 py-3 align-middle text-editorial-ink', className)} {...rest} />;
+  return (
+    <td
+      className={cn('px-4 py-3 align-middle text-editorial-ink first:pl-6 last:pr-6', className)}
+      {...rest}
+    />
+  );
 }

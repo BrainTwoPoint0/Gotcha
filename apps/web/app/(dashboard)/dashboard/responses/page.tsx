@@ -243,14 +243,15 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         </EditorialCard>
       ) : (
         <EditorialCard className="overflow-hidden">
-          <EditorialTable className="min-w-[720px] table-fixed">
+          <EditorialTable className="table-fixed">
             <colgroup>
-              <col className="w-[38%]" />
+              {/* Proportions sum to 100%. Date widened so "Mar 10, 12:58 AM" never clips. */}
+              <col className="w-[34%]" />
+              <col className="w-[13%]" />
+              <col className="w-[9%]" />
+              <col className="w-[13%]" />
               <col className="w-[14%]" />
-              <col className="w-[10%]" />
-              <col className="w-[12%]" />
-              <col className="w-[14%]" />
-              <col className="w-[12%]" />
+              <col className="w-[17%]" />
             </colgroup>
             <EditorialTHead>
               <EditorialTR className="hover:bg-transparent">

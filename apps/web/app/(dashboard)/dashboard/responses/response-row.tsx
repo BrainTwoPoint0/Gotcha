@@ -199,8 +199,9 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         <EditorialTD
           className={`hidden whitespace-nowrap font-mono text-[12px] tabular-nums text-editorial-neutral-3 sm:table-cell ${isGated ? 'select-none blur-sm' : ''}`}
+          title={formatDateLong(new Date(response.createdAt))}
         >
-          {formatDate(new Date(response.createdAt))}
+          {formatDateShort(new Date(response.createdAt))}
         </EditorialTD>
       </EditorialTR>
 
@@ -310,15 +311,29 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MS_DAY = 24 * 60 * 60 * 1000;
 
-function formatDate(date: Date): string {
+/** List-view date — short and relative. "Today 12:58p" / "Yesterday 3:45p" / "Mar 10". */
+function formatDateShort(date: Date): string {
+  const now = new Date();
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  const yesterday = now.getTime() - date.getTime() < 2 * MS_DAY && !sameDay;
+
+  if (sameDay || yesterday) {
+    let h = date.getHours();
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const ampm = h >= 12 ? 'p' : 'a';
+    h = h % 12 || 12;
+    return `${sameDay ? 'Today' : 'Yesterday'} ${h}:${min}${ampm}`;
+  }
+
+  const sameYear = date.getFullYear() === now.getFullYear();
   const m = MONTHS[date.getMonth()];
   const d = date.getDate();
-  let h = date.getHours();
-  const min = date.getMinutes().toString().padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${m} ${d}, ${h}:${min} ${ampm}`;
+  return sameYear ? `${m} ${d}` : `${m} ${d}, ${date.getFullYear()}`;
 }
 
 function formatDateLong(date: Date): string {
