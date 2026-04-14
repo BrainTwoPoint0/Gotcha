@@ -48,3 +48,6 @@ app/(dashboard)/dashboard/insights
 # Misc
 *.log
 *.tmp
+
+# Dev-only screenshot / QA helpers
+.screenshot-*.js

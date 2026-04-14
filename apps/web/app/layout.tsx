@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Carter_One } from 'next/font/google';
+import { DM_Sans, Carter_One, Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
@@ -13,6 +13,25 @@ const carterOne = Carter_One({
   weight: '400',
   subsets: ['latin'],
   variable: '--font-carter',
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  display: 'swap',
+  axes: ['opsz', 'SOFT'],
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -47,7 +66,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${carterOne.variable}`}>
+      <body
+        className={`${dmSans.variable} ${carterOne.variable} ${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

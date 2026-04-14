@@ -1,7 +1,6 @@
 import { ResolvedTheme } from './tokens';
 
 const STYLE_ID = 'gotcha-styles';
-const FONT_ID = 'gotcha-dm-sans';
 const FONT_FACE_ID = 'gotcha-carter-one';
 
 /**
@@ -212,33 +211,13 @@ export function generateStyleTag(theme: ResolvedTheme): string {
 
 /**
  * Inject the style tag into the document head (idempotent).
+ *
+ * Privacy: makes zero third-party network calls. Carter One is base64-embedded above.
+ * UI text uses the host's system font stack — no Google Fonts, no CDN, no leak.
  */
 export function injectStyles(theme: ResolvedTheme): void {
   if (typeof document === 'undefined') return;
 
-  // Inject DM Sans from Google Fonts with preconnect
-  if (!document.getElementById(FONT_ID)) {
-    // Preconnect to Google Fonts
-    const preconnect = document.createElement('link');
-    preconnect.rel = 'preconnect';
-    preconnect.href = 'https://fonts.googleapis.com';
-    document.head.appendChild(preconnect);
-
-    const preconnectStatic = document.createElement('link');
-    preconnectStatic.rel = 'preconnect';
-    preconnectStatic.href = 'https://fonts.gstatic.com';
-    preconnectStatic.crossOrigin = 'anonymous';
-    document.head.appendChild(preconnectStatic);
-
-    // Load DM Sans from Google Fonts (Carter One is base64-embedded above)
-    const link = document.createElement('link');
-    link.id = FONT_ID;
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Carter+One&family=DM+Sans:wght@400;500;600;700&display=swap';
-    document.head.appendChild(link);
-  }
-
-  // Inject or update style tag
   let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
   if (!styleEl) {
     styleEl = document.createElement('style');

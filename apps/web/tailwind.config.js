@@ -7,11 +7,27 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-dm-sans)', 'system-ui', '-apple-system', 'sans-serif'],
         carter: ['var(--font-carter)', 'cursive'],
+        // Editorial surface stack
+        display: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        editorial: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      spacing: {
+        // Editorial 4pt scale — favour 32 (8) and 48 (12). Breathing room is the product.
+        editorial: '32px',
+        'editorial-lg': '48px',
+        'editorial-xl': '80px',
+      },
+      transitionTimingFunction: {
+        'page-turn': 'cubic-bezier(0.2, 0, 0, 1)',
+      },
+      transitionDuration: {
+        240: '240ms',
       },
       keyframes: {
         spotlight: {
@@ -69,6 +85,15 @@ module.exports = {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
+        // Editorial palette — scoped under `editorial.*` to avoid clashing with shadcn's `accent`.
+        // Usage: bg-editorial-paper, text-editorial-ink, border-editorial-neutral-2, etc.
+        'editorial-ink': 'rgb(var(--editorial-ink) / <alpha-value>)',
+        'editorial-paper': 'rgb(var(--editorial-paper) / <alpha-value>)',
+        'editorial-accent': 'rgb(var(--editorial-accent) / <alpha-value>)',
+        'editorial-neutral-2': 'rgb(var(--editorial-neutral-2) / <alpha-value>)',
+        'editorial-neutral-3': 'rgb(var(--editorial-neutral-3) / <alpha-value>)',
+        'editorial-success': 'rgb(var(--editorial-success) / <alpha-value>)',
+        'editorial-alert': 'rgb(var(--editorial-alert) / <alpha-value>)',
       },
     },
   },

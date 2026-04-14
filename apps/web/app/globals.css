@@ -11,6 +11,35 @@ body {
   color: #111827; /* gray-900 */
 }
 
+/* Editorial surface — opt-in wrapper for marketing pages and redesigned product surfaces.
+   Sits in `@layer components` so Tailwind utilities (bg-editorial-ink, text-editorial-paper, etc.)
+   always override the defaults on nested sections that want to flip the palette. */
+@layer components {
+  .editorial {
+    font-family:
+      var(--font-inter),
+      system-ui,
+      -apple-system,
+      sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  .editorial ::selection {
+    background: rgb(var(--editorial-accent) / 0.2);
+    color: rgb(var(--editorial-ink));
+  }
+}
+
+:root {
+  /* Editorial palette — rgb triplets so they can be used with Tailwind's / opacity syntax */
+  --editorial-ink: 26 23 20; /* #1A1714 */
+  --editorial-paper: 250 248 244; /* #FAF8F4 */
+  --editorial-accent: 212 83 42; /* #D4532A — burnt sienna */
+  --editorial-neutral-2: 232 226 217; /* #E8E2D9 — hairlines, borders */
+  --editorial-neutral-3: 107 101 93; /* #6B655D — secondary text */
+  --editorial-success: 74 107 62; /* #4A6B3E — sage */
+  --editorial-alert: 155 58 46; /* #9B3A2E */
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -22,8 +51,35 @@ body {
   }
 }
 
+/* Turning-a-page — 240ms opacity + 4px translate, no bounce. Motion signature for the editorial surface. */
+@keyframes pageTurn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.editorial .animate-page-turn {
+  animation: pageTurn 240ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorial .animate-page-turn {
+    /* Kill the animation but restore the end state — otherwise elements stay at
+       the `from` keyframe (opacity: 0) and the hero renders blank for users with
+       reduced-motion preferences. */
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer base {

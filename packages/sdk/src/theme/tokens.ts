@@ -201,7 +201,8 @@ export const LIGHT_TOKENS: ResolvedTheme = {
     pollCheckSelectedBg: '#1e293b',
   },
   typography: {
-    fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily:
+      "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     fontSize: { xs: 11, sm: 13, md: 14, lg: 16 },
     fontWeight: { normal: 400, medium: 500, semibold: 600, bold: 700 },
   },
@@ -290,7 +291,8 @@ export const DARK_TOKENS: ResolvedTheme = {
     pollCheckSelectedBg: '#e2e8f0',
   },
   typography: {
-    fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily:
+      "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     fontSize: { xs: 11, sm: 13, md: 14, lg: 16 },
     fontWeight: { normal: 400, medium: 500, semibold: 600, bold: 700 },
   },
