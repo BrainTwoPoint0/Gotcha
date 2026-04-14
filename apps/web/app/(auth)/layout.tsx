@@ -3,61 +3,57 @@ import { Suspense } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-[45%] relative bg-gray-950 flex-col justify-between p-12 overflow-hidden">
-        {/* Subtle grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-          }}
-        />
+    <div className="editorial flex min-h-screen bg-editorial-paper text-editorial-ink">
+      {/* Left panel — editorial quote, inverted */}
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-editorial-ink p-12 text-editorial-paper lg:flex lg:w-[45%]">
+        {/* Hairline top rule */}
+        <div className="absolute inset-x-0 top-0 h-px bg-editorial-paper/10" aria-hidden="true" />
 
-        {/* Floating code snippets as decoration */}
-        <div className="absolute top-[15%] right-12 opacity-[0.07] text-white font-mono text-sm leading-relaxed select-none">
-          {'<Gotcha elementId="hero" />\n<Gotcha mode="vote" />\n<Gotcha mode="nps" />'}
-        </div>
-        <div className="absolute bottom-[20%] left-12 opacity-[0.07] text-white font-mono text-sm leading-relaxed select-none">
-          {'onSubmit={(data) => {\n  console.log(data)\n}}'}
-        </div>
-
-        <div className="relative z-10">
-          <Link href="/" className="text-white text-2xl font-bold tracking-tight">
+        <div className="relative z-10 flex items-baseline gap-[2px] font-display text-2xl leading-none tracking-[-0.01em]">
+          <Link href="/" className="transition-colors hover:text-editorial-accent">
             Gotcha
           </Link>
+          <span className="text-editorial-accent">.</span>
         </div>
 
-        <div className="relative z-10 space-y-6">
-          <blockquote className="text-white/90 text-2xl font-light leading-relaxed max-w-md">
-            &ldquo;Know what your users actually think — not what you assume.&rdquo;
+        <div className="relative z-10 max-w-md space-y-8">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-paper/50">
+            What the loop sounds like
+          </span>
+          <blockquote className="font-display text-[1.875rem] font-normal leading-[1.2] tracking-[-0.01em]">
+            &ldquo;Your users ask. <span className="italic text-editorial-paper/70">You ship.</span>{' '}
+            They hear back — the feedback loop that closes itself.&rdquo;
           </blockquote>
-          <div className="flex items-center gap-3">
-            <div className="h-px w-8 bg-white/20" />
-            <p className="text-white/40 text-sm">Contextual feedback in 3 lines of code</p>
+          <div className="flex items-center gap-3 text-[13px] text-editorial-paper/60">
+            <span className="h-px w-8 bg-editorial-accent" aria-hidden="true" />
+            <span>No analytics. No cookies. No tracking.</span>
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center gap-6 text-white/30 text-xs">
-          <Link href="/terms" className="hover:text-white/50 transition-colors">
+        <div className="relative z-10 flex items-center gap-6 text-[12px] text-editorial-paper/40">
+          <Link href="/terms" className="transition-colors hover:text-editorial-paper/80">
             Terms
           </Link>
-          <Link href="/privacy" className="hover:text-white/50 transition-colors">
+          <Link href="/privacy" className="transition-colors hover:text-editorial-paper/80">
             Privacy
           </Link>
         </div>
-      </div>
+      </aside>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex flex-col bg-white">
-        <div className="lg:hidden p-6">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            Gotcha
-          </Link>
+      <div className="flex flex-1 flex-col">
+        <div className="lg:hidden">
+          <div className="flex items-center justify-between border-b border-editorial-neutral-2 px-6 py-5">
+            <Link
+              href="/"
+              className="flex items-baseline gap-[2px] font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
+            >
+              Gotcha
+              <span className="text-editorial-accent">.</span>
+            </Link>
+          </div>
         </div>
-        <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="flex flex-1 items-center justify-center px-6 py-12">
           <Suspense>{children}</Suspense>
         </div>
       </div>
