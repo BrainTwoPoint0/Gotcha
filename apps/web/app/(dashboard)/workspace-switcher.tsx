@@ -21,13 +21,10 @@ export function WorkspaceSwitcher({
   const [switching, setSwitching] = useState(false);
   const router = useRouter();
 
-  // Don't render if only one workspace
   if (workspaces.length <= 1) {
     const ws = workspaces[0];
     if (!ws) return null;
-    return (
-      <span className="text-sm font-medium text-gray-700 truncate max-w-[160px]">{ws.name}</span>
-    );
+    return <span className="max-w-[180px] truncate text-[14px] text-editorial-ink">{ws.name}</span>;
   }
 
   const active = workspaces.find((w) => w.id === activeId) || workspaces[0];
@@ -46,7 +43,6 @@ export function WorkspaceSwitcher({
       if (res.ok) {
         setOpen(false);
         router.refresh();
-        // Small delay to let the cookie propagate before full reload
         setTimeout(() => window.location.reload(), 100);
       }
     } catch {
@@ -60,8 +56,8 @@ export function WorkspaceSwitcher({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors truncate max-w-[200px]"
         disabled={switching}
+        className="flex max-w-[220px] items-center gap-1.5 truncate text-[14px] text-editorial-ink transition-colors hover:text-editorial-accent"
       >
         <span className="truncate">{active?.name}</span>
         <svg
@@ -69,7 +65,8 @@ export function WorkspaceSwitcher({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-editorial-neutral-3 transition-transform duration-240 ease-page-turn ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
         >
           <path
             d="M3 4.5L6 7.5L9 4.5"
@@ -83,51 +80,53 @@ export function WorkspaceSwitcher({
 
       {open && (
         <>
-          {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
 
-          {/* Dropdown */}
-          <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1 overflow-hidden">
-            <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+          <div className="editorial absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-md border border-editorial-neutral-2 bg-editorial-paper shadow-[0_8px_24px_rgba(26,23,20,0.08)]">
+            <div className="px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
               Workspaces
             </div>
-            {workspaces.map((ws) => (
-              <button
-                key={ws.id}
-                onClick={() => handleSwitch(ws.id)}
-                disabled={switching}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                  ws.id === activeId ? 'bg-gray-50' : ''
-                } ${switching ? 'opacity-50' : ''}`}
-              >
-                <div className="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500 shrink-0">
-                  {ws.name[0]?.toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{ws.name}</p>
-                  <p className="text-[11px] text-gray-400">
-                    {ws.role.charAt(0) + ws.role.slice(1).toLowerCase()}
-                  </p>
-                </div>
-                {ws.id === activeId && (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    className="shrink-0 text-gray-400"
+            <div className="border-t border-editorial-neutral-2/70">
+              {workspaces.map((ws) => {
+                const isActive = ws.id === activeId;
+                return (
+                  <button
+                    key={ws.id}
+                    onClick={() => handleSwitch(ws.id)}
+                    disabled={switching}
+                    className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-editorial-ink/[0.03] ${isActive ? 'bg-editorial-ink/[0.02]' : ''} ${switching ? 'opacity-60' : ''}`}
                   >
-                    <path
-                      d="M3.5 7L6 9.5L10.5 4.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-            ))}
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-editorial-neutral-2 bg-editorial-paper font-mono text-[12px] text-editorial-neutral-3">
+                      {ws.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] text-editorial-ink">{ws.name}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                        {ws.role.charAt(0) + ws.role.slice(1).toLowerCase()}
+                      </p>
+                    </div>
+                    {isActive && (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        className="shrink-0 text-editorial-accent"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M3.5 7L6 9.5L10.5 4.5"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </>
       )}

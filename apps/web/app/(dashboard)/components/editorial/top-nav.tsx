@@ -1,0 +1,91 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
+export interface EditorialNavLink {
+  href: string;
+  label: string;
+  proLocked?: boolean;
+}
+
+export interface EditorialTopNavProps {
+  links: EditorialNavLink[];
+  leftSlot?: React.ReactNode;
+  rightSlot?: React.ReactNode;
+  mobileMenuSlot?: React.ReactNode;
+}
+
+export function EditorialTopNav({
+  links,
+  leftSlot,
+  rightSlot,
+  mobileMenuSlot,
+}: EditorialTopNavProps) {
+  const pathname = usePathname();
+
+  return (
+    <nav className="editorial sticky top-0 z-30 border-b border-editorial-neutral-2 bg-editorial-paper/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex shrink-0 items-center gap-4">
+          <Link
+            href="/dashboard"
+            className="flex items-baseline gap-[2px] font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
+          >
+            Gotcha
+            <span className="text-editorial-accent">.</span>
+          </Link>
+          {leftSlot && (
+            <>
+              <span aria-hidden="true" className="text-editorial-neutral-2">
+                /
+              </span>
+              {leftSlot}
+            </>
+          )}
+        </div>
+
+        <div className="hidden min-w-0 flex-1 items-center gap-1 md:flex">
+          {links.map((link) => {
+            const active =
+              link.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname === link.href || pathname.startsWith(link.href + '/');
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'relative flex h-16 items-center px-3 text-[14px] transition-colors duration-240 ease-page-turn',
+                  active
+                    ? 'text-editorial-ink'
+                    : 'text-editorial-neutral-3 hover:text-editorial-ink'
+                )}
+              >
+                {link.label}
+                {link.proLocked && (
+                  <span className="ml-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent">
+                    Pro
+                  </span>
+                )}
+                {active && (
+                  <span
+                    className="absolute inset-x-3 bottom-0 h-px bg-editorial-ink"
+                    aria-hidden="true"
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-4">
+          <div className="hidden items-center gap-4 md:flex">{rightSlot}</div>
+          <div className="md:hidden">{mobileMenuSlot}</div>
+        </div>
+      </div>
+    </nav>
+  );
+}
