@@ -9,10 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Input } from '@/components/ui/input';
+import { EditorialInput } from '../../components/editorial/form-field';
+import { EditorialButton } from '../../components/editorial/button';
 
 interface Element {
   elementIdRaw: string;
@@ -53,6 +52,7 @@ export function ResponsesFilter({
   const [tag, setTag] = useState(searchParams.get('tag') || '');
   const [tagFocused, setTagFocused] = useState(false);
   const [tagHighlight, setTagHighlight] = useState(-1);
+  const [showAdvanced, setShowAdvanced] = useState(Boolean(startDate || endDate || tag));
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   const tagSuggestions =
@@ -79,6 +79,7 @@ export function ResponsesFilter({
     setElementId('');
     setStatuses(DEFAULT_STATUSES);
     setTag('');
+    setShowAdvanced(false);
     router.push('/dashboard/responses');
   };
 
@@ -96,140 +97,187 @@ export function ResponsesFilter({
     !DEFAULT_STATUSES.every((s) => statuses.includes(s));
 
   return (
-    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 mb-6 p-4 bg-white rounded-lg border border-gray-200">
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>Search</Label>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleFilter();
-          }}
-          placeholder="Search feedback..."
-          className="w-full sm:w-[200px]"
-        />
-      </div>
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>Element</Label>
-        <Select value={elementId} onValueChange={setElementId}>
-          <SelectTrigger className="w-full sm:w-[220px]">
-            <SelectValue placeholder="All Elements" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">All Elements</SelectItem>
-            {elements.map((el) => (
-              <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
-                {el.elementIdRaw} ({el.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>Status</Label>
-        <div className="flex gap-1">
-          {ALL_STATUSES.map((s) => {
-            const active = statuses.includes(s);
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggleStatus(s)}
-                className={`
-                  px-2.5 h-9 text-xs font-medium rounded-md border
-                  transition-all duration-100
-                  ${
-                    active
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-400 border-gray-200 hover:text-gray-600 hover:border-gray-300'
-                  }
-                `}
-              >
-                {STATUS_LABELS[s]}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>Tag</Label>
-        <div className="relative">
-          <Input
-            ref={tagInputRef}
-            value={tag}
-            onChange={(e) => {
-              setTag(e.target.value);
-              setTagHighlight(-1);
-            }}
-            onFocus={() => setTagFocused(true)}
-            onBlur={() => setTimeout(() => setTagFocused(false), 150)}
+    <div className="mb-6 overflow-hidden rounded-md border border-editorial-neutral-2 bg-editorial-paper">
+      {/* Primary row — search + element + status + actions — always visible */}
+      <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <svg
+            className="shrink-0 text-editorial-neutral-3"
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="6" cy="6" r="4.25" stroke="currentColor" strokeWidth="1.25" />
+            <path
+              d="M9.25 9.25L12 12"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinecap="round"
+            />
+          </svg>
+          <EditorialInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
-              if (tagSuggestions.length > 0) {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  setTagHighlight((i) => (i < tagSuggestions.length - 1 ? i + 1 : 0));
-                  return;
-                }
-                if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setTagHighlight((i) => (i > 0 ? i - 1 : tagSuggestions.length - 1));
-                  return;
-                }
-                if (e.key === 'Enter' && tagHighlight >= 0) {
-                  e.preventDefault();
-                  setTag(tagSuggestions[tagHighlight].tag);
-                  setTagFocused(false);
-                  setTagHighlight(-1);
-                  return;
-                }
-              }
+              if (e.key === 'Enter') handleFilter();
             }}
-            placeholder="Filter by tag"
-            className="w-full sm:w-[160px]"
+            placeholder="Search feedback…"
+            className="h-9 border-transparent bg-transparent px-0 text-[14px] focus:border-transparent focus:ring-0"
           />
-          {tagSuggestions.length > 0 && (
-            <div className="absolute top-full left-0 z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-md shadow-lg py-1">
-              {tagSuggestions.map((s, i) => (
-                <button
-                  key={s.tag}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setTag(s.tag);
-                    setTagFocused(false);
-                    setTagHighlight(-1);
-                  }}
-                  className={`
-                    w-full text-left px-2.5 py-1.5 text-sm flex items-center justify-between gap-3
-                    ${i === tagHighlight ? 'bg-sky-50 text-sky-700' : 'text-gray-700 hover:bg-gray-50'}
-                  `}
-                >
-                  <span>{s.tag}</span>
-                  <span className="text-xs text-gray-400">{s.count}</span>
-                </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={elementId} onValueChange={setElementId}>
+            <SelectTrigger className="h-9 w-[180px] rounded-md border-editorial-neutral-2 bg-editorial-paper text-[13px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25">
+              <SelectValue placeholder="All elements" />
+            </SelectTrigger>
+            <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
+              <SelectItem value="__all__">All elements</SelectItem>
+              {elements.map((el) => (
+                <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
+                  {el.elementIdRaw} ({el.count})
+                </SelectItem>
               ))}
-            </div>
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-0.5 rounded-md border border-editorial-neutral-2 p-0.5">
+            {ALL_STATUSES.map((s) => {
+              const active = statuses.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleStatus(s)}
+                  className={`h-8 rounded px-2.5 text-[12px] transition-colors duration-240 ease-page-turn ${
+                    active
+                      ? 'bg-editorial-ink text-editorial-paper'
+                      : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.04] hover:text-editorial-ink'
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors ${
+              showAdvanced
+                ? 'bg-editorial-ink/[0.04] text-editorial-ink'
+                : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.04] hover:text-editorial-ink'
+            }`}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path
+                d="M2 3.5H10M3.5 6H8.5M5 8.5H7"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
+            </svg>
+            More
+          </button>
+
+          <EditorialButton onClick={handleFilter} variant="ink" size="sm" className="h-9">
+            Apply
+          </EditorialButton>
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="h-9 px-2.5 text-[13px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+            >
+              Clear
+            </button>
           )}
         </div>
       </div>
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>Start Date</Label>
-        <DatePicker value={startDate} onChange={setStartDate} placeholder="Start date" />
-      </div>
-      <div className="w-full sm:w-auto space-y-1">
-        <Label>End Date</Label>
-        <DatePicker value={endDate} onChange={setEndDate} placeholder="End date" />
-      </div>
-      <div className="flex gap-2 sm:gap-4">
-        <Button onClick={handleFilter} className="flex-1 sm:flex-none">
-          Apply Filter
-        </Button>
-        {hasFilters && (
-          <Button variant="ghost" onClick={handleClear}>
-            Clear
-          </Button>
-        )}
-      </div>
+
+      {showAdvanced && (
+        <div className="flex flex-col gap-3 border-t border-editorial-neutral-2 bg-editorial-ink/[0.02] p-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+              Range
+            </span>
+            <DatePicker value={startDate} onChange={setStartDate} placeholder="Start" />
+            <span aria-hidden="true" className="text-editorial-neutral-3">
+              →
+            </span>
+            <DatePicker value={endDate} onChange={setEndDate} placeholder="End" />
+          </div>
+
+          <div className="relative flex items-center gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+              Tag
+            </span>
+            <EditorialInput
+              ref={tagInputRef}
+              value={tag}
+              onChange={(e) => {
+                setTag(e.target.value);
+                setTagHighlight(-1);
+              }}
+              onFocus={() => setTagFocused(true)}
+              onBlur={() => setTimeout(() => setTagFocused(false), 150)}
+              onKeyDown={(e) => {
+                if (tagSuggestions.length > 0) {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setTagHighlight((i) => (i < tagSuggestions.length - 1 ? i + 1 : 0));
+                    return;
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setTagHighlight((i) => (i > 0 ? i - 1 : tagSuggestions.length - 1));
+                    return;
+                  }
+                  if (e.key === 'Enter' && tagHighlight >= 0) {
+                    e.preventDefault();
+                    setTag(tagSuggestions[tagHighlight].tag);
+                    setTagFocused(false);
+                    setTagHighlight(-1);
+                    return;
+                  }
+                }
+              }}
+              placeholder="Filter by tag"
+              className="h-9 w-[180px]"
+            />
+            {tagSuggestions.length > 0 && (
+              <div className="absolute left-14 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-md border border-editorial-neutral-2 bg-editorial-paper shadow-[0_8px_24px_rgba(26,23,20,0.08)]">
+                {tagSuggestions.map((s, i) => (
+                  <button
+                    key={s.tag}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setTag(s.tag);
+                      setTagFocused(false);
+                      setTagHighlight(-1);
+                    }}
+                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition-colors ${
+                      i === tagHighlight
+                        ? 'bg-editorial-accent/10 text-editorial-ink'
+                        : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.03] hover:text-editorial-ink'
+                    }`}
+                  >
+                    <span>{s.tag}</span>
+                    <span className="font-mono text-[11px] text-editorial-neutral-3">
+                      {s.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

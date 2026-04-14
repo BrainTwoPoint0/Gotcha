@@ -79,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       />
 
       <main className="flex min-h-[calc(100vh-4rem)] flex-col">
-        <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
           {children}
         </div>
         <Footer />

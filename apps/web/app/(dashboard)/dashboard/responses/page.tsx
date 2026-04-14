@@ -4,11 +4,19 @@ import { getAvailableTags } from '@/lib/analytics-queries';
 import { ResponsesFilter } from './responses-filter';
 import { Pagination } from '../../components/pagination';
 import { ExportButton } from './export-button';
-import { DashboardFeedback } from '@/app/components/DashboardFeedback';
-import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponseRow } from './response-row';
+import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import {
+  EditorialTable,
+  EditorialTHead,
+  EditorialTBody,
+  EditorialTR,
+  EditorialTH,
+} from '../../components/editorial/table';
+import { EditorialCard } from '../../components/editorial/card';
+import { EditorialPageHeader } from '../../components/editorial/page-header';
+import { EditorialEmptyState } from '../../components/editorial/empty-state';
+import { EditorialLinkButton } from '../../components/editorial/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,19 +64,15 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   const organization = activeOrg?.organization;
   const isPro = activeOrg?.isPro ?? false;
 
-  // Parse pagination
   const page = Math.max(1, parseInt(params.page || '1', 10));
 
-  // Parse date filters
   const startDate = params.startDate ? new Date(params.startDate) : undefined;
   const endDate = params.endDate ? new Date(`${params.endDate}T23:59:59.999Z`) : undefined;
 
-  // FREE users are limited to last 30 days
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const effectiveStartDate = !isPro && !startDate ? thirtyDaysAgo : startDate;
 
-  // Parse status filter — defaults to excluding ARCHIVED
   const validStatuses = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
   const defaultStatuses = ['NEW', 'REVIEWED', 'ADDRESSED'] as const;
   type ResponseStatus = (typeof validStatuses)[number];
@@ -78,7 +82,6 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         .filter((s): s is ResponseStatus => (validStatuses as readonly string[]).includes(s))
     : [...defaultStatuses];
 
-  // Build where clause
   const searchTerm = params.search?.trim() || '';
   const where = {
     project: {
@@ -103,7 +106,6 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     }),
   };
 
-  // Run all queries in parallel
   const [elements, total, gatedCount, responses, availableTags] = organization
     ? await Promise.all([
         prisma.response.groupBy({
@@ -155,7 +157,6 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  // Redact gated responses server-side so real data never reaches the client
   const safeResponses = responses.map((r) => {
     if (!isPro && r.gated) {
       return {
@@ -172,39 +173,18 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     return r;
   });
 
+  const hasActiveFilters = Boolean(
+    params.startDate || params.endDate || params.elementId || params.search || params.tag
+  );
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">All Responses</h1>
-            <DashboardFeedback
-              elementId="responses-page"
-              mode="poll"
-              promptText="What would make this page more useful?"
-              options={[
-                'Full-text search',
-                'Bulk status changes',
-                'Saved filter presets',
-                'Response annotations',
-                'Auto-categorization',
-              ]}
-              onePerUser={false}
-              userEmail={dbUser?.email}
-              userName={dbUser?.name ?? undefined}
-              userProfile={{
-                companySize: dbUser?.companySize ?? undefined,
-                role: dbUser?.role ?? undefined,
-                industry: dbUser?.industry ?? undefined,
-                useCase: dbUser?.useCase ?? undefined,
-                plan: isPro ? 'PRO' : 'FREE',
-              }}
-            />
-          </div>
-          <p className="text-gray-600">View feedback from all your projects</p>
-        </div>
-        <ExportButton isPro={isPro} />
-      </div>
+      <EditorialPageHeader
+        eyebrow={`${total.toLocaleString()} total · all projects`}
+        title="Responses"
+        subtitle="Every piece of feedback from every project. Click a row to expand."
+        action={<ExportButton isPro={isPro} />}
+      />
 
       <ResponsesFilter
         elements={elementOptions}
@@ -212,97 +192,118 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         availableTags={availableTagOptions}
       />
 
-      {gatedCount > 0 && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>
-            {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free
-            limit.{' '}
-            <a href="/dashboard/settings" className="font-medium underline">
-              Upgrade to Pro
-            </a>{' '}
-            to unlock all your data.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {!isPro && gatedCount === 0 && (
-        <Alert className="mb-4">
-          <AlertDescription>
-            Showing responses from the last 30 days.{' '}
-            <a href="/dashboard/settings" className="font-medium underline">
-              Upgrade to Pro
-            </a>{' '}
-            to view all historical data.
-          </AlertDescription>
-        </Alert>
+      {(gatedCount > 0 || (!isPro && gatedCount === 0)) && (
+        <div className="mb-6 rounded-md border-l-2 border-editorial-accent bg-editorial-accent/[0.04] px-5 py-4 text-[14px] text-editorial-ink">
+          {gatedCount > 0 ? (
+            <>
+              <span className="font-medium">
+                {gatedCount.toLocaleString()} response{gatedCount === 1 ? '' : 's'} beyond the free
+                limit.
+              </span>{' '}
+              <a
+                href="/dashboard/settings"
+                className="underline decoration-editorial-accent decoration-1 underline-offset-4 hover:text-editorial-accent"
+              >
+                Upgrade to Pro
+              </a>{' '}
+              to unlock all your data.
+            </>
+          ) : (
+            <>
+              Showing responses from the last 30 days.{' '}
+              <a
+                href="/dashboard/settings"
+                className="underline decoration-editorial-accent decoration-1 underline-offset-4 hover:text-editorial-accent"
+              >
+                Upgrade to Pro
+              </a>{' '}
+              to view all historical data.
+            </>
+          )}
+        </div>
       )}
 
       {safeResponses.length === 0 ? (
-        <Card className="text-center py-20">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-2">
-            <svg
-              className="h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
-              />
-            </svg>
-          </div>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No responses found</h3>
-          <p className="mt-2 text-gray-500 max-w-sm mx-auto">
-            {params.startDate || params.endDate || params.elementId
-              ? 'Try adjusting your filters.'
-              : 'Responses from your SDK integrations will appear here.'}
-          </p>
-        </Card>
+        <EditorialCard>
+          <EditorialEmptyState
+            title={hasActiveFilters ? 'No responses match these filters' : 'Nothing yet'}
+            body={
+              hasActiveFilters
+                ? 'Try widening your date range, clearing the status filter, or removing the tag.'
+                : 'Once users start leaving feedback through your SDK, their responses will appear here — one row per submission.'
+            }
+            action={
+              hasActiveFilters ? null : (
+                <EditorialLinkButton href="/dashboard/projects" variant="ink">
+                  Set up a project →
+                </EditorialLinkButton>
+              )
+            }
+          />
+        </EditorialCard>
       ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table className="w-full min-w-[700px]">
-              <TableHeader>
-                <TableRow className="border-b border-gray-200/80">
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Response
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Project
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Type
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Status
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Element
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Date
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {safeResponses.map((response) => (
-                  <ResponseRow
-                    key={response.id}
-                    response={response}
-                    isGated={!isPro && response.gated}
-                    isPro={isPro}
-                    availableTags={availableTagOptions}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+        <EditorialCard className="overflow-hidden">
+          <EditorialTable className="min-w-[720px] table-fixed">
+            <colgroup>
+              <col className="w-[38%]" />
+              <col className="w-[14%]" />
+              <col className="w-[10%]" />
+              <col className="w-[12%]" />
+              <col className="w-[14%]" />
+              <col className="w-[12%]" />
+            </colgroup>
+            <EditorialTHead>
+              <EditorialTR className="hover:bg-transparent">
+                <EditorialTH>Response</EditorialTH>
+                <EditorialTH className="hidden sm:table-cell">Project</EditorialTH>
+                <EditorialTH className="hidden sm:table-cell">Type</EditorialTH>
+                <EditorialTH>Status</EditorialTH>
+                <EditorialTH className="hidden md:table-cell">Element</EditorialTH>
+                <EditorialTH className="hidden sm:table-cell">Date</EditorialTH>
+              </EditorialTR>
+            </EditorialTHead>
+            <EditorialTBody>
+              {safeResponses.map((response) => (
+                <ResponseRow
+                  key={response.id}
+                  response={response}
+                  isGated={!isPro && response.gated}
+                  isPro={isPro}
+                  availableTags={availableTagOptions}
+                />
+              ))}
+            </EditorialTBody>
+          </EditorialTable>
           <Pagination currentPage={page} totalPages={totalPages} total={total} />
-        </Card>
+        </EditorialCard>
       )}
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-10 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="responses-page"
+          mode="poll"
+          promptText="What would make this page more useful?"
+          options={[
+            'Full-text search',
+            'Bulk status changes',
+            'Saved filter presets',
+            'Response annotations',
+            'Auto-categorization',
+          ]}
+          onePerUser={false}
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: isPro ? 'PRO' : 'FREE',
+          }}
+        />
+      </div>
     </div>
   );
 }

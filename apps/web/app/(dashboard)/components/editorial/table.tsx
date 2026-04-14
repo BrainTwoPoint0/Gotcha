@@ -50,5 +50,5 @@ export function EditorialTH({ className, ...rest }: React.ThHTMLAttributes<HTMLT
 }
 
 export function EditorialTD({ className, ...rest }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('px-4 py-4 align-middle text-editorial-ink', className)} {...rest} />;
+  return <td className={cn('px-4 py-3 align-middle text-editorial-ink', className)} {...rest} />;
 }

@@ -1,38 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { TableRow, TableCell } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { EditorialTD, EditorialTR } from '../../components/editorial/table';
 import { StatusBadge } from './status-badge';
 import { TagEditor } from './tag-editor';
 
-// Mode badge styling — desaturated, muted tones matching Linear's label system
-const MODE_CONFIG: Record<string, { label: string; className: string }> = {
-  FEEDBACK: {
-    label: 'Feedback',
-    className: 'bg-slate-50 text-slate-600 border-slate-200/80',
-  },
-  VOTE: {
-    label: 'Vote',
-    className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
-  },
-  POLL: {
-    label: 'Poll',
-    className: 'bg-violet-50/80 text-violet-700 border-violet-200/60',
-  },
-  FEATURE_REQUEST: {
-    label: 'Feature',
-    className: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
-  },
-  AB: {
-    label: 'A/B',
-    className: 'bg-rose-50/80 text-rose-700 border-rose-200/60',
-  },
-  NPS: {
-    label: 'NPS',
-    className: 'bg-teal-50/80 text-teal-700 border-teal-200/60',
-  },
+const MODE_LABELS: Record<string, string> = {
+  FEEDBACK: 'Feedback',
+  VOTE: 'Vote',
+  POLL: 'Poll',
+  FEATURE_REQUEST: 'Feature',
+  AB: 'A/B',
+  NPS: 'NPS',
 };
 
 interface ResponseRowProps {
@@ -67,16 +46,10 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
     }
   }, [expanded]);
 
-  const modeConfig = MODE_CONFIG[response.mode] || {
-    label: response.mode.toLowerCase(),
-    className: 'bg-gray-50 text-gray-600 border-gray-200/80',
-  };
+  const modeLabel = MODE_LABELS[response.mode] ?? response.mode.toLowerCase();
 
-  // Format the response preview text
   const getPreview = () => {
-    if (response.vote) {
-      return response.content || response.title || null;
-    }
+    if (response.vote) return response.content || response.title || null;
     if (Array.isArray(response.pollSelected) && response.pollSelected.length > 0) {
       return response.pollSelected.join(', ');
     }
@@ -88,30 +61,21 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
   return (
     <>
-      <TableRow
-        className={`
-          group transition-colors duration-100
-          ${isGated ? 'opacity-60' : 'cursor-pointer'}
-          ${expanded ? 'bg-gray-50/80' : isGated ? '' : 'hover:bg-gray-50/50'}
-        `}
+      <EditorialTR
+        className={`group ${isGated ? 'opacity-60' : 'cursor-pointer'} ${expanded ? 'bg-editorial-ink/[0.02]' : ''}`}
         onClick={() => hasExpandableContent && setExpanded(!expanded)}
       >
         {/* Response column */}
-        <TableCell className="!py-2">
-          <div className={`flex items-center gap-2.5 ${isGated ? 'blur-sm select-none' : ''}`}>
-            {/* Vote indicator */}
+        <EditorialTD className="!py-3">
+          <div className={`flex items-center gap-2.5 ${isGated ? 'select-none blur-sm' : ''}`}>
             {response.vote && (
-              <div
-                className={`
-                flex items-center justify-center w-6 h-6 rounded-full shrink-0
-                ${
-                  response.vote === 'UP'
-                    ? 'bg-emerald-50 text-emerald-600'
-                    : 'bg-red-50 text-red-500'
-                }
-              `}
+              <span
+                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-editorial-neutral-2 ${
+                  response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'
+                }`}
+                aria-hidden="true"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   {response.vote === 'UP' ? (
                     <path
                       d="M7 3L7 11M7 3L4 6M7 3L10 6"
@@ -130,18 +94,31 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                     />
                   )}
                 </svg>
-              </div>
+              </span>
             )}
 
-            {/* Rating stars (feedback) */}
             {response.rating && response.mode !== 'NPS' && (
-              <div className="flex items-center gap-0.5 shrink-0">
+              <div
+                className="flex shrink-0 items-center gap-0.5"
+                aria-label={`${response.rating} of 5 stars`}
+              >
                 {Array.from({ length: 5 }, (_, i) => (
-                  <svg key={i} width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <svg
+                    key={i}
+                    width="11"
+                    height="11"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
                     <path
                       d="M6 1.5L7.35 4.2L10.35 4.65L8.175 6.75L8.7 9.75L6 8.325L3.3 9.75L3.825 6.75L1.65 4.65L4.65 4.2L6 1.5Z"
-                      fill={i < response.rating! ? '#F59E0B' : 'none'}
-                      stroke={i < response.rating! ? '#F59E0B' : '#D1D5DB'}
+                      fill={i < response.rating! ? 'rgb(var(--editorial-accent))' : 'none'}
+                      stroke={
+                        i < response.rating!
+                          ? 'rgb(var(--editorial-accent))'
+                          : 'rgb(var(--editorial-neutral-2))'
+                      }
                       strokeWidth="0.75"
                       strokeLinejoin="round"
                     />
@@ -150,34 +127,30 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
               </div>
             )}
 
-            {/* NPS score */}
             {response.rating && response.mode === 'NPS' && (
-              <span className="text-sm font-medium text-teal-600 shrink-0">
-                {response.rating}/10
+              <span className="shrink-0 font-display text-[15px] text-editorial-ink">
+                {response.rating}
+                <span className="text-editorial-neutral-3">/10</span>
               </span>
             )}
 
-            {/* Preview text */}
             {preview && (
-              <span className="text-sm text-gray-700 truncate leading-tight">{preview}</span>
+              <span className="truncate text-[14px] leading-tight text-editorial-ink">
+                {preview}
+              </span>
             )}
             {!preview && !response.rating && !response.vote && (
-              <span className="text-sm text-gray-400">—</span>
+              <span className="text-[14px] text-editorial-neutral-3">—</span>
             )}
 
-            {/* Expand chevron */}
             {hasExpandableContent && (
               <svg
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 16 16"
                 fill="none"
-                className={`
-                  shrink-0 ml-auto text-gray-300
-                  transition-all duration-200 ease-out
-                  group-hover:text-gray-500
-                  ${expanded ? 'rotate-180 text-gray-500' : ''}
-                `}
+                className={`ml-auto shrink-0 text-editorial-neutral-3/60 transition-all duration-240 ease-page-turn group-hover:text-editorial-ink ${expanded ? 'rotate-180 text-editorial-ink' : ''}`}
+                aria-hidden="true"
               >
                 <path
                   d="M4.5 6.5L8 10L11.5 6.5"
@@ -189,198 +162,126 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
               </svg>
             )}
           </div>
-        </TableCell>
+        </EditorialTD>
 
-        {/* Project */}
-        <TableCell
-          className={`!py-2 hidden sm:table-cell text-sm text-gray-500 max-w-[120px] truncate ${isGated ? 'blur-sm select-none' : ''}`}
+        <EditorialTD
+          className={`hidden max-w-[140px] truncate text-[13px] text-editorial-neutral-3 sm:table-cell ${isGated ? 'select-none blur-sm' : ''}`}
         >
           {response.project.name}
-        </TableCell>
+        </EditorialTD>
 
-        {/* Type badge */}
-        <TableCell className={`!py-2 hidden sm:table-cell ${isGated ? 'blur-sm select-none' : ''}`}>
-          <Badge variant="outline" className={modeConfig.className}>
-            {modeConfig.label}
-          </Badge>
-        </TableCell>
+        <EditorialTD className={`hidden sm:table-cell ${isGated ? 'select-none blur-sm' : ''}`}>
+          <span className="inline-flex items-center rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+            {modeLabel}
+          </span>
+        </EditorialTD>
 
-        {/* Status */}
-        <TableCell className="!py-2" onClick={(e) => e.stopPropagation()}>
+        <EditorialTD onClick={(e) => e.stopPropagation()}>
           {!isGated ? (
             <StatusBadge
               responseId={response.id}
               status={response.status as 'NEW' | 'REVIEWED' | 'ADDRESSED' | 'ARCHIVED'}
             />
           ) : (
-            <span className="blur-sm select-none text-xs text-gray-400">New</span>
+            <span className="select-none font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3/60 blur-sm">
+              New
+            </span>
           )}
-        </TableCell>
+        </EditorialTD>
 
-        {/* Element */}
-        <TableCell
-          className={`!py-2 hidden md:table-cell max-w-[160px] ${isGated ? 'blur-sm select-none' : ''}`}
+        <EditorialTD
+          className={`hidden max-w-[180px] md:table-cell ${isGated ? 'select-none blur-sm' : ''}`}
         >
-          <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded truncate block max-w-full">
+          <code className="block max-w-full truncate font-mono text-[11px] text-editorial-neutral-3">
             {response.elementIdRaw}
           </code>
-        </TableCell>
+        </EditorialTD>
 
-        {/* Date */}
-        <TableCell
-          className={`!py-2 hidden sm:table-cell text-sm tabular-nums text-gray-400 whitespace-nowrap ${isGated ? 'blur-sm select-none' : ''}`}
+        <EditorialTD
+          className={`hidden whitespace-nowrap font-mono text-[12px] tabular-nums text-editorial-neutral-3 sm:table-cell ${isGated ? 'select-none blur-sm' : ''}`}
         >
           {formatDate(new Date(response.createdAt))}
-        </TableCell>
+        </EditorialTD>
+      </EditorialTR>
 
-        {/* Gated overlay */}
-        {isGated && (
-          <TableCell className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[11px] text-gray-400 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md border border-gray-200/60 shadow-sm">
-              Upgrade to view
-            </span>
-          </TableCell>
-        )}
-      </TableRow>
-
-      {/* Expanded detail panel */}
-      <TableRow
-        className={`
-          border-0
-          ${expanded && !isGated ? '' : 'hidden'}
-        `}
-      >
-        <TableCell colSpan={6} className="p-0 border-0">
+      {/* Expanded detail */}
+      <tr className={`${expanded && !isGated ? '' : 'hidden'}`}>
+        <td colSpan={6} className="border-b border-editorial-neutral-2 p-0">
           <div
             ref={detailRef}
-            className="overflow-hidden transition-all duration-200 ease-out"
+            className="overflow-hidden transition-[max-height] duration-240 ease-page-turn"
             style={{ maxHeight: expanded ? `${height + 32}px` : '0px' }}
           >
-            <div className="px-3 py-3 sm:px-6 sm:py-4 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
-              <div className="max-w-2xl space-y-3">
-                {/* Rating detail */}
+            <div className="bg-editorial-ink/[0.02] px-6 py-5">
+              <div className="max-w-2xl space-y-4">
                 {response.rating && response.mode !== 'NPS' && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
-                      Rating
+                  <DetailRow label="Rating">
+                    <span className="font-display text-[18px] text-editorial-ink">
+                      {response.rating}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path
-                              d="M7 1.75L8.575 4.9L12.075 5.425L9.5375 7.875L10.15 11.375L7 9.7125L3.85 11.375L4.4625 7.875L1.925 5.425L5.425 4.9L7 1.75Z"
-                              fill={i < response.rating! ? '#F59E0B' : 'none'}
-                              stroke={i < response.rating! ? '#F59E0B' : '#E5E7EB'}
-                              strokeWidth="0.75"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-400">{response.rating} of 5</span>
-                    </div>
-                  </div>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                      of 5
+                    </span>
+                  </DetailRow>
                 )}
 
-                {/* NPS score detail */}
                 {response.rating && response.mode === 'NPS' && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
-                      NPS
+                  <DetailRow label="NPS">
+                    <span className="font-display text-[18px] text-editorial-ink">
+                      {response.rating}
+                      <span className="text-editorial-neutral-3">/10</span>
                     </span>
-                    <span className="text-sm font-medium text-teal-600">{response.rating}/10</span>
-                  </div>
+                  </DetailRow>
                 )}
 
-                {/* Vote detail */}
                 {response.vote && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
-                      Vote
-                    </span>
+                  <DetailRow label="Vote">
                     <span
-                      className={`text-sm font-medium ${
-                        response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
-                      }`}
+                      className={`text-[14px] ${response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
                     >
                       {response.vote === 'UP' ? 'Upvote' : 'Downvote'}
                     </span>
-                  </div>
+                  </DetailRow>
                 )}
 
-                {/* Poll selections */}
                 {Array.isArray(response.pollSelected) && response.pollSelected.length > 0 && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
-                      Selected
-                    </span>
+                  <DetailRow label="Selected">
                     <div className="flex flex-wrap gap-1.5">
                       {response.pollSelected.map((opt: string) => (
-                        <Badge
+                        <span
                           key={opt}
-                          variant="outline"
-                          className="bg-violet-50/60 text-violet-700 border-violet-200/60 text-xs font-normal"
+                          className="inline-flex items-center rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2 py-0.5 text-[12px] text-editorial-ink"
                         >
                           {opt}
-                        </Badge>
+                        </span>
                       ))}
                     </div>
-                  </div>
+                  </DetailRow>
                 )}
 
-                {/* Title */}
                 {response.title && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
-                      Title
-                    </span>
-                    <span className="text-sm text-gray-800 font-medium">{response.title}</span>
-                  </div>
+                  <DetailRow label="Title">
+                    <span className="text-[14px] text-editorial-ink">{response.title}</span>
+                  </DetailRow>
                 )}
 
-                {/* Content */}
                 {response.content && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16 pt-0.5">
-                      Content
-                    </span>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <DetailRow label="Content">
+                    <p className="whitespace-pre-wrap text-[14px] leading-[1.6] text-editorial-ink">
                       {response.content}
                     </p>
-                  </div>
+                  </DetailRow>
                 )}
 
-                <Separator className="my-2" />
-
-                {/* Metadata row */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      className="text-gray-300"
-                    >
-                      <path
-                        d="M6 3V6L8 7.5"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                      />
-                      <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1" />
-                    </svg>
-                    <span className="text-[11px] text-gray-400">
-                      {formatDateLong(new Date(response.createdAt))}
-                    </span>
-                  </div>
-                  <code className="text-[11px] text-gray-400 font-mono break-all">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-editorial-neutral-2 pt-3">
+                  <span className="font-mono text-[11px] text-editorial-neutral-3">
+                    {formatDateLong(new Date(response.createdAt))}
+                  </span>
+                  <code className="break-all font-mono text-[11px] text-editorial-neutral-3">
                     {response.elementIdRaw}
                   </code>
                 </div>
 
-                {/* Tags */}
                 <TagEditor
                   responseId={response.id}
                   initialTags={response.tags}
@@ -390,16 +291,26 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
               </div>
             </div>
           </div>
-        </TableCell>
-      </TableRow>
+        </td>
+      </tr>
     </>
+  );
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-5">
+      <span className="w-20 shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        {label}
+      </span>
+      <div className="flex flex-1 items-center gap-2">{children}</div>
+    </div>
   );
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** Compact date formatter — "Mar 4, 2:30 PM" (locale-independent to avoid hydration mismatch) */
 function formatDate(date: Date): string {
   const m = MONTHS[date.getMonth()];
   const d = date.getDate();
@@ -410,7 +321,6 @@ function formatDate(date: Date): string {
   return `${m} ${d}, ${h}:${min} ${ampm}`;
 }
 
-/** Long format — "Wed, Mar 4, 2026, 2:30 PM" */
 function formatDateLong(date: Date): string {
   const day = DAYS[date.getDay()];
   const m = MONTHS[date.getMonth()];

@@ -10,57 +10,58 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 
-// Desaturated, professional status colors — inspired by Linear's status system
 const STATUS_CONFIG = {
   NEW: {
     label: 'New',
     icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <circle cx="7" cy="7" r="5.5" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="3 2" />
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <circle
+          cx="5"
+          cy="5"
+          r="3.75"
+          stroke="currentColor"
+          strokeWidth="1.25"
+          strokeDasharray="2.5 1.5"
+        />
       </svg>
     ),
-    textClass: 'text-blue-600',
-    bgClass: 'bg-blue-50/80 border-blue-200/60 hover:bg-blue-100/80 hover:border-blue-300/60',
+    className: 'text-editorial-accent',
   },
   REVIEWED: {
     label: 'Reviewed',
     icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <circle cx="7" cy="7" r="5.5" stroke="#D97706" strokeWidth="1.5" />
-        <circle cx="7" cy="7" r="2.5" fill="#D97706" />
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.75" stroke="currentColor" strokeWidth="1.25" />
+        <circle cx="5" cy="5" r="1.75" fill="currentColor" />
       </svg>
     ),
-    textClass: 'text-amber-700',
-    bgClass: 'bg-amber-50/80 border-amber-200/60 hover:bg-amber-100/80 hover:border-amber-300/60',
+    className: 'text-editorial-neutral-3',
   },
   ADDRESSED: {
     label: 'Addressed',
     icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <circle cx="7" cy="7" r="5.5" stroke="#059669" strokeWidth="1.5" />
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.75" stroke="currentColor" strokeWidth="1.25" />
         <path
-          d="M4.5 7L6.5 9L9.5 5"
-          stroke="#059669"
-          strokeWidth="1.5"
+          d="M3.25 5L4.5 6.25L6.75 3.75"
+          stroke="currentColor"
+          strokeWidth="1.25"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </svg>
     ),
-    textClass: 'text-emerald-700',
-    bgClass:
-      'bg-emerald-50/80 border-emerald-200/60 hover:bg-emerald-100/80 hover:border-emerald-300/60',
+    className: 'text-editorial-success',
   },
   ARCHIVED: {
     label: 'Archived',
     icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" strokeWidth="1.5" />
-        <path d="M5 7H9" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.75" stroke="currentColor" strokeWidth="1.25" />
+        <path d="M3.5 5H6.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
       </svg>
     ),
-    textClass: 'text-gray-500',
-    bgClass: 'bg-gray-50/80 border-gray-200/60 hover:bg-gray-100/80 hover:border-gray-300/60',
+    className: 'text-editorial-neutral-3/70',
   },
 } as const;
 
@@ -75,7 +76,6 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
   const [status, setStatus] = useState<Status>(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Sync state when server data changes (e.g. pagination)
   useEffect(() => {
     setStatus(initialStatus);
   }, [initialStatus]);
@@ -110,25 +110,18 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className={`
-            inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
-            border cursor-pointer
-            transition-all duration-150 ease-out
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-1
-            active:scale-[0.97]
-            ${config.bgClass} ${config.textClass}
-            ${isUpdating ? 'opacity-40 pointer-events-none' : ''}
-          `}
+          className={`inline-flex items-center gap-2 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors duration-240 ease-page-turn hover:bg-editorial-ink/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-editorial-accent/40 ${config.className} ${isUpdating ? 'pointer-events-none opacity-50' : ''}`}
           disabled={isUpdating}
         >
           {config.icon}
-          <span className="hidden sm:inline-block sm:w-[58px]">{config.label}</span>
+          <span className="hidden sm:inline-block sm:w-[60px] text-left">{config.label}</span>
           <svg
-            width="10"
-            height="10"
+            width="8"
+            height="8"
             viewBox="0 0 10 10"
             fill="none"
-            className="ml-0.5 opacity-40 hidden sm:block"
+            className="hidden opacity-50 sm:block"
+            aria-hidden="true"
           >
             <path
               d="M3 4L5 6L7 4"
@@ -140,11 +133,14 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
           </svg>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-44 p-1">
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-2 py-1">
+      <DropdownMenuContent
+        align="start"
+        className="editorial w-48 rounded-md border-editorial-neutral-2 bg-editorial-paper p-1"
+      >
+        <DropdownMenuLabel className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
           Set status
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-editorial-neutral-2" />
         {(Object.keys(STATUS_CONFIG) as Status[]).map((s) => {
           const c = STATUS_CONFIG[s];
           const isActive = s === status;
@@ -152,25 +148,20 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
             <DropdownMenuItem
               key={s}
               onClick={() => handleStatusChange(s)}
-              className={`
-                flex items-center gap-2.5 cursor-pointer rounded-md px-2 py-1.5
-                transition-colors duration-100
-                ${isActive ? 'bg-gray-100' : ''}
-              `}
+              className={`flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-[13px] transition-colors ${isActive ? 'bg-editorial-ink/[0.04]' : ''}`}
             >
-              {c.icon}
-              <span
-                className={`text-sm ${isActive ? 'font-medium text-gray-900' : 'text-gray-600'}`}
-              >
+              <span className={c.className}>{c.icon}</span>
+              <span className={isActive ? 'text-editorial-ink' : 'text-editorial-neutral-3'}>
                 {c.label}
               </span>
               {isActive && (
                 <svg
-                  width="14"
-                  height="14"
+                  width="12"
+                  height="12"
                   viewBox="0 0 14 14"
                   fill="none"
-                  className="ml-auto text-gray-400"
+                  className="ml-auto text-editorial-accent"
+                  aria-hidden="true"
                 >
                   <path
                     d="M3.5 7L6 9.5L10.5 4.5"

@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { Download, Loader2 } from 'lucide-react';
+import { EditorialButton } from '../../components/editorial/button';
 
 interface ExportButtonProps {
   isPro: boolean;
@@ -24,7 +24,6 @@ export function ExportButton({ isPro }: ExportButtonProps) {
     setIsExporting(true);
 
     try {
-      // Forward all active filters to the export API
       const params = new URLSearchParams();
       params.set('format', format);
 
@@ -50,7 +49,6 @@ export function ExportButton({ isPro }: ExportButtonProps) {
         return;
       }
 
-      // Download the file
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -70,38 +68,46 @@ export function ExportButton({ isPro }: ExportButtonProps) {
 
   if (!isPro) {
     return (
-      <Button variant="secondary" asChild>
-        <a href="/dashboard/settings" className="gap-2">
-          <Download className="w-4 h-4" />
-          Export
-          <Badge variant="secondary" className="text-xs">
-            Pro
-          </Badge>
-        </a>
-      </Button>
+      <Link
+        href="/dashboard/settings"
+        className="inline-flex h-10 items-center gap-2 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 text-[14px] text-editorial-ink transition-colors hover:bg-editorial-ink/[0.03]"
+      >
+        <Download className="h-4 w-4" />
+        Export
+        <span className="ml-1 font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent">
+          Pro
+        </span>
+      </Link>
     );
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button disabled={isExporting}>
+        <EditorialButton variant="ghost" disabled={isExporting}>
           {isExporting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Exporting...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Exporting…
             </>
           ) : (
             <>
-              <Download className="w-4 h-4" />
+              <Download className="h-4 w-4" />
               Export
             </>
           )}
-        </Button>
+        </EditorialButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleExport('csv')}>Export as CSV</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport('json')}>Export as JSON</DropdownMenuItem>
+      <DropdownMenuContent
+        align="end"
+        className="editorial border-editorial-neutral-2 bg-editorial-paper"
+      >
+        <DropdownMenuItem onClick={() => handleExport('csv')} className="text-[13px]">
+          Export as CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('json')} className="text-[13px]">
+          Export as JSON
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
