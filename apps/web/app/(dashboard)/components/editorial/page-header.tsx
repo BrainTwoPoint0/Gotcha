@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { EditorialEyebrow } from './eyebrow';
 
 export interface EditorialPageHeaderProps {
   eyebrow?: React.ReactNode;
@@ -25,12 +26,9 @@ export function EditorialPageHeader({
     >
       <div className="min-w-0 flex-1">
         {eyebrow && (
-          <div className="mb-3 flex items-center gap-3">
-            <span className="h-px w-6 bg-editorial-accent" aria-hidden="true" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-              {eyebrow}
-            </span>
-          </div>
+          <EditorialEyebrow rule="none" className="mb-3">
+            {eyebrow}
+          </EditorialEyebrow>
         )}
         <h1 className="font-display text-3xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink sm:text-4xl">
           {title}

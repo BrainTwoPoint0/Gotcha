@@ -13,8 +13,7 @@ export default function NotFound() {
         </div>
         <h1 className="font-display text-5xl font-normal leading-[1.05] tracking-[-0.02em] text-editorial-ink">
           The page you were looking for{' '}
-          <span className="italic text-editorial-neutral-3">is not here</span>
-          <span className="text-editorial-accent">.</span>
+          <span className="italic text-editorial-neutral-3">is not here</span>.
         </h1>
         <p className="mt-6 text-[15px] leading-[1.6] text-editorial-neutral-3">
           Wrong link, stale bookmark, or we moved it. Head back to known ground.

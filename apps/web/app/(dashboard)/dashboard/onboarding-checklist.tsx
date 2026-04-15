@@ -98,7 +98,7 @@ export function OnboardingChecklist({
           <li key={step.label} className="flex items-start gap-5 px-6 py-5">
             <span
               className={`font-mono text-[13px] ${
-                step.checked ? 'text-editorial-success' : 'text-editorial-accent'
+                step.checked ? 'text-editorial-success' : 'text-editorial-ink'
               }`}
               aria-hidden="true"
             >

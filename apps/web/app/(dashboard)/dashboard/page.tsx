@@ -236,7 +236,7 @@ export default async function DashboardPage() {
                       <li key={response.id} className="flex items-start gap-4 py-3">
                         <span
                           aria-hidden="true"
-                          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-accent/70"
+                          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-neutral-3/60"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[14px] text-editorial-ink">

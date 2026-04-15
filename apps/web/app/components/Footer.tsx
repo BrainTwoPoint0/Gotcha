@@ -17,9 +17,8 @@ export function Footer() {
     <footer className="editorial border-t border-editorial-neutral-2 bg-editorial-paper py-20 text-editorial-neutral-3">
       <div className="mx-auto max-w-5xl px-6 lg:px-8">
         {/* Masthead */}
-        <div className="mb-14 flex items-baseline gap-[2px] font-display text-2xl leading-none tracking-[-0.01em] text-editorial-ink">
+        <div className="mb-14 font-display text-2xl leading-none tracking-[-0.01em] text-editorial-ink">
           Gotcha
-          <span className="text-editorial-accent">.</span>
         </div>
 
         <div className="grid gap-12 sm:grid-cols-[2fr_1fr_1fr_1fr]">
@@ -111,10 +110,7 @@ export function Footer() {
 
         <div className="mt-10 flex items-center justify-between text-[12px]">
           <p>&copy; {new Date().getFullYear()} Gotcha.</p>
-          <p className="font-mono tracking-[0.06em]">
-            Crafted without surveillance
-            <span className="text-editorial-accent">.</span>
-          </p>
+          <p className="font-mono tracking-[0.06em]">Crafted without surveillance.</p>
         </div>
       </div>
     </footer>

@@ -32,10 +32,9 @@ export function EditorialTopNav({
         <div className="flex shrink-0 items-center gap-4">
           <Link
             href="/dashboard"
-            className="flex items-baseline gap-[2px] font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
+            className="font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
           >
             Gotcha
-            <span className="text-editorial-accent">.</span>
           </Link>
           {leftSlot && (
             <>

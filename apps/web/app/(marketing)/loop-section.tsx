@@ -37,8 +37,7 @@ export function LoopSection() {
         <h2 className="max-w-3xl font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink sm:text-5xl">
           Your users ask. <span className="italic text-editorial-neutral-3">You ship.</span>{' '}
           <br className="hidden sm:block" />
-          They hear back
-          <span className="text-editorial-accent">.</span>
+          They hear back.
         </h2>
 
         <p className="mt-6 max-w-2xl text-lg leading-[1.55] text-editorial-neutral-3">
@@ -54,7 +53,7 @@ export function LoopSection() {
               className="group bg-editorial-paper p-8 transition-colors duration-240 hover:bg-editorial-ink/[0.015] sm:p-10"
             >
               <div className="mb-5 flex items-baseline gap-4">
-                <span className="font-mono text-[13px] text-editorial-accent">{step.num}</span>
+                <span className="font-mono text-[13px] text-editorial-ink">{step.num}</span>
                 <span className="h-px flex-1 bg-editorial-neutral-2" aria-hidden="true" />
               </div>
               <h3 className="font-display text-[1.5rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">

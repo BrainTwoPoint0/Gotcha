@@ -26,12 +26,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Hairline top rule */}
         <div className="absolute inset-x-0 top-0 h-px bg-editorial-paper/10" aria-hidden="true" />
 
-        <div className="relative z-10 flex items-baseline gap-[2px] font-display text-2xl leading-none tracking-[-0.01em]">
-          <Link href="/" className="transition-colors hover:text-editorial-accent">
-            Gotcha
-          </Link>
-          <span className="text-editorial-accent">.</span>
-        </div>
+        <Link
+          href="/"
+          className="relative z-10 font-display text-2xl leading-none tracking-[-0.01em] transition-colors hover:text-editorial-accent"
+        >
+          Gotcha
+        </Link>
 
         <div className="relative z-10 max-w-md space-y-8">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-paper/50">
@@ -63,10 +63,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="flex items-center justify-between border-b border-editorial-neutral-2 px-6 py-5">
             <Link
               href="/"
-              className="flex items-baseline gap-[2px] font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
+              className="font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink"
             >
               Gotcha
-              <span className="text-editorial-accent">.</span>
             </Link>
           </div>
         </div>

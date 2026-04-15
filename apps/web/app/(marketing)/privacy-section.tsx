@@ -31,8 +31,7 @@ export function PrivacySection() {
 
         {/* Headline */}
         <h2 className="max-w-3xl font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-          Feedback <span className="italic text-editorial-paper/70">without surveillance</span>
-          <span className="text-editorial-accent">.</span>
+          Feedback <span className="italic text-editorial-paper/70">without surveillance</span>.
         </h2>
 
         <p className="mt-6 max-w-2xl text-lg leading-[1.55] text-editorial-paper/70">

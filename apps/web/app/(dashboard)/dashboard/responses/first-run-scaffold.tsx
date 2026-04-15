@@ -102,8 +102,7 @@ export function FirstRunScaffold({ hasProject, firstProjectSlug }: FirstRunScaff
           </span>
         </div>
         <h2 className="font-display text-[1.875rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
-          Set up your first feedback loop
-          <span className="text-editorial-accent">.</span>
+          Set up your first feedback loop.
         </h2>
         <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-editorial-neutral-3">
           Three steps. Every response you collect will land here, tagged with the page and context
@@ -116,7 +115,7 @@ export function FirstRunScaffold({ hasProject, firstProjectSlug }: FirstRunScaff
           <li key={step.num} className="flex flex-col gap-4 p-6 sm:flex-row sm:gap-8 sm:p-8">
             <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-start sm:gap-2">
               <span
-                className={`font-mono text-[13px] ${step.done ? 'text-editorial-success' : 'text-editorial-accent'}`}
+                className={`font-mono text-[13px] ${step.done ? 'text-editorial-success' : 'text-editorial-ink'}`}
               >
                 {step.done ? '✓' : step.num}
               </span>
@@ -149,6 +148,20 @@ export function FirstRunScaffold({ hasProject, firstProjectSlug }: FirstRunScaff
           </li>
         ))}
       </ol>
+
+      {/* Listening indicator — the one warm moment. A pulsing accent dot +
+          mono-uppercase status tells the 2am user "we're here, watching,
+          waiting for the first response to land." Respects reduced-motion
+          via the editorial blanket rule in globals.css. */}
+      <div className="flex items-center gap-3 border-t border-editorial-neutral-2 bg-editorial-ink/[0.015] px-6 py-5">
+        <span className="relative inline-flex h-2 w-2" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-editorial-accent opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-editorial-accent" />
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+          Listening for your first response
+        </span>
+      </div>
     </div>
   );
 }

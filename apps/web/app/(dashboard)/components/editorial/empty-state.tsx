@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { EditorialDot } from './dot';
 
 export interface EditorialEmptyStateProps {
   title: React.ReactNode;
@@ -16,7 +17,7 @@ export function EditorialEmptyState({ title, body, action, className }: Editoria
         className
       )}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-editorial-accent" aria-hidden="true" />
+      <EditorialDot tone="accent" />
       <h2 className="font-display text-2xl font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink sm:text-[1.75rem]">
         {title}
       </h2>

@@ -105,9 +105,8 @@ export function EditorialMobileDrawer({ links, topSlot, bottomSlot }: EditorialM
         aria-hidden={!open}
       >
         <div className="flex h-16 items-center justify-between border-b border-editorial-neutral-2 px-5">
-          <span className="flex items-baseline gap-[2px] font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink">
+          <span className="font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink">
             Gotcha
-            <span className="text-editorial-accent">.</span>
           </span>
           <button
             ref={closeBtnRef}
