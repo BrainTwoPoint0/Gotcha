@@ -172,31 +172,6 @@ export default async function BugsPage({ searchParams }: PageProps) {
         eyebrow={`${totalCount.toLocaleString()} total · ${activeCount} active`}
         title="Bugs"
         subtitle="Track and manage bug reports from user feedback."
-        action={
-          <DashboardFeedback
-            elementId="bugs-list-page"
-            mode="poll"
-            promptText="What slows down your bug workflow?"
-            options={[
-              'Finding specific bugs',
-              'Updating multiple bugs at once',
-              'Knowing who is responsible',
-              'Tracking resolution time',
-              'Getting notified of changes',
-            ]}
-            allowMultiple
-            onePerUser={false}
-            userEmail={dbUser?.email}
-            userName={dbUser?.name ?? undefined}
-            userProfile={{
-              companySize: dbUser?.companySize ?? undefined,
-              role: dbUser?.role ?? undefined,
-              industry: dbUser?.industry ?? undefined,
-              useCase: dbUser?.useCase ?? undefined,
-              plan: 'PRO',
-            }}
-          />
-        }
       />
 
       <div className="mb-6 flex items-center gap-1 border-b border-editorial-neutral-2">
@@ -312,6 +287,34 @@ export default async function BugsPage({ searchParams }: PageProps) {
           />
         </EditorialCard>
       )}
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="bugs-list-page"
+          mode="poll"
+          promptText="What slows down your bug workflow?"
+          options={[
+            'Finding specific bugs',
+            'Updating multiple bugs at once',
+            'Knowing who is responsible',
+            'Tracking resolution time',
+            'Getting notified of changes',
+          ]}
+          allowMultiple
+          onePerUser={false}
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: 'PRO',
+          }}
+        />
+      </div>
     </div>
   );
 }

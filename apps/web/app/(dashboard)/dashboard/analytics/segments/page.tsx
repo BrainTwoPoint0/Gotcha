@@ -291,21 +291,6 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         }
         title="User segments"
         subtitle="Compare responses across plan, role, region, and custom metadata."
-        action={
-          <DashboardFeedback
-            elementId="segments-page-pro"
-            promptText="Rate the segmentation tools"
-            userEmail={dbUser?.email}
-            userName={dbUser?.name ?? undefined}
-            userProfile={{
-              companySize: dbUser?.companySize ?? undefined,
-              role: dbUser?.role ?? undefined,
-              industry: dbUser?.industry ?? undefined,
-              useCase: dbUser?.useCase ?? undefined,
-              plan: 'PRO',
-            }}
-          />
-        }
       />
 
       {segmentDataCapped && (
@@ -327,6 +312,24 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
         selectedElementId={params.elementId}
         selectedGroupBy={selectedGroupBy}
       />
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="segments-page-pro"
+          promptText="Rate the segmentation tools"
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: 'PRO',
+          }}
+        />
+      </div>
     </div>
   );
 }

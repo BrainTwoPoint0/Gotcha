@@ -9,9 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
+import { EditorialButton } from '../../components/editorial/button';
 
 interface Project {
   id: string;
@@ -27,6 +26,17 @@ interface Element {
 interface AnalyticsFilterProps {
   projects: Project[];
   elements?: Element[];
+}
+
+const TRIGGER_CLASS =
+  'h-9 rounded-md border-editorial-neutral-2 bg-editorial-paper text-[13px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25';
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+      {children}
+    </span>
+  );
 }
 
 export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProps) {
@@ -59,16 +69,16 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
   const hasFilters = startDate || endDate || projectId || elementId;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-        <div className="w-full sm:w-auto space-y-1">
-          <Label>Project</Label>
+    <div className="mb-6 rounded-md border border-editorial-neutral-2 bg-editorial-paper p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex flex-col gap-2">
+          <FieldLabel>Project</FieldLabel>
           <Select value={projectId} onValueChange={setProjectId}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="All Projects" />
+            <SelectTrigger aria-label="Project" className={`${TRIGGER_CLASS} w-full sm:w-[200px]`}>
+              <SelectValue placeholder="All projects" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Projects</SelectItem>
+            <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
+              <SelectItem value="__all__">All projects</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
@@ -78,14 +88,14 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
           </Select>
         </div>
 
-        <div className="w-full sm:w-auto space-y-1">
-          <Label>Element</Label>
+        <div className="flex flex-col gap-2">
+          <FieldLabel>Element</FieldLabel>
           <Select value={elementId} onValueChange={setElementId}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="All Elements" />
+            <SelectTrigger aria-label="Element" className={`${TRIGGER_CLASS} w-full sm:w-[220px]`}>
+              <SelectValue placeholder="All elements" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Elements</SelectItem>
+            <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
+              <SelectItem value="__all__">All elements</SelectItem>
               {elements.map((el) => (
                 <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
                   {el.elementIdRaw} ({el.count})
@@ -95,25 +105,29 @@ export function AnalyticsFilter({ projects, elements = [] }: AnalyticsFilterProp
           </Select>
         </div>
 
-        <div className="w-full sm:w-auto space-y-1">
-          <Label>Start Date</Label>
+        <div className="flex flex-col gap-2">
+          <FieldLabel>Start</FieldLabel>
           <DatePicker value={startDate} onChange={setStartDate} placeholder="Start date" />
         </div>
 
-        <div className="w-full sm:w-auto space-y-1">
-          <Label>End Date</Label>
+        <div className="flex flex-col gap-2">
+          <FieldLabel>End</FieldLabel>
           <DatePicker value={endDate} onChange={setEndDate} placeholder="End date" />
         </div>
 
-        <div className="flex gap-2 sm:gap-4">
-          <Button onClick={applyFilters} className="flex-1 sm:flex-none">
-            Apply
-          </Button>
+        <div className="flex gap-2 sm:ml-auto">
+          <EditorialButton onClick={applyFilters} variant="ink" size="sm" className="h-9">
+            Apply filters
+          </EditorialButton>
 
           {hasFilters && (
-            <Button variant="ghost" onClick={clearFilters}>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="h-9 px-2.5 text-[13px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+            >
               Clear
-            </Button>
+            </button>
           )}
         </div>
       </div>

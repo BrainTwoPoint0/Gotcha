@@ -137,28 +137,6 @@ export default async function DashboardPage() {
           eyebrow={dbUser?.name ? `Welcome back, ${dbUser.name}` : 'Welcome back'}
           title="Overview"
           subtitle="Everything that is happening across your projects, in one place."
-          action={
-            <DashboardFeedback
-              elementId="dashboard-nps"
-              mode="nps"
-              onePerUser={false}
-              promptText="How likely are you to recommend Gotcha to a colleague?"
-              userEmail={dbUser?.email}
-              userName={dbUser?.name ?? undefined}
-              userProfile={{
-                companySize: dbUser?.companySize ?? undefined,
-                role: dbUser?.role ?? undefined,
-                industry: dbUser?.industry ?? undefined,
-                useCase: dbUser?.useCase ?? undefined,
-                plan: activeOrg?.isPro ? 'PRO' : 'FREE',
-                accountAgeDays: dbUser?.createdAt
-                  ? Math.floor((Date.now() - dbUser.createdAt.getTime()) / 86400000)
-                  : undefined,
-                onboarded: !!dbUser?.onboardedAt,
-                totalResponses,
-              }}
-            />
-          }
         />
 
         {overLimit && (
@@ -363,6 +341,33 @@ export default async function DashboardPage() {
             />
           </div>
         )}
+
+        {/* Per-page feedback widget — quiet hint, not a chrome element */}
+        <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em]">
+            Improve this page
+          </span>
+          <DashboardFeedback
+            elementId="dashboard-nps"
+            mode="nps"
+            onePerUser={false}
+            promptText="How likely are you to recommend Gotcha to a colleague?"
+            userEmail={dbUser?.email}
+            userName={dbUser?.name ?? undefined}
+            userProfile={{
+              companySize: dbUser?.companySize ?? undefined,
+              role: dbUser?.role ?? undefined,
+              industry: dbUser?.industry ?? undefined,
+              useCase: dbUser?.useCase ?? undefined,
+              plan: activeOrg?.isPro ? 'PRO' : 'FREE',
+              accountAgeDays: dbUser?.createdAt
+                ? Math.floor((Date.now() - dbUser.createdAt.getTime()) / 86400000)
+                : undefined,
+              onboarded: !!dbUser?.onboardedAt,
+              totalResponses,
+            }}
+          />
+        </div>
       </div>
     );
   } catch (error) {

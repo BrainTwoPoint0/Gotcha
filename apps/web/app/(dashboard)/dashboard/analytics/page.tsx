@@ -950,30 +950,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         }
         title="Analytics"
         subtitle="Trends, benchmarks, and rating insights across your feedback."
-        action={
-          <DashboardFeedback
-            elementId="analytics-priorities-pro"
-            mode="poll"
-            promptText="What analytics would be most valuable?"
-            options={[
-              'Element benchmarking',
-              'Anomaly alerts',
-              'Rating trends over time',
-              'Segment comparison',
-              'AI summaries',
-            ]}
-            onePerUser={false}
-            userEmail={dbUser?.email}
-            userName={dbUser?.name ?? undefined}
-            userProfile={{
-              companySize: dbUser?.companySize ?? undefined,
-              role: dbUser?.role ?? undefined,
-              industry: dbUser?.industry ?? undefined,
-              useCase: dbUser?.useCase ?? undefined,
-              plan: 'PRO',
-            }}
-          />
-        }
       />
 
       <AnalyticsFilter projects={projects} elements={elements} />
@@ -1091,6 +1067,33 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           selectedCol={pivotCol}
         />
       )}
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="analytics-priorities-pro"
+          mode="poll"
+          promptText="What analytics would be most valuable?"
+          options={[
+            'Element benchmarking',
+            'Anomaly alerts',
+            'Rating trends over time',
+            'Segment comparison',
+            'AI summaries',
+          ]}
+          onePerUser={false}
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: 'PRO',
+          }}
+        />
+      </div>
     </div>
   );
 }

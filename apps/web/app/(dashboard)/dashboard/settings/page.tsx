@@ -59,23 +59,6 @@ export default async function SettingsPage() {
         eyebrow="Account & workspace"
         title="Settings"
         subtitle="Manage your profile, team, and subscription."
-        action={
-          <DashboardFeedback
-            elementId="settings-page"
-            mode="feedback"
-            promptText="How clear are these settings?"
-            userEmail={dbUser?.email}
-            userName={dbUser?.name ?? undefined}
-            userProfile={{
-              companySize: dbUser?.companySize ?? undefined,
-              role: dbUser?.role ?? undefined,
-              industry: dbUser?.industry ?? undefined,
-              useCase: dbUser?.useCase ?? undefined,
-              plan: planLabel,
-              onboarded: !!dbUser?.onboardedAt,
-            }}
-          />
-        }
       />
 
       <div className="space-y-6">
@@ -198,6 +181,26 @@ export default async function SettingsPage() {
             </div>
           </EditorialCardBody>
         </EditorialCard>
+      </div>
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="settings-page"
+          mode="feedback"
+          promptText="How clear are these settings?"
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: planLabel,
+            onboarded: !!dbUser?.onboardedAt,
+          }}
+        />
       </div>
     </div>
   );

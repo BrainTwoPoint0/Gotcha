@@ -96,25 +96,9 @@ export default async function BugDetailPage({ params }: PageProps) {
             Bug · {bug.project.name}
           </span>
         </div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="max-w-3xl font-display text-3xl font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink sm:text-4xl">
-            {bug.title}
-          </h1>
-          <DashboardFeedback
-            elementId="bug-detail-page"
-            mode="feedback"
-            promptText="Rate this bug detail view"
-            userEmail={dbUser?.email}
-            userName={dbUser?.name ?? undefined}
-            userProfile={{
-              companySize: dbUser?.companySize ?? undefined,
-              role: dbUser?.role ?? undefined,
-              industry: dbUser?.industry ?? undefined,
-              useCase: dbUser?.useCase ?? undefined,
-              plan: 'PRO',
-            }}
-          />
-        </div>
+        <h1 className="max-w-3xl font-display text-3xl font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink sm:text-4xl">
+          {bug.title}
+        </h1>
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
           <span
             className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] ${status.tone}`}
@@ -325,6 +309,25 @@ export default async function BugDetailPage({ params }: PageProps) {
             </EditorialCardBody>
           </EditorialCard>
         </div>
+      </div>
+
+      {/* Per-page feedback widget — quiet hint, not a chrome element */}
+      <div className="mt-12 flex items-center justify-center gap-3 text-[13px] text-editorial-neutral-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em]">Improve this page</span>
+        <DashboardFeedback
+          elementId="bug-detail-page"
+          mode="feedback"
+          promptText="Rate this bug detail view"
+          userEmail={dbUser?.email}
+          userName={dbUser?.name ?? undefined}
+          userProfile={{
+            companySize: dbUser?.companySize ?? undefined,
+            role: dbUser?.role ?? undefined,
+            industry: dbUser?.industry ?? undefined,
+            useCase: dbUser?.useCase ?? undefined,
+            plan: 'PRO',
+          }}
+        />
       </div>
     </div>
   );

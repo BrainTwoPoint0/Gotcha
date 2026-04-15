@@ -75,6 +75,18 @@ export default async function ProjectPage({ params }: Props) {
       apiKeys: {
         where: { revokedAt: null },
         orderBy: { createdAt: 'desc' },
+        // Explicitly select only the fields the UI needs. Critically, omit
+        // `key` and `keyHash` — the full key was visible at creation only and
+        // the detail page must never re-display it. We derive a masked
+        // identifier on the server before sending to the client.
+        select: {
+          id: true,
+          name: true,
+          key: true,
+          allowedDomains: true,
+          lastUsedAt: true,
+          createdAt: true,
+        },
       },
       responses: {
         orderBy: { createdAt: 'desc' },
@@ -88,6 +100,24 @@ export default async function ProjectPage({ params }: Props) {
 
   if (!project) {
     notFound();
+  }
+
+  // Mask the API key so the project detail page only ever shows the prefix
+  // and a fixed-width tail of dots. The full key is shown ONCE at creation
+  // (in NewProjectForm's success state) and never again — if the user lost
+  // it they regenerate, which revokes the old one and shows the new one once.
+  const safeApiKeys = project.apiKeys.map((apiKey) => ({
+    ...apiKey,
+    key: maskApiKey(apiKey.key),
+  }));
+
+  function maskApiKey(key: string): string {
+    // Show the prefix (gtch_live_ or gtch_test_) plus the next 4 chars of
+    // the secret, then a fixed-width mask. Enough to disambiguate which key
+    // is which without leaking the secret.
+    const match = key.match(/^(gtch_(?:live|test)_)(.{0,4})/);
+    if (!match) return '••••••••';
+    return `${match[1]}${match[2]}${'•'.repeat(24)}`;
   }
 
   return (
@@ -146,12 +176,12 @@ export default async function ProjectPage({ params }: Props) {
             </h2>
           </EditorialCardHeader>
           <EditorialCardBody className="space-y-4">
-            {project.apiKeys.length === 0 ? (
+            {safeApiKeys.length === 0 ? (
               <p className="text-[14px] text-editorial-neutral-3">
                 No API keys yet — create one to install the SDK.
               </p>
             ) : (
-              (project.apiKeys as ApiKeyItem[]).map((apiKey) => (
+              (safeApiKeys as ApiKeyItem[]).map((apiKey) => (
                 <ApiKeyCard key={apiKey.id} apiKey={apiKey} projectSlug={slug} />
               ))
             )}
