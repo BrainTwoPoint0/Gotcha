@@ -1,61 +1,38 @@
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Pagination } from '../../components/pagination';
+import { EditorialPageHeader } from '../../components/editorial/page-header';
+import { EditorialCard, EditorialCardBody } from '../../components/editorial/card';
+import { EditorialEmptyState } from '../../components/editorial/empty-state';
+import { EditorialLinkButton } from '../../components/editorial/button';
 import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
+  EditorialTable,
+  EditorialTHead,
+  EditorialTBody,
+  EditorialTR,
+  EditorialTH,
+  EditorialTD,
+} from '../../components/editorial/table';
 
 export const dynamic = 'force-dynamic';
 
-// Linear-style desaturated badge configs
-const STATUS_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
-  OPEN: {
-    label: 'Open',
-    className: 'bg-red-50/80 text-red-700 border-red-200/60',
-    dot: 'bg-red-500',
-  },
-  INVESTIGATING: {
-    label: 'Investigating',
-    className: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
-    dot: 'bg-amber-500',
-  },
-  FIXING: {
-    label: 'Fixing',
-    className: 'bg-blue-50/80 text-blue-700 border-blue-200/60',
-    dot: 'bg-blue-500',
-  },
-  RESOLVED: {
-    label: 'Resolved',
-    className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
-    dot: 'bg-emerald-500',
-  },
-  CLOSED: {
-    label: 'Closed',
-    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
-    dot: 'bg-gray-400',
-  },
-  WONT_FIX: {
-    label: "Won't Fix",
-    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
-    dot: 'bg-gray-400',
-  },
+const STATUS_CONFIG: Record<string, { label: string; tone: string }> = {
+  OPEN: { label: 'Open', tone: 'text-editorial-accent' },
+  INVESTIGATING: { label: 'Investigating', tone: 'text-editorial-neutral-3' },
+  FIXING: { label: 'Fixing', tone: 'text-editorial-ink' },
+  RESOLVED: { label: 'Resolved', tone: 'text-editorial-success' },
+  CLOSED: { label: 'Closed', tone: 'text-editorial-neutral-3/70' },
+  WONT_FIX: { label: "Won't fix", tone: 'text-editorial-neutral-3/70' },
 };
 
-const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
-  LOW: { label: 'Low', className: 'bg-gray-50 text-gray-500 border-gray-200/60' },
-  MEDIUM: { label: 'Medium', className: 'bg-blue-50/80 text-blue-700 border-blue-200/60' },
-  HIGH: { label: 'High', className: 'bg-orange-50/80 text-orange-700 border-orange-200/60' },
-  CRITICAL: { label: 'Critical', className: 'bg-red-50/80 text-red-700 border-red-200/60' },
+const PRIORITY_CONFIG: Record<string, { label: string; tone: string }> = {
+  LOW: { label: 'Low', tone: 'text-editorial-neutral-3/80' },
+  MEDIUM: { label: 'Medium', tone: 'text-editorial-neutral-3' },
+  HIGH: { label: 'High', tone: 'text-editorial-accent' },
+  CRITICAL: { label: 'Critical', tone: 'text-editorial-alert' },
 };
 
 const LIMIT = 20;
@@ -77,48 +54,33 @@ export default async function BugsPage({ searchParams }: PageProps) {
   const activeOrg = user?.email ? await getActiveOrganization(user.email) : null;
   const organization = activeOrg?.organization;
   if (!organization) {
-    return <div className="p-8 text-gray-500">No organization found.</div>;
+    return (
+      <div>
+        <EditorialPageHeader title="Bugs" subtitle="No organization found." />
+      </div>
+    );
   }
 
   const isPro = canAccessBugFeatures(organization.subscription?.plan ?? 'FREE');
 
-  // Pro gate — show upgrade prompt for FREE users
   if (!isPro) {
     return (
       <div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Bug Tickets</h1>
-          <p className="text-gray-600">Track and manage bug reports from user feedback</p>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="mx-auto w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-8 h-8 text-amber-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unlock Bug Tracking</h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Upgrade to Pro to access bug tracking with ticket management, email notifications, and
-            Slack/Discord integration.
-          </p>
-          <Link
-            href="/dashboard/settings"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
-          >
-            Upgrade to Pro
-          </Link>
-          <div className="mt-8">
+        <EditorialPageHeader
+          title="Bugs"
+          subtitle="Track and manage bug reports from user feedback."
+        />
+        <EditorialCard>
+          <EditorialEmptyState
+            title="Bug tracking is a Pro feature"
+            body="Upgrade to Pro to unlock ticket management, email notifications, and Slack/Discord integration."
+            action={
+              <EditorialLinkButton href="/dashboard/settings" variant="ink">
+                Upgrade to Pro →
+              </EditorialLinkButton>
+            }
+          />
+          <EditorialCardBody className="border-t border-editorial-neutral-2">
             <DashboardFeedback
               elementId="bugs-pro-gate"
               mode="poll"
@@ -141,18 +103,16 @@ export default async function BugsPage({ searchParams }: PageProps) {
                 plan: 'FREE',
               }}
             />
-          </div>
-        </div>
+          </EditorialCardBody>
+        </EditorialCard>
       </div>
     );
   }
 
   const projectIds = (organization.projects ?? []).map((p) => p.id);
 
-  // Parse pagination
   const page = Math.max(1, parseInt(params.page || '1', 10));
 
-  // Filter by status tab
   const statusFilter = params.status || 'active';
   const where: Record<string, unknown> = {
     projectId: { in: projectIds },
@@ -166,7 +126,6 @@ export default async function BugsPage({ searchParams }: PageProps) {
     where.status = statusFilter;
   }
 
-  // Get bugs (paginated) + total count + status counts in parallel
   const [bugs, filteredCount, counts] = await Promise.all([
     prisma.bugTicket.findMany({
       where,
@@ -213,9 +172,11 @@ export default async function BugsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">Bug Tickets</h1>
+      <EditorialPageHeader
+        eyebrow={`${totalCount.toLocaleString()} total · ${activeCount} active`}
+        title="Bugs"
+        subtitle="Track and manage bug reports from user feedback."
+        action={
           <DashboardFeedback
             elementId="bugs-list-page"
             mode="poll"
@@ -239,157 +200,147 @@ export default async function BugsPage({ searchParams }: PageProps) {
               plan: 'PRO',
             }}
           />
-        </div>
-        <p className="text-gray-600">Track and manage bug reports from user feedback</p>
-      </div>
+        }
+      />
 
-      {/* Status Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200/80">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.key}
-            href={`/dashboard/bugs${tab.key !== 'active' ? `?status=${tab.key}` : ''}`}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              statusFilter === tab.key
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            {tab.label}
-            <span
-              className={`ml-1.5 text-xs ${
-                statusFilter === tab.key ? 'text-gray-500' : 'text-gray-300'
+      <div className="mb-6 flex items-center gap-1 border-b border-editorial-neutral-2">
+        {tabs.map((tab) => {
+          const active = statusFilter === tab.key;
+          return (
+            <Link
+              key={tab.key}
+              href={`/dashboard/bugs${tab.key !== 'active' ? `?status=${tab.key}` : ''}`}
+              className={`relative inline-flex h-11 items-center gap-2 px-3 text-[14px] transition-colors duration-240 ease-page-turn ${
+                active ? 'text-editorial-ink' : 'text-editorial-neutral-3 hover:text-editorial-ink'
               }`}
             >
-              {tab.count}
-            </span>
-          </Link>
-        ))}
+              {tab.label}
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                {tab.count}
+              </span>
+              {active && (
+                <span
+                  className="absolute inset-x-3 -bottom-px h-px bg-editorial-ink"
+                  aria-hidden="true"
+                />
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       {bugs.length === 0 ? (
-        <Card className="text-center py-16">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No bugs found</h3>
-          <p className="mt-2 text-gray-500">
-            Bugs appear here when users flag feedback as bug reports.
-          </p>
-        </Card>
+        <EditorialCard>
+          <EditorialEmptyState
+            title="No bugs in this view"
+            body="Bugs appear here when users flag feedback as bug reports — either via the SDK's bug flag or through a dedicated bug report button."
+          />
+        </EditorialCard>
       ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <Table className="table-fixed w-full">
-              <colgroup>
-                <col className="w-[35%]" />
-                <col className="w-[15%]" />
-                <col className="w-[13%]" />
-                <col className="w-[12%]" />
-                <col className="w-[12%]" />
-                <col className="w-[13%]" />
-              </colgroup>
-              <TableHeader>
-                <TableRow className="border-b border-gray-200/80">
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Title
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Element
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Priority
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Project
-                  </TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-right">
-                    Date
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bugs.map((bug) => {
-                  const status = STATUS_CONFIG[bug.status] || STATUS_CONFIG.OPEN;
-                  const priority = PRIORITY_CONFIG[bug.priority] || PRIORITY_CONFIG.MEDIUM;
+        <EditorialCard className="overflow-hidden">
+          <EditorialTable className="table-fixed">
+            <colgroup>
+              <col className="w-[38%]" />
+              <col className="w-[13%]" />
+              <col className="w-[13%]" />
+              <col className="w-[11%]" />
+              <col className="w-[12%]" />
+              <col className="w-[13%]" />
+            </colgroup>
+            <EditorialTHead>
+              <EditorialTR className="hover:bg-transparent">
+                <EditorialTH>Title</EditorialTH>
+                <EditorialTH>Element</EditorialTH>
+                <EditorialTH>Status</EditorialTH>
+                <EditorialTH>Priority</EditorialTH>
+                <EditorialTH>Project</EditorialTH>
+                <EditorialTH>Date</EditorialTH>
+              </EditorialTR>
+            </EditorialTHead>
+            <EditorialTBody>
+              {bugs.map((bug) => {
+                const status = STATUS_CONFIG[bug.status] || STATUS_CONFIG.OPEN;
+                const priority = PRIORITY_CONFIG[bug.priority] || PRIORITY_CONFIG.MEDIUM;
 
-                  return (
-                    <TableRow
-                      key={bug.id}
-                      className="group transition-colors duration-100 hover:bg-gray-50/50"
-                    >
-                      <TableCell>
-                        <Link
-                          href={`/dashboard/bugs/${bug.id}`}
-                          className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors line-clamp-1"
-                        >
-                          {bug.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <code className="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
-                          {bug.elementId}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={status.className}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${status.dot} mr-1.5`} />
-                          {status.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={priority.className}>
-                          {priority.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-500">{bug.project.name}</span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-sm tabular-nums text-gray-400">
-                          {formatDate(bug.createdAt)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              total={filteredCount}
-              basePath="/dashboard/bugs"
-              itemLabel="bugs"
-            />
-          </div>
-        </Card>
+                return (
+                  <EditorialTR key={bug.id}>
+                    <EditorialTD>
+                      <Link
+                        href={`/dashboard/bugs/${bug.id}`}
+                        className="line-clamp-1 text-[14px] text-editorial-ink transition-colors hover:text-editorial-accent"
+                      >
+                        {bug.title}
+                      </Link>
+                    </EditorialTD>
+                    <EditorialTD>
+                      <code className="block max-w-full truncate font-mono text-[11px] text-editorial-neutral-3">
+                        {bug.elementId}
+                      </code>
+                    </EditorialTD>
+                    <EditorialTD>
+                      <span
+                        className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] ${status.tone}`}
+                      >
+                        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {status.label}
+                      </span>
+                    </EditorialTD>
+                    <EditorialTD>
+                      <span
+                        className={`font-mono text-[10px] uppercase tracking-[0.14em] ${priority.tone}`}
+                      >
+                        {priority.label}
+                      </span>
+                    </EditorialTD>
+                    <EditorialTD>
+                      <span className="text-[13px] text-editorial-neutral-3">
+                        {bug.project.name}
+                      </span>
+                    </EditorialTD>
+                    <EditorialTD>
+                      <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-editorial-neutral-3">
+                        {formatDate(bug.createdAt)}
+                      </span>
+                    </EditorialTD>
+                  </EditorialTR>
+                );
+              })}
+            </EditorialTBody>
+          </EditorialTable>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            total={filteredCount}
+            basePath="/dashboard/bugs"
+            itemLabel="bugs"
+          />
+        </EditorialCard>
       )}
     </div>
   );
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MS_DAY = 24 * 60 * 60 * 1000;
 
 function formatDate(date: Date): string {
+  const now = new Date();
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  const yesterday = now.getTime() - date.getTime() < 2 * MS_DAY && !sameDay;
+
+  if (sameDay || yesterday) {
+    let h = date.getHours();
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const ampm = h >= 12 ? 'p' : 'a';
+    h = h % 12 || 12;
+    return `${sameDay ? 'Today' : 'Yesterday'} ${h}:${min}${ampm}`;
+  }
+
+  const sameYear = date.getFullYear() === now.getFullYear();
   const m = MONTHS[date.getMonth()];
   const d = date.getDate();
-  let h = date.getHours();
-  const min = date.getMinutes().toString().padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${m} ${d}, ${h}:${min} ${ampm}`;
+  return sameYear ? `${m} ${d}` : `${m} ${d}, ${date.getFullYear()}`;
 }

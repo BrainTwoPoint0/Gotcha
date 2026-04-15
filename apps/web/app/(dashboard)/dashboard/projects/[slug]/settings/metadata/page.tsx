@@ -3,6 +3,7 @@ import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { MetadataFieldsManager } from './metadata-fields-manager';
+import { EditorialPageHeader } from '../../../../../components/editorial/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,6 @@ export default async function MetadataSettingsPage({ params }: Props) {
     notFound();
   }
 
-  // Discover fields from responses
   const responses = await prisma.response.findMany({
     where: {
       projectId: project.id,
@@ -88,36 +88,33 @@ export default async function MetadataSettingsPage({ params }: Props) {
 
   return (
     <div>
-      <div className="mb-8">
-        <Link
-          href={`/dashboard/projects/${slug}`}
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to {project.name}
-        </Link>
-        <div className="mt-4">
-          <h1 className="text-2xl font-bold text-gray-900">Metadata Fields</h1>
-          <p className="text-gray-600">Configure user attributes for segmentation</p>
-        </div>
-      </div>
+      <Link
+        href={`/dashboard/projects/${slug}`}
+        className="mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+      >
+        <span aria-hidden="true">←</span>
+        Back to {project.name}
+      </Link>
+
+      <EditorialPageHeader
+        eyebrow={`Project · ${slug}`}
+        title="Metadata fields"
+        subtitle="Configure the user attributes that travel with every response — for segmentation and filtering later."
+      />
 
       {!isPro && (
-        <div className="mb-6 bg-slate-50 border border-slate-200 rounded-lg p-4">
-          <p className="text-sm text-slate-700">
-            Metadata configuration is available on all plans, but{' '}
-            <Link href="/dashboard/settings" className="font-medium underline">
-              upgrade to Pro
+        <div className="mb-6 flex items-center gap-3 border-t border-editorial-neutral-2 pt-4 text-[13px] text-editorial-neutral-3">
+          <span className="h-1 w-1 shrink-0 rounded-full bg-editorial-accent" aria-hidden="true" />
+          <span>
+            <span className="text-editorial-ink">Configuration is available on all plans.</span>{' '}
+            <Link
+              href="/dashboard/settings"
+              className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+            >
+              Upgrade to Pro
             </Link>{' '}
-            to unlock user segmentation analytics.
-          </p>
+            to unlock segmentation analytics on top of these fields.
+          </span>
         </div>
       )}
 

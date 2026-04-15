@@ -1,10 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
-import Link from 'next/link';
 import { SegmentCharts } from './segment-charts';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
 import { parseDevice, parseBrowser } from '@/lib/ua-parser';
+import { EditorialPageHeader } from '../../../components/editorial/page-header';
+import { EditorialCard } from '../../../components/editorial/card';
+import { EditorialEmptyState } from '../../../components/editorial/empty-state';
+import { EditorialLinkButton } from '../../../components/editorial/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +33,10 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
   if (!isPro || !organization) {
     return (
       <div>
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+        <EditorialPageHeader
+          title="User segments"
+          subtitle="Analyze responses by user attributes."
+          action={
             <DashboardFeedback
               elementId="segments-gate"
               mode="poll"
@@ -53,38 +57,19 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
                 plan: 'FREE',
               }}
             />
-          </div>
-          <p className="text-gray-600">Analyze responses by user attributes</p>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-8 h-8 text-slate-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unlock User Segmentation</h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Upgrade to Pro to segment your feedback by user attributes like plan, location, age, and
-            more.
-          </p>
-          <Link
-            href="/dashboard/settings"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
-          >
-            Upgrade to Pro
-          </Link>
-        </div>
+          }
+        />
+        <EditorialCard>
+          <EditorialEmptyState
+            title="Segmentation is a Pro feature"
+            body="Upgrade to Pro to segment feedback by plan, role, region, company size, and custom metadata fields."
+            action={
+              <EditorialLinkButton href="/dashboard/settings" variant="ink">
+                Upgrade to Pro →
+              </EditorialLinkButton>
+            }
+          />
+        </EditorialCard>
       </div>
     );
   }
@@ -304,9 +289,17 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">User Segments</h1>
+      <EditorialPageHeader
+        eyebrow={
+          <>
+            {selectedProject ? selectedProject.name : 'All projects'}
+            {selectedElement ? ` / ${selectedElement}` : ''}
+            {' · '}Grouped by {selectedGroupBy || 'none'}
+          </>
+        }
+        title="User segments"
+        subtitle="Compare responses across plan, role, region, and custom metadata."
+        action={
           <DashboardFeedback
             elementId="segments-page-pro"
             promptText="Rate the segmentation tools"
@@ -320,20 +313,16 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
               plan: 'PRO',
             }}
           />
-        </div>
-        <p className="text-gray-600">
-          {selectedProject ? `${selectedProject.name}` : 'All projects'}
-          {selectedElement ? ` / ${selectedElement}` : ''}
-          {' - '}Grouped by {selectedGroupBy || 'none'}
-        </p>
-      </div>
+        }
+      />
 
       {segmentDataCapped && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-yellow-700">
+        <div className="mb-6 flex items-center gap-3 border-t border-editorial-neutral-2 pt-4 text-[13px] text-editorial-neutral-3">
+          <span className="h-1 w-1 shrink-0 rounded-full bg-editorial-accent" aria-hidden="true" />
+          <span>
             Showing analysis based on the most recent 10,000 responses. Results may not reflect the
             full dataset.
-          </p>
+          </span>
         </div>
       )}
 

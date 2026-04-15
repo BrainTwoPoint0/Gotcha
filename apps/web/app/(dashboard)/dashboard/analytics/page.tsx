@@ -2,9 +2,15 @@ import { prisma } from '@/lib/prisma';
 import { unstable_cache } from 'next/cache';
 import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import {
-  getDailyTrend, getPollSelectedCounts, getPollAvailableOptions,
-  getNpsAggregation, getHeatmap, getElementSparklines,
-  getDailyTrends, getDailyNpsRatings, getPivotData,
+  getDailyTrend,
+  getPollSelectedCounts,
+  getPollAvailableOptions,
+  getNpsAggregation,
+  getHeatmap,
+  getElementSparklines,
+  getDailyTrends,
+  getDailyNpsRatings,
+  getPivotData,
 } from '@/lib/analytics-queries';
 import Link from 'next/link';
 import { AnalyticsCharts } from './charts';
@@ -12,6 +18,10 @@ import { AnalyticsFilter } from './analytics-filter';
 import { ElementsTab } from './elements-tab';
 import { TrendsTab } from './trends-tab';
 import { PivotTab } from './pivot-tab';
+import { EditorialPageHeader } from '../../components/editorial/page-header';
+import { EditorialCard } from '../../components/editorial/card';
+import { EditorialEmptyState } from '../../components/editorial/empty-state';
+import { EditorialLinkButton } from '../../components/editorial/button';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
 import { parseDevice, parseBrowser } from '@/lib/ua-parser';
@@ -74,44 +84,56 @@ const fetchOverviewData = unstable_cache(
       prevVoteCountsRaw,
     ] = await Promise.all([
       prisma.response.groupBy({ by: ['mode'], where, _count: { mode: true } }).catch(() => []),
-      prisma.response.aggregate({
-        where: { ...where, rating: { not: null } },
-        _avg: { rating: true },
-        _count: { rating: true },
-      }).catch(() => ({ _avg: { rating: null }, _count: { rating: 0 } })),
-      prisma.response.groupBy({
-        by: ['vote'],
-        where: { ...where, vote: { not: null } },
-        _count: { vote: true },
-      }).catch(() => []),
+      prisma.response
+        .aggregate({
+          where: { ...where, rating: { not: null } },
+          _avg: { rating: true },
+          _count: { rating: true },
+        })
+        .catch(() => ({ _avg: { rating: null }, _count: { rating: 0 } })),
+      prisma.response
+        .groupBy({
+          by: ['vote'],
+          where: { ...where, vote: { not: null } },
+          _count: { vote: true },
+        })
+        .catch(() => []),
       getDailyTrend(orgId, projectId, elementId, startDate, endDate),
-      prisma.response.groupBy({
-        by: ['elementIdRaw'],
-        where,
-        _count: { elementIdRaw: true },
-        _avg: { rating: true },
-        orderBy: { _count: { elementIdRaw: 'desc' } },
-        take: 10,
-      }).catch(() => []),
+      prisma.response
+        .groupBy({
+          by: ['elementIdRaw'],
+          where,
+          _count: { elementIdRaw: true },
+          _avg: { rating: true },
+          orderBy: { _count: { elementIdRaw: 'desc' } },
+          take: 10,
+        })
+        .catch(() => []),
       getPollSelectedCounts(orgId, projectId, elementId, startDate, endDate),
       getPollAvailableOptions(orgId, projectId, elementId, startDate, endDate),
       getNpsAggregation(orgId, projectId, elementId, startDate, endDate),
-      prisma.response.groupBy({
-        by: ['rating'],
-        where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
-        _count: { rating: true },
-      }).catch(() => []),
+      prisma.response
+        .groupBy({
+          by: ['rating'],
+          where: { ...where, mode: 'FEEDBACK', rating: { not: null } },
+          _count: { rating: true },
+        })
+        .catch(() => []),
       getHeatmap(orgId, projectId, elementId, startDate, endDate),
       prisma.response.count({ where: prevWhere }).catch(() => 0),
-      prisma.response.aggregate({
-        where: { ...prevWhere, rating: { not: null } },
-        _avg: { rating: true },
-      }).catch(() => ({ _avg: { rating: null } })),
-      prisma.response.groupBy({
-        by: ['vote'],
-        where: { ...prevWhere, vote: { not: null } },
-        _count: { vote: true },
-      }).catch(() => []),
+      prisma.response
+        .aggregate({
+          where: { ...prevWhere, rating: { not: null } },
+          _avg: { rating: true },
+        })
+        .catch(() => ({ _avg: { rating: null } })),
+      prisma.response
+        .groupBy({
+          by: ['vote'],
+          where: { ...prevWhere, vote: { not: null } },
+          _count: { vote: true },
+        })
+        .catch(() => []),
     ]);
 
     // Post-processing
@@ -145,7 +167,10 @@ const fetchOverviewData = unstable_cache(
       dailyCounts[date.toISOString().split('T')[0]] = 0;
     }
     dailyTrendRaw.forEach((row) => {
-      const key = typeof row.day === 'string' ? row.day.split('T')[0] : new Date(row.day).toISOString().split('T')[0];
+      const key =
+        typeof row.day === 'string'
+          ? row.day.split('T')[0]
+          : new Date(row.day).toISOString().split('T')[0];
       if (dailyCounts[key] !== undefined) dailyCounts[key] = Number(row.count);
     });
     const trendData = Object.entries(dailyCounts).map(([date, count]) => ({
@@ -170,13 +195,14 @@ const fetchOverviewData = unstable_cache(
 
     // Element performance + vote breakdown
     const topElementIds = elementPerfRaw.map((e) => e.elementIdRaw);
-    const elementVotes = topElementIds.length > 0
-      ? await prisma.response.groupBy({
-          by: ['elementIdRaw', 'vote'],
-          where: { ...where, elementIdRaw: { in: topElementIds }, vote: { not: null } },
-          _count: { vote: true },
-        })
-      : [];
+    const elementVotes =
+      topElementIds.length > 0
+        ? await prisma.response.groupBy({
+            by: ['elementIdRaw', 'vote'],
+            where: { ...where, elementIdRaw: { in: topElementIds }, vote: { not: null } },
+            _count: { vote: true },
+          })
+        : [];
     const elementVoteMap: Record<string, { up: number; down: number }> = {};
     elementVotes.forEach((v) => {
       if (!elementVoteMap[v.elementIdRaw]) elementVoteMap[v.elementIdRaw] = { up: 0, down: 0 };
@@ -186,18 +212,28 @@ const fetchOverviewData = unstable_cache(
 
     // NPS
     const npsRow = npsAggRaw[0];
-    const npsResult = npsRow && Number(npsRow.total) > 0
-      ? (() => {
-          const promoters = Number(npsRow.promoters);
-          const passives = Number(npsRow.passives);
-          const detractors = Number(npsRow.detractors);
-          const total = Number(npsRow.total);
-          const promoterPct = Math.round((promoters / total) * 100);
-          const passivePct = Math.round((passives / total) * 100);
-          const detractorPct = Math.round((detractors / total) * 100);
-          return { score: promoterPct - detractorPct, promoters, passives, detractors, promoterPct, passivePct, detractorPct, total };
-        })()
-      : null;
+    const npsResult =
+      npsRow && Number(npsRow.total) > 0
+        ? (() => {
+            const promoters = Number(npsRow.promoters);
+            const passives = Number(npsRow.passives);
+            const detractors = Number(npsRow.detractors);
+            const total = Number(npsRow.total);
+            const promoterPct = Math.round((promoters / total) * 100);
+            const passivePct = Math.round((passives / total) * 100);
+            const detractorPct = Math.round((detractors / total) * 100);
+            return {
+              score: promoterPct - detractorPct,
+              promoters,
+              passives,
+              detractors,
+              promoterPct,
+              passivePct,
+              detractorPct,
+              total,
+            };
+          })()
+        : null;
 
     const ratingDistribution = [1, 2, 3, 4, 5].map((rating) => {
       const found = ratingDistRaw.find((r) => r.rating === rating);
@@ -216,10 +252,13 @@ const fetchOverviewData = unstable_cache(
       if (v.vote === 'UP') prevVoteCounts.UP = v._count.vote;
       if (v.vote === 'DOWN') prevVoteCounts.DOWN = v._count.vote;
     });
-    const prevPositiveRate = prevVoteCounts.UP + prevVoteCounts.DOWN > 0
-      ? Math.round((prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100)
+    const prevPositiveRate =
+      prevVoteCounts.UP + prevVoteCounts.DOWN > 0
+        ? Math.round((prevVoteCounts.UP / (prevVoteCounts.UP + prevVoteCounts.DOWN)) * 100)
+        : null;
+    const prevAvgRating = prevRatingAgg._avg.rating
+      ? Number(prevRatingAgg._avg.rating.toFixed(1))
       : null;
-    const prevAvgRating = prevRatingAgg._avg.rating ? Number(prevRatingAgg._avg.rating.toFixed(1)) : null;
 
     const elementPerformance = elementPerfRaw.map((e) => {
       const votes = elementVoteMap[e.elementIdRaw] || { up: 0, down: 0 };
@@ -245,9 +284,16 @@ const fetchOverviewData = unstable_cache(
       ratingDistribution,
       heatmapData,
       deltas: {
-        totalResponses: prevCount > 0 ? Math.round(((totalResponses - prevCount) / prevCount) * 100) : null,
-        avgRating: avgRating !== null && prevAvgRating !== null ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1)) : null,
-        positiveRate: positiveRate !== null && prevPositiveRate !== null ? positiveRate - prevPositiveRate : null,
+        totalResponses:
+          prevCount > 0 ? Math.round(((totalResponses - prevCount) / prevCount) * 100) : null,
+        avgRating:
+          avgRating !== null && prevAvgRating !== null
+            ? Number((parseFloat(avgRating) - prevAvgRating).toFixed(1))
+            : null,
+        positiveRate:
+          positiveRate !== null && prevPositiveRate !== null
+            ? positiveRate - prevPositiveRate
+            : null,
       },
     };
   },
@@ -285,9 +331,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   if (!isPro || !organization) {
     return (
       <div>
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <EditorialPageHeader
+          title="Analytics"
+          subtitle="Insights into your feedback data."
+          action={
             <DashboardFeedback
               elementId="analytics-priorities-free"
               mode="poll"
@@ -309,38 +356,19 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
                 plan: 'FREE',
               }}
             />
-          </div>
-          <p className="text-gray-600">Insights into your feedback data</p>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <svg
-              className="w-8 h-8 text-slate-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unlock Analytics</h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Upgrade to Pro to access detailed analytics including response trends, sentiment
-            analysis, and rating insights.
-          </p>
-          <Link
-            href="/dashboard/settings"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-slate-700 hover:bg-slate-800"
-          >
-            Upgrade to Pro
-          </Link>
-        </div>
+          }
+        />
+        <EditorialCard>
+          <EditorialEmptyState
+            title="Analytics is a Pro feature"
+            body="Upgrade to Pro to unlock response trends, sentiment analysis, element benchmarks, and rating insights across all your projects."
+            action={
+              <EditorialLinkButton href="/dashboard/settings" variant="ink">
+                Upgrade to Pro →
+              </EditorialLinkButton>
+            }
+          />
+        </EditorialCard>
       </div>
     );
   }
@@ -823,8 +851,13 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
     if (rowIsDb && colIsDb) {
       // Pure SQL pivot (getPivotData validates keys against its own allowlist)
       const rawRows = await getPivotData(
-        organization.id, projectId, elementId, startDate, endDate,
-        pivotRow, pivotCol
+        organization.id,
+        projectId,
+        elementId,
+        startDate,
+        endDate,
+        pivotRow,
+        pivotCol
       );
 
       const cells: Record<string, Record<string, number>> = {};
@@ -911,9 +944,20 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+      <EditorialPageHeader
+        eyebrow={
+          <>
+            {selectedProject ? selectedProject.name : 'All projects'}
+            {selectedElement ? ` / ${selectedElement}` : ''}
+            {' · '}
+            {dateRangeLabel}
+            {' · '}
+            {totalResponses.toLocaleString()} responses
+          </>
+        }
+        title="Analytics"
+        subtitle="Trends, benchmarks, and rating insights across your feedback."
+        action={
           <DashboardFeedback
             elementId="analytics-priorities-pro"
             mode="poll"
@@ -936,21 +980,13 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
               plan: 'PRO',
             }}
           />
-        </div>
-        <p className="text-gray-600">
-          {selectedProject ? selectedProject.name : 'All projects'}
-          {selectedElement ? ` / ${selectedElement}` : ''}
-          {' \u2014 '}
-          {dateRangeLabel}
-          {' \u2014 '}
-          <span className="font-medium">{totalResponses}</span> responses
-        </p>
-      </div>
+        }
+      />
 
       <AnalyticsFilter projects={projects} elements={elements} />
 
-      {/* Tab Navigation */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200/80 -mx-1 px-1">
+      {/* Tab Navigation — editorial hairline underline */}
+      <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-editorial-neutral-2">
         {tabs.map((tab) => {
           const tabUrl = new URLSearchParams();
           if (params.startDate) tabUrl.set('startDate', params.startDate);
@@ -959,23 +995,28 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           if (params.elementId) tabUrl.set('elementId', params.elementId);
           if (tab.key !== 'overview') tabUrl.set('tab', tab.key);
 
+          const active = activeTab === tab.key;
           return (
             <Link
               key={tab.key}
               href={`/dashboard/analytics${tabUrl.toString() ? `?${tabUrl.toString()}` : ''}`}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${
-                activeTab === tab.key
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              className={`relative inline-flex h-11 shrink-0 items-center whitespace-nowrap px-3 text-[14px] transition-colors duration-240 ease-page-turn ${
+                active ? 'text-editorial-ink' : 'text-editorial-neutral-3 hover:text-editorial-ink'
               }`}
             >
               {tab.label}
+              {active && (
+                <span
+                  className="absolute inset-x-3 -bottom-px h-px bg-editorial-ink"
+                  aria-hidden="true"
+                />
+              )}
             </Link>
           );
         })}
         <Link
           href="/dashboard/analytics/segments"
-          className="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 border-transparent text-gray-400 hover:text-gray-600"
+          className="inline-flex h-11 shrink-0 items-center whitespace-nowrap px-3 text-[14px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
         >
           Segments
         </Link>
@@ -984,7 +1025,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
       {/* Mobile segments link */}
       <Link
         href="/dashboard/analytics/segments"
-        className="md:hidden flex items-center justify-between mb-6 px-4 py-3 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-700"
+        className="md:hidden mb-6 flex items-center justify-between rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 py-3 text-[14px] text-editorial-ink"
       >
         User Segments
         <span className="text-gray-400">&rarr;</span>

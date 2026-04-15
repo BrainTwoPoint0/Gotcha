@@ -3,52 +3,30 @@ import { getAuthUser, getActiveOrganization } from '@/lib/auth';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { BugActions } from './bug-actions';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import {
+  EditorialCard,
+  EditorialCardBody,
+  EditorialCardHeader,
+} from '../../../components/editorial/card';
 
 export const dynamic = 'force-dynamic';
 
-const STATUS_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
-  OPEN: {
-    label: 'Open',
-    className: 'bg-red-50/80 text-red-700 border-red-200/60',
-    dot: 'bg-red-500',
-  },
-  INVESTIGATING: {
-    label: 'Investigating',
-    className: 'bg-amber-50/80 text-amber-700 border-amber-200/60',
-    dot: 'bg-amber-500',
-  },
-  FIXING: {
-    label: 'Fixing',
-    className: 'bg-blue-50/80 text-blue-700 border-blue-200/60',
-    dot: 'bg-blue-500',
-  },
-  RESOLVED: {
-    label: 'Resolved',
-    className: 'bg-emerald-50/80 text-emerald-700 border-emerald-200/60',
-    dot: 'bg-emerald-500',
-  },
-  CLOSED: {
-    label: 'Closed',
-    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
-    dot: 'bg-gray-400',
-  },
-  WONT_FIX: {
-    label: "Won't Fix",
-    className: 'bg-gray-50 text-gray-500 border-gray-200/60',
-    dot: 'bg-gray-400',
-  },
+const STATUS_CONFIG: Record<string, { label: string; tone: string }> = {
+  OPEN: { label: 'Open', tone: 'text-editorial-accent' },
+  INVESTIGATING: { label: 'Investigating', tone: 'text-editorial-neutral-3' },
+  FIXING: { label: 'Fixing', tone: 'text-editorial-ink' },
+  RESOLVED: { label: 'Resolved', tone: 'text-editorial-success' },
+  CLOSED: { label: 'Closed', tone: 'text-editorial-neutral-3/70' },
+  WONT_FIX: { label: "Won't fix", tone: 'text-editorial-neutral-3/70' },
 };
 
-const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
-  LOW: { label: 'Low', className: 'bg-gray-50 text-gray-500 border-gray-200/60' },
-  MEDIUM: { label: 'Medium', className: 'bg-blue-50/80 text-blue-700 border-blue-200/60' },
-  HIGH: { label: 'High', className: 'bg-orange-50/80 text-orange-700 border-orange-200/60' },
-  CRITICAL: { label: 'Critical', className: 'bg-red-50/80 text-red-700 border-red-200/60' },
+const PRIORITY_CONFIG: Record<string, { label: string; tone: string }> = {
+  LOW: { label: 'Low', tone: 'text-editorial-neutral-3/80' },
+  MEDIUM: { label: 'Medium', tone: 'text-editorial-neutral-3' },
+  HIGH: { label: 'High', tone: 'text-editorial-accent' },
+  CRITICAL: { label: 'Critical', tone: 'text-editorial-alert' },
 };
 
 interface PageProps {
@@ -69,7 +47,6 @@ export default async function BugDetailPage({ params }: PageProps) {
   const organization = activeOrg?.organization;
   if (!organization) notFound();
 
-  // Pro gate — redirect FREE users to bugs list (shows upgrade prompt)
   const isPro = canAccessBugFeatures(organization.subscription?.plan ?? 'FREE');
   if (!isPro) redirect('/dashboard/bugs');
 
@@ -104,29 +81,25 @@ export default async function BugDetailPage({ params }: PageProps) {
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <Link
-          href="/dashboard/bugs"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path
-              d="M8.5 3.5L5 7L8.5 10.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back to Bugs
-        </Link>
-      </div>
+      <Link
+        href="/dashboard/bugs"
+        className="mb-6 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+      >
+        <span aria-hidden="true">←</span>
+        Back to bugs
+      </Link>
 
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-gray-900">{bug.title}</h1>
+      <header className="mb-10">
+        <div className="mb-3 flex items-center gap-3">
+          <span className="h-px w-6 bg-editorial-accent" aria-hidden="true" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+            Bug · {bug.project.name}
+          </span>
+        </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <h1 className="max-w-3xl font-display text-3xl font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink sm:text-4xl">
+            {bug.title}
+          </h1>
           <DashboardFeedback
             elementId="bug-detail-page"
             mode="feedback"
@@ -142,136 +115,87 @@ export default async function BugDetailPage({ params }: PageProps) {
             }}
           />
         </div>
-        <div className="flex items-center gap-2.5 mt-2.5">
-          <Badge variant="outline" className={status.className}>
-            <span className={`w-1.5 h-1.5 rounded-full ${status.dot} mr-1.5`} />
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
+          <span
+            className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] ${status.tone}`}
+          >
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
             {status.label}
-          </Badge>
-          <Badge variant="outline" className={priority.className}>
+          </span>
+          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] ${priority.tone}`}>
             {priority.label}
-          </Badge>
-          <span className="text-gray-200">·</span>
-          <span className="text-sm text-gray-400">{bug.project.name}</span>
-          <span className="text-gray-200">·</span>
-          <span className="text-sm tabular-nums text-gray-400">
+          </span>
+          <span aria-hidden="true" className="text-editorial-neutral-2">
+            ·
+          </span>
+          <span className="font-mono text-[12px] tabular-nums text-editorial-neutral-3">
             {formatDateLong(bug.createdAt)}
           </span>
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Description */}
-          <Card className="p-5">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">
-              Description
-            </h2>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {bug.description}
-            </p>
-          </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <EditorialCard>
+            <EditorialCardHeader>
+              <SectionLabel>Description</SectionLabel>
+            </EditorialCardHeader>
+            <EditorialCardBody>
+              <p className="whitespace-pre-wrap text-[14px] leading-[1.65] text-editorial-ink">
+                {bug.description}
+              </p>
+            </EditorialCardBody>
+          </EditorialCard>
 
-          {/* Original Response */}
           {bug.response && (
-            <Card className="p-5">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-3">
-                Original Response
-              </h2>
-              <div className="space-y-3">
-                {/* Rating stars */}
+            <EditorialCard>
+              <EditorialCardHeader>
+                <SectionLabel>Original response</SectionLabel>
+              </EditorialCardHeader>
+              <EditorialCardBody className="space-y-4">
                 {bug.response.rating != null && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-16">Rating</span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path
-                              d="M7 1.75L8.575 4.9L12.075 5.425L9.5375 7.875L10.15 11.375L7 9.7125L3.85 11.375L4.4625 7.875L1.925 5.425L5.425 4.9L7 1.75Z"
-                              fill={i < bug.response!.rating! ? '#F59E0B' : 'none'}
-                              stroke={i < bug.response!.rating! ? '#F59E0B' : '#E5E7EB'}
-                              strokeWidth="0.75"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-400">{bug.response.rating} of 5</span>
-                    </div>
-                  </div>
+                  <DetailRow label="Rating">
+                    <span className="font-display text-[18px] text-editorial-accent">
+                      {'★'.repeat(bug.response.rating)}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                      {bug.response.rating} of 5
+                    </span>
+                  </DetailRow>
                 )}
-
-                {/* Vote */}
                 {bug.response.vote && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-16">Vote</span>
-                    <div
-                      className={`flex items-center gap-1.5 text-sm font-medium ${
-                        bug.response.vote === 'UP' ? 'text-emerald-600' : 'text-red-500'
-                      }`}
+                  <DetailRow label="Vote">
+                    <span
+                      className={`text-[14px] ${bug.response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
                     >
-                      <div
-                        className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 ${
-                          bug.response.vote === 'UP' ? 'bg-emerald-50' : 'bg-red-50'
-                        }`}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                          {bug.response.vote === 'UP' ? (
-                            <path
-                              d="M7 3L7 11M7 3L4 6M7 3L10 6"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          ) : (
-                            <path
-                              d="M7 11L7 3M7 11L4 8M7 11L10 8"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          )}
-                        </svg>
-                      </div>
                       {bug.response.vote === 'UP' ? 'Upvote' : 'Downvote'}
-                    </div>
-                  </div>
+                    </span>
+                  </DetailRow>
                 )}
-
-                {/* Content */}
                 {bug.response.content && (
-                  <div>
-                    <span className="text-xs text-gray-400 block mb-1.5">Content</span>
-                    <div className="bg-gradient-to-b from-gray-50/80 to-white border border-gray-100 rounded-md p-3">
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {bug.response.content}
-                      </p>
-                    </div>
-                  </div>
+                  <DetailRow label="Content">
+                    <p className="whitespace-pre-wrap text-[14px] leading-[1.6] text-editorial-ink">
+                      {bug.response.content}
+                    </p>
+                  </DetailRow>
                 )}
-
-                <Separator className="my-1" />
-
-                {/* Metadata */}
-                <div className="flex items-center gap-3 text-[11px] text-gray-400">
-                  <span className="font-mono">{bug.response.mode}</span>
-                  <span className="text-gray-200">·</span>
+                <div className="flex items-center gap-3 border-t border-editorial-neutral-2 pt-3 font-mono text-[11px] text-editorial-neutral-3">
+                  <span className="uppercase tracking-[0.14em]">{bug.response.mode}</span>
+                  <span aria-hidden="true" className="text-editorial-neutral-2">
+                    ·
+                  </span>
                   <span className="tabular-nums">{formatDateLong(bug.response.createdAt)}</span>
                 </div>
-              </div>
-            </Card>
+              </EditorialCardBody>
+            </EditorialCard>
           )}
 
-          {/* Activity Feed */}
           {bug.notes.length > 0 && (
-            <Card className="p-5">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
-                Activity
-              </h2>
-              <div className="space-y-4">
+            <EditorialCard>
+              <EditorialCardHeader>
+                <SectionLabel>Activity</SectionLabel>
+              </EditorialCardHeader>
+              <EditorialCardBody className="space-y-4">
                 {bug.notes.map((note) => {
                   const isSystemNote =
                     note.content.startsWith('Status changed from') ||
@@ -279,15 +203,18 @@ export default async function BugDetailPage({ params }: PageProps) {
 
                   if (isSystemNote) {
                     return (
-                      <div key={note.id} className="flex items-center gap-2 px-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-                        <span className="text-xs text-gray-400">
-                          <span className="font-medium text-gray-500">
+                      <div key={note.id} className="flex items-center gap-2.5">
+                        <span
+                          aria-hidden="true"
+                          className="h-1 w-1 shrink-0 rounded-full bg-editorial-neutral-2"
+                        />
+                        <span className="text-[13px] text-editorial-neutral-3">
+                          <span className="text-editorial-ink">
                             {note.authorName || note.authorEmail}
                           </span>{' '}
                           {note.content.toLowerCase()}
                         </span>
-                        <span className="text-[11px] text-gray-300 tabular-nums ml-auto">
+                        <span className="ml-auto font-mono text-[11px] tabular-nums text-editorial-neutral-3">
                           {formatDateLong(note.createdAt)}
                         </span>
                       </div>
@@ -297,58 +224,51 @@ export default async function BugDetailPage({ params }: PageProps) {
                   return (
                     <div
                       key={note.id}
-                      className={`rounded-md border p-3 ${
-                        note.isExternal
-                          ? 'border-blue-200/60 bg-blue-50/30'
-                          : 'border-gray-100 bg-gray-50/50'
-                      }`}
+                      className={`rounded-md border p-4 ${note.isExternal ? 'border-editorial-accent/30 bg-editorial-accent/[0.03]' : 'border-editorial-neutral-2 bg-editorial-ink/[0.02]'}`}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-sm font-medium text-gray-700">
+                      <div className="mb-2 flex items-center gap-3">
+                        <span className="text-[13px] text-editorial-ink">
                           {note.authorName || note.authorEmail}
                         </span>
-                        {note.isExternal ? (
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-blue-600 bg-blue-100/60 px-1.5 py-0.5 rounded">
-                            Sent to reporter
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                            Internal
-                          </span>
-                        )}
-                        <span className="text-[11px] text-gray-400 tabular-nums ml-auto">
+                        <span
+                          className={`font-mono text-[9px] uppercase tracking-[0.18em] ${note.isExternal ? 'text-editorial-accent' : 'text-editorial-neutral-3'}`}
+                        >
+                          {note.isExternal ? 'Sent to reporter' : 'Internal'}
+                        </span>
+                        <span className="ml-auto font-mono text-[11px] tabular-nums text-editorial-neutral-3">
                           {formatDateLong(note.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                      <p className="whitespace-pre-wrap text-[14px] leading-[1.6] text-editorial-ink">
                         {note.content}
                       </p>
                     </div>
                   );
                 })}
-              </div>
-            </Card>
+              </EditorialCardBody>
+            </EditorialCard>
           )}
 
-          {/* Resolution */}
           {bug.resolutionNote && (
-            <Card className="p-5 border-emerald-200/60 bg-emerald-50/30">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-emerald-600 mb-3">
-                Resolution
-              </h2>
-              <p className="text-sm text-gray-700 leading-relaxed">{bug.resolutionNote}</p>
-              {bug.resolvedAt && (
-                <p className="text-xs text-gray-400 mt-3 tabular-nums">
-                  Resolved {formatDateLong(bug.resolvedAt)}
+            <EditorialCard className="border-editorial-success/30 bg-editorial-success/[0.03]">
+              <EditorialCardHeader className="border-editorial-success/20">
+                <SectionLabel className="text-editorial-success">Resolution</SectionLabel>
+              </EditorialCardHeader>
+              <EditorialCardBody>
+                <p className="whitespace-pre-wrap text-[14px] leading-[1.65] text-editorial-ink">
+                  {bug.resolutionNote}
                 </p>
-              )}
-            </Card>
+                {bug.resolvedAt && (
+                  <p className="mt-3 font-mono text-[11px] tabular-nums text-editorial-neutral-3">
+                    Resolved {formatDateLong(bug.resolvedAt)}
+                  </p>
+                )}
+              </EditorialCardBody>
+            </EditorialCard>
           )}
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Actions */}
           <BugActions
             bugId={bug.id}
             currentStatus={bug.status}
@@ -356,73 +276,88 @@ export default async function BugDetailPage({ params }: PageProps) {
             reporterEmail={bug.reporterEmail}
           />
 
-          {/* Reporter */}
           {(bug.reporterEmail || bug.reporterName || bug.endUserId) && (
-            <Card className="p-5">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
-                Reporter
-              </h2>
-              <div className="space-y-3.5">
-                {bug.reporterName && (
-                  <div>
-                    <span className="text-[11px] text-gray-400 block mb-1">Name</span>
-                    <span className="text-sm text-gray-700">{bug.reporterName}</span>
-                  </div>
-                )}
-                {bug.reporterEmail && (
-                  <div>
-                    <span className="text-[11px] text-gray-400 block mb-1">Email</span>
-                    <span className="text-sm text-gray-700">{bug.reporterEmail}</span>
-                  </div>
-                )}
+            <EditorialCard>
+              <EditorialCardHeader>
+                <SectionLabel>Reporter</SectionLabel>
+              </EditorialCardHeader>
+              <EditorialCardBody className="space-y-4">
+                {bug.reporterName && <MetaRow label="Name">{bug.reporterName}</MetaRow>}
+                {bug.reporterEmail && <MetaRow label="Email">{bug.reporterEmail}</MetaRow>}
                 {bug.endUserId && (
-                  <div>
-                    <span className="text-[11px] text-gray-400 block mb-1">User ID</span>
-                    <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
-                      {bug.endUserId}
-                    </code>
-                  </div>
+                  <MetaRow label="User ID">
+                    <code className="font-mono text-[12px]">{bug.endUserId}</code>
+                  </MetaRow>
                 )}
-              </div>
-            </Card>
+              </EditorialCardBody>
+            </EditorialCard>
           )}
 
-          {/* Context */}
-          <Card className="p-5">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">
-              Context
-            </h2>
-            <div className="space-y-3.5">
-              <div>
-                <span className="text-[11px] text-gray-400 block mb-1">Element</span>
-                <code className="text-xs text-gray-500 font-mono bg-gray-50 px-1.5 py-0.5 rounded">
+          <EditorialCard>
+            <EditorialCardHeader>
+              <SectionLabel>Context</SectionLabel>
+            </EditorialCardHeader>
+            <EditorialCardBody className="space-y-4">
+              <MetaRow label="Element">
+                <code className="font-mono text-[12px] text-editorial-neutral-3">
                   {bug.elementId}
                 </code>
-              </div>
+              </MetaRow>
               {bug.pageUrl && (
-                <div>
-                  <span className="text-[11px] text-gray-400 block mb-1">Page URL</span>
-                  <span className="text-xs text-gray-600 break-all">{bug.pageUrl}</span>
-                </div>
+                <MetaRow label="Page URL">
+                  <span className="break-all font-mono text-[12px] text-editorial-neutral-3">
+                    {bug.pageUrl}
+                  </span>
+                </MetaRow>
               )}
               {bug.userAgent && (
-                <div>
-                  <span className="text-[11px] text-gray-400 block mb-1">Browser</span>
-                  <span className="text-xs text-gray-600 break-all leading-relaxed">
+                <MetaRow label="Browser">
+                  <span className="break-all font-mono text-[11px] leading-[1.55] text-editorial-neutral-3">
                     {bug.userAgent}
                   </span>
-                </div>
+                </MetaRow>
               )}
-              <div>
-                <span className="text-[11px] text-gray-400 block mb-1">Created</span>
-                <span className="text-xs tabular-nums text-gray-600">
+              <MetaRow label="Created">
+                <span className="font-mono text-[12px] tabular-nums text-editorial-neutral-3">
                   {formatDateLong(bug.createdAt)}
                 </span>
-              </div>
-            </div>
-          </Card>
+              </MetaRow>
+            </EditorialCardBody>
+          </EditorialCard>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <h2
+      className={`font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3 ${className ?? ''}`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-5">
+      <span className="w-20 shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        {label}
+      </span>
+      <div className="flex flex-1 items-center gap-2">{children}</div>
+    </div>
+  );
+}
+
+function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        {label}
+      </span>
+      <div className="text-[13px] text-editorial-ink">{children}</div>
     </div>
   );
 }

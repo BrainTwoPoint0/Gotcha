@@ -17,6 +17,9 @@ export const EditorialPasswordInput = React.forwardRef<
       <EditorialInput
         ref={ref}
         type={visible ? 'text' : 'password'}
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
         className={cn('pr-16', className)}
         {...rest}
       />
