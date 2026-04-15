@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/app/components/AppButton';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Check } from 'lucide-react';
+import { EditorialButton } from '../../../components/editorial/button';
+import {
+  EditorialFormField,
+  EditorialInput,
+  EditorialTextarea,
+} from '../../../components/editorial/form-field';
 
 export function NewProjectForm() {
   const [name, setName] = useState('');
@@ -24,9 +24,13 @@ export function NewProjectForm() {
 
   const handleCopy = async () => {
     if (!createdProject) return;
-    await navigator.clipboard.writeText(createdProject.apiKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(createdProject.apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,136 +66,119 @@ export function NewProjectForm() {
 
   if (createdProject) {
     return (
-      <div className="max-w-2xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Project created</h1>
-          <p className="text-gray-600">
-            Save your API key now — you won&apos;t be able to see it again.
-          </p>
+      <div>
+        <div className="mb-5 flex items-center gap-3">
+          <span className="h-px w-6 bg-editorial-success" aria-hidden="true" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-success">
+            Project created
+          </span>
+        </div>
+        <h2 className="font-display text-2xl font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+          Your API key — copy it now
+        </h2>
+        <p className="mt-2 text-[14px] leading-[1.6] text-editorial-neutral-3">
+          This is the only time we will show you the full key. Save it somewhere safe; if you lose
+          it, you can regenerate a new one from the project page.
+        </p>
+
+        <div className="mt-6 flex items-center gap-2">
+          <code className="min-w-0 flex-1 select-all break-all rounded-md border border-editorial-neutral-2 bg-editorial-ink px-3 py-2.5 font-mono text-[13px] text-editorial-paper">
+            {createdProject.apiKey}
+          </code>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-editorial-ink transition-colors hover:bg-editorial-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-editorial-accent/40"
+            aria-label={copied ? 'Copied' : 'Copy key'}
+          >
+            {copied ? (
+              <Check className="h-4 w-4 text-editorial-success" />
+            ) : (
+              <Copy className="h-4 w-4 text-editorial-neutral-3" />
+            )}
+          </button>
         </div>
 
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Your API Key</Label>
-              <div className="mt-1 flex items-center gap-2">
-                <code className="min-w-0 flex-1 text-sm bg-gray-100 px-3 py-2 rounded font-mono text-gray-900 break-all select-all">
-                  {createdProject.apiKey}
-                </code>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="shrink-0 p-2 rounded hover:bg-gray-100 transition-colors"
-                  title="Copy"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Copy className="h-4 w-4 text-gray-500" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <Alert>
-              <AlertDescription>
-                This is the only time your full API key will be shown. Copy it and store it
-                securely. If you lose it, you&apos;ll need to regenerate a new one.
-              </AlertDescription>
-            </Alert>
-
-            <div className="flex justify-end">
-              <Button onClick={() => router.push(`/dashboard/projects/${createdProject.slug}`)}>
-                Go to Project
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mt-6 flex justify-end">
+          <EditorialButton
+            variant="ink"
+            onClick={() => router.push(`/dashboard/projects/${createdProject.slug}`)}
+          >
+            Go to project
+            <span aria-hidden="true">→</span>
+          </EditorialButton>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="mb-8">
-        <Link
-          href="/dashboard/projects"
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+    <form onSubmit={handleSubmit}>
+      {error && (
+        <div
+          role="alert"
+          className="mb-5 border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Projects
-        </Link>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">Create a new project</h1>
-        <p className="text-gray-600">Set up a new project to start collecting feedback.</p>
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-5">
+        <EditorialFormField
+          label="Project name"
+          htmlFor="name"
+          hint={
+            slug ? (
+              <>
+                Slug: <code className="font-mono text-[12px] text-editorial-ink">{slug}</code>
+              </>
+            ) : undefined
+          }
+        >
+          <EditorialInput
+            id="name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="My Awesome App"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </EditorialFormField>
+
+        <EditorialFormField
+          label={
+            <>
+              Description{' '}
+              <span className="text-editorial-neutral-3 normal-case tracking-normal">
+                (optional)
+              </span>
+            </>
+          }
+          htmlFor="description"
+        >
+          <EditorialTextarea
+            id="description"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="A brief description of your project"
+          />
+        </EditorialFormField>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit}>
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Project name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="My Awesome App"
-                />
-                {slug && (
-                  <p className="text-sm text-muted-foreground">
-                    Slug: <code className="bg-muted px-1 rounded">{slug}</code>
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">
-                  Description <span className="text-muted-foreground">(optional)</span>
-                </Label>
-                <Textarea
-                  id="description"
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="A brief description of your project"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <Link
-                href="/dashboard/projects"
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
-                Cancel
-              </Link>
-              <Button
-                type="submit"
-                disabled={!name.trim()}
-                loading={loading}
-                loadingText="Creating..."
-              >
-                Create Project
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      <div className="mt-8 flex items-center justify-end gap-4">
+        <Link
+          href="/dashboard/projects"
+          className="text-[13px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+        >
+          Cancel
+        </Link>
+        <EditorialButton type="submit" variant="ink" disabled={!name.trim() || loading}>
+          {loading ? 'Creating…' : 'Create project'}
+        </EditorialButton>
+      </div>
+    </form>
   );
 }

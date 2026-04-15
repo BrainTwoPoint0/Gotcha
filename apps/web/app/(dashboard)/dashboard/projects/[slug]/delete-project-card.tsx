@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { EditorialButton } from '../../../components/editorial/button';
+import { EditorialFormField, EditorialInput } from '../../../components/editorial/form-field';
 
 export function DeleteProjectCard({
   projectName,
@@ -49,45 +47,67 @@ export function DeleteProjectCard({
   };
 
   return (
-    <Card className="border-red-200">
-      <CardContent className="pt-6">
-        <h3 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          This action cannot be undone. This will permanently delete the{' '}
-          <strong>{projectName}</strong> project and all of its data including responses, API keys,
-          webhooks, and metadata fields.
-        </p>
+    <div className="rounded-md border border-editorial-alert/30 bg-editorial-alert/[0.03] p-6">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="h-px w-6 bg-editorial-alert" aria-hidden="true" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-alert">
+          Danger zone
+        </span>
+      </div>
+      <h3 className="font-display text-[1.25rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
+        Delete this project
+      </h3>
+      <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-editorial-neutral-3">
+        This cannot be undone. All responses, API keys, webhooks, metadata fields, and bug tickets
+        tied to <span className="text-editorial-ink">{projectName}</span> will be permanently
+        removed.
+      </p>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Type <strong>{projectName}</strong> to confirm
-        </label>
-        <Input
-          value={confirmText}
-          onChange={(e) => setConfirmText(e.target.value)}
-          placeholder={projectName}
-          className="mb-3 max-w-sm"
-        />
-
-        {error && (
-          <Alert variant="destructive" className="mb-3">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex items-center gap-3">
-          <Button variant="destructive" disabled={!canDelete || deleting} onClick={handleDelete}>
-            {deleting ? 'Deleting...' : 'Delete this project'}
-          </Button>
-          <DashboardFeedback
-            elementId="project-delete-preference"
-            mode="poll"
-            promptText="Would you prefer archive or permanent delete?"
-            options={['Archive (hide but keep data)', 'Delete (permanent)', 'Both options']}
-            onePerUser={true}
-            userEmail={userEmail}
+      <div className="mt-6 max-w-sm">
+        <EditorialFormField
+          label={
+            <>
+              Type <span className="text-editorial-ink">{projectName}</span> to confirm
+            </>
+          }
+        >
+          <EditorialInput
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={projectName}
+            autoComplete="off"
+            spellCheck={false}
           />
+        </EditorialFormField>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mt-4 border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
+        >
+          {error}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="mt-6 flex items-center gap-3">
+        <EditorialButton
+          variant="ink"
+          disabled={!canDelete || deleting}
+          onClick={handleDelete}
+          className="bg-editorial-alert text-editorial-paper hover:bg-editorial-alert/90"
+        >
+          {deleting ? 'Deleting…' : 'Delete this project'}
+        </EditorialButton>
+        <DashboardFeedback
+          elementId="project-delete-preference"
+          mode="poll"
+          promptText="Would you prefer archive or permanent delete?"
+          options={['Archive (hide but keep data)', 'Delete (permanent)', 'Both options']}
+          onePerUser={true}
+          userEmail={userEmail}
+        />
+      </div>
+    </div>
   );
 }
