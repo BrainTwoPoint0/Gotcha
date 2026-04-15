@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { resend, FROM_EMAIL } from '@/lib/resend';
+import { signSuppressionToken } from '@/lib/notify-token';
 import {
   welcomeEmail,
   proActivatedEmail,
@@ -8,6 +9,7 @@ import {
   bugResolutionEmail,
   bugUpdateEmail,
   inviteEmail,
+  shippedNotificationEmail,
 } from './templates';
 
 interface User {
@@ -229,6 +231,72 @@ export async function sendBugUpdateEmail({
     console.log(`Bug update email sent to ${reporterEmail}`);
   } catch (error) {
     console.error('Failed to send bug update email:', error);
+  }
+}
+
+/**
+ * Notify-back email sent on the first →SHIPPED transition for a response
+ * with a captured submitterEmail. The PATCH route claims the notify slot
+ * atomically (conditional UPDATE on `notifiedAt IS NULL`) before calling
+ * this function, so concurrent PATCHes can't double-send.
+ *
+ * Adds RFC 8058 List-Unsubscribe headers (mailto + one-click HTTPS) so
+ * Gmail/Yahoo bulk-sender rules accept us, and so recipients can suppress
+ * future notify-backs without round-tripping through the dashboard. The
+ * unsubscribe token is bound to (email, projectId) — see lib/notify-token.
+ *
+ * Returns true on accepted send, false on swallowed failure.
+ */
+export async function sendShippedNotification({
+  to,
+  projectId,
+  projectName,
+  projectSlug,
+  excerpt,
+  elementLabel,
+  adminNote,
+}: {
+  to: string;
+  projectId: string;
+  projectName: string;
+  projectSlug: string;
+  excerpt: string | null;
+  elementLabel: string;
+  adminNote: string | null;
+}): Promise<boolean> {
+  try {
+    const token = signSuppressionToken(to, projectId);
+    const unsubscribeUrl = `https://gotcha.cx/api/notify/unsubscribe?t=${encodeURIComponent(token)}`;
+
+    const { subject, html } = shippedNotificationEmail({
+      projectName,
+      excerpt,
+      elementLabel,
+      adminNote,
+      unsubscribeUrl,
+    });
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html,
+      headers: {
+        'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:unsubscribe@gotcha.cx?subject=unsubscribe-${projectSlug}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    });
+
+    if (result.error) {
+      console.error('Failed to send shipped notification (Resend error):', result.error);
+      return false;
+    }
+
+    console.log(`Shipped notification sent to ${to} for project ${projectSlug}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send shipped notification:', error);
+    return false;
   }
 }
 

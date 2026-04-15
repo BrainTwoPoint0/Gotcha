@@ -55,6 +55,14 @@ interface BugUpdateEmailProps {
   authorName: string;
 }
 
+interface ShippedNotificationEmailProps {
+  projectName: string;
+  excerpt: string | null;
+  elementLabel: string;
+  adminNote: string | null;
+  unsubscribeUrl: string | null;
+}
+
 const baseStyles = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
@@ -299,6 +307,76 @@ export function bugUpdateEmail({
 
         <p style="color: #9ca3af; font-size: 12px; margin-top: 32px;">
           Powered by <a href="https://gotcha.cx" style="color: #64748b; text-decoration: none; font-weight: 500;">Gotcha</a>
+        </p>
+      </div>
+    `,
+  };
+}
+
+export function shippedNotificationEmail({
+  projectName,
+  excerpt,
+  elementLabel,
+  adminNote,
+  unsubscribeUrl,
+}: ShippedNotificationEmailProps): { subject: string; html: string } {
+  // Editorial voice — quiet, transactional, no marketing chrome. Fraunces
+  // serif isn't web-safe in email clients, so the headline falls back to
+  // Georgia (close enough, ships in every default mail UA).
+  const safeProject = escapeHtml(projectName);
+  const safeElement = escapeHtml(elementLabel);
+  const safeExcerpt = excerpt ? escapeHtml(excerpt) : null;
+  const safeNote = adminNote ? escapeHtml(adminNote) : null;
+
+  return {
+    subject: 'You asked — we shipped.',
+    html: `
+      <div style="${baseStyles} max-width: 560px; margin: 0 auto; padding: 32px 24px;">
+        <h1 style="font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; line-height: 1.2; color: #1A1714; margin: 0 0 24px 0;">
+          You asked — we shipped.
+        </h1>
+
+        <p style="margin: 0 0 16px 0;">
+          A while back you submitted feedback on
+          <strong>${safeProject}</strong>${safeExcerpt ? '' : ` (<code style="background:#f1f5f9;padding:1px 6px;border-radius:3px;font-size:13px;">${safeElement}</code>)`}.
+        </p>
+
+        ${
+          safeExcerpt
+            ? `
+        <blockquote style="border-left: 2px solid #D4532A; margin: 24px 0; padding: 8px 0 8px 16px; color: #4b5563; font-style: italic; font-size: 15px;">
+          &ldquo;${safeExcerpt}&rdquo;
+        </blockquote>
+        `
+            : ''
+        }
+
+        <p style="margin: 24px 0 0 0;">
+          We shipped it. It&rsquo;s live now.
+        </p>
+
+        ${
+          safeNote
+            ? `
+        <div style="margin: 32px 0; padding: 16px 20px; background: #FAF8F4; border-radius: 4px;">
+          <p style="margin: 0; font-size: 14px; color: #4b5563; white-space: pre-wrap;">${safeNote}</p>
+        </div>
+        `
+            : ''
+        }
+
+        <p style="margin: 32px 0 0 0; color: #6b7280; font-size: 13px; line-height: 1.55;">
+          You&rsquo;re receiving this because you left feedback with an email
+          address.
+          ${
+            unsubscribeUrl
+              ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#6b7280;text-decoration:underline;">Don&rsquo;t notify me again</a>.`
+              : ''
+          }
+        </p>
+
+        <p style="margin: 24px 0 0 0; color: #9ca3af; font-size: 11px;">
+          Powered by <a href="https://gotcha.cx" style="color:#9ca3af;text-decoration:none;">Gotcha</a> — feedback that closes the loop.
         </p>
       </div>
     `,

@@ -77,6 +77,10 @@ export interface SubmitResponsePayload {
   isBug?: boolean;
   screenshot?: string;
   user?: GotchaUser;
+  // Opt-in submitter email — when provided, the dashboard can send a
+  // notify-back when the feedback ships. First-class to make intent explicit
+  // (vs. burying inside the catch-all `user` object).
+  userEmail?: string;
   context?: SubmissionContext;
 }
 

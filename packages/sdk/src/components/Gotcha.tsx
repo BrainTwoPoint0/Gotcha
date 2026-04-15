@@ -27,6 +27,14 @@ export interface GotchaProps {
   /** User metadata for segmentation */
   user?: GotchaUser;
 
+  /**
+   * Submitter's email address. When set, the dashboard can email the user
+   * a "we shipped what you asked for" note when their feedback hits the
+   * SHIPPED status. Pass only with explicit user consent — store no other
+   * PII in this field.
+   */
+  userEmail?: string;
+
   // Behavior
   /** Feedback mode */
   mode?: ResponseMode;
@@ -141,6 +149,7 @@ export interface GotchaProps {
 export function Gotcha({
   elementId,
   user,
+  userEmail,
   mode = 'feedback',
   showText = true,
   showRating = true,
@@ -179,7 +188,15 @@ export function Gotcha({
   onClose,
   onError,
 }: GotchaProps) {
-  const { disabled, activeModalId, openModal, closeModal, defaultUser, client } = useGotchaContext();
+  const {
+    disabled,
+    activeModalId,
+    openModal,
+    closeModal,
+    defaultUser,
+    defaultUserEmail,
+    client,
+  } = useGotchaContext();
 
   const { conditionsMet } = useTriggerConditions({
     elementId,
@@ -270,6 +287,7 @@ export function Gotcha({
     mode,
     pollOptions: options,
     user,
+    userEmail: userEmail ?? defaultUserEmail,
     onePerUser,
     cooldownDays,
     onSuccess: (response) => {

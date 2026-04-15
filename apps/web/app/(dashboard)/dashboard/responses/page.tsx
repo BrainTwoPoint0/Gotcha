@@ -73,8 +73,29 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const effectiveStartDate = !isPro && !startDate ? thirtyDaysAgo : startDate;
 
-  const validStatuses = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
-  const defaultStatuses = ['NEW', 'REVIEWED', 'ADDRESSED'] as const;
+  // Triage + Lifecycle. ARCHIVED + DECLINED are excluded from the default
+  // view so closed-out items don't crowd the inbox; admins opt into them
+  // via the filter.
+  const validStatuses = [
+    'NEW',
+    'REVIEWED',
+    'ADDRESSED',
+    'ARCHIVED',
+    'UNDER_REVIEW',
+    'PLANNED',
+    'IN_PROGRESS',
+    'SHIPPED',
+    'DECLINED',
+  ] as const;
+  const defaultStatuses = [
+    'NEW',
+    'REVIEWED',
+    'ADDRESSED',
+    'UNDER_REVIEW',
+    'PLANNED',
+    'IN_PROGRESS',
+    'SHIPPED',
+  ] as const;
   type ResponseStatus = (typeof validStatuses)[number];
   const statusFilter = params.status
     ? params.status

@@ -35,11 +35,16 @@ export const contextSchema = z
     language: z.string().max(20).optional(),
     timezone: z.string().max(100).optional(),
     screenResolution: z.object({ width: z.number(), height: z.number() }).optional(),
-    recentErrors: z.array(z.object({
-      message: z.string().max(200),
-      source: z.string().max(200).optional(),
-      timestamp: z.number(),
-    })).max(10).optional(),
+    recentErrors: z
+      .array(
+        z.object({
+          message: z.string().max(200),
+          source: z.string().max(200).optional(),
+          timestamp: z.number(),
+        })
+      )
+      .max(10)
+      .optional(),
   })
   .optional();
 
@@ -64,6 +69,12 @@ export const submitResponseSchema = z
 
     // User data
     user: userSchema.optional(),
+
+    // Opt-in submitter email for notify-back when the feedback ships.
+    // Bounded for DB; stored on Response.submitterEmail. Unlike `user.email`
+    // it is a first-class prop on the SDK so the intent ("I want to be
+    // notified") is explicit.
+    userEmail: z.string().email().max(320).optional(),
 
     // Context
     context: contextSchema,

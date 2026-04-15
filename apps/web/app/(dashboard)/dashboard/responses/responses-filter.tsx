@@ -18,14 +18,34 @@ interface Element {
   count: number;
 }
 
-const ALL_STATUSES = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
-const DEFAULT_STATUSES = ['NEW', 'REVIEWED', 'ADDRESSED'];
+const TRIAGE_STATUSES = ['NEW', 'REVIEWED', 'ADDRESSED', 'ARCHIVED'] as const;
+const LIFECYCLE_STATUSES = [
+  'UNDER_REVIEW',
+  'PLANNED',
+  'IN_PROGRESS',
+  'SHIPPED',
+  'DECLINED',
+] as const;
+const DEFAULT_STATUSES = [
+  'NEW',
+  'REVIEWED',
+  'ADDRESSED',
+  'UNDER_REVIEW',
+  'PLANNED',
+  'IN_PROGRESS',
+  'SHIPPED',
+];
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'New',
   REVIEWED: 'Reviewed',
   ADDRESSED: 'Addressed',
   ARCHIVED: 'Archived',
+  UNDER_REVIEW: 'Under review',
+  PLANNED: 'Planned',
+  IN_PROGRESS: 'In progress',
+  SHIPPED: 'Shipped',
+  DECLINED: 'Declined',
 };
 
 interface ResponsesFilterProps {
@@ -149,15 +169,40 @@ export function ResponsesFilter({
           <div
             role="group"
             aria-label="Filter by status"
-            className="flex items-center gap-0.5 rounded-md border border-editorial-neutral-2 p-0.5"
+            className="flex flex-wrap items-center gap-0.5 rounded-md border border-editorial-neutral-2 p-0.5"
           >
             <span
               aria-hidden="true"
               className="pl-2 pr-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
             >
-              Status
+              Triage
             </span>
-            {ALL_STATUSES.map((s) => {
+            {TRIAGE_STATUSES.map((s) => {
+              const active = statuses.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleStatus(s)}
+                  aria-pressed={active}
+                  className={`h-8 rounded px-2.5 text-[12px] transition-colors duration-240 ease-page-turn ${
+                    active
+                      ? 'bg-editorial-ink text-editorial-paper'
+                      : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.04] hover:text-editorial-ink'
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              );
+            })}
+            <span aria-hidden="true" className="mx-1 h-5 w-px bg-editorial-neutral-2" />
+            <span
+              aria-hidden="true"
+              className="pl-1 pr-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
+            >
+              Lifecycle
+            </span>
+            {LIFECYCLE_STATUSES.map((s) => {
               const active = statuses.includes(s);
               return (
                 <button

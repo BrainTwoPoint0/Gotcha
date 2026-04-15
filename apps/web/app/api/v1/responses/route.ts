@@ -182,15 +182,18 @@ export async function POST(request: NextRequest) {
           variant: data.variant,
           endUserId: data.user?.id,
           endUserMeta: (data.user || {}) as object,
+          submitterEmail: data.userEmail ?? null,
           url: data.context?.url,
           userAgent: data.context?.userAgent,
-          contextMeta: data.context ? {
-            viewport: data.context.viewport,
-            language: data.context.language,
-            timezone: data.context.timezone,
-            screenResolution: data.context.screenResolution,
-            recentErrors: data.context.recentErrors,
-          } : undefined,
+          contextMeta: data.context
+            ? {
+                viewport: data.context.viewport,
+                language: data.context.language,
+                timezone: data.context.timezone,
+                screenResolution: data.context.screenResolution,
+                recentErrors: data.context.recentErrors,
+              }
+            : undefined,
           idempotencyKey: idempotencyKey,
           createdAt: createdAt,
           gated,
@@ -212,12 +215,15 @@ export async function POST(request: NextRequest) {
         if (data.content) descParts.push(data.content);
         if (data.context?.url) descParts.push(`Page: ${data.context.url}`);
         if (data.context?.userAgent) descParts.push(`Browser: ${data.context.userAgent}`);
-        if (data.context?.viewport) descParts.push(`Viewport: ${data.context.viewport.width}x${data.context.viewport.height}`);
+        if (data.context?.viewport)
+          descParts.push(
+            `Viewport: ${data.context.viewport.width}x${data.context.viewport.height}`
+          );
         if (data.context?.timezone) descParts.push(`Timezone: ${data.context.timezone}`);
         if (data.context?.recentErrors?.length) {
           const errorList = data.context.recentErrors
             .slice(0, 5)
-            .map(e => `- ${e.message}${e.source ? ` (${e.source})` : ''}`)
+            .map((e) => `- ${e.message}${e.source ? ` (${e.source})` : ''}`)
             .join('\n');
           descParts.push(`Recent Errors:\n${errorList}`);
         }
@@ -262,7 +268,11 @@ export async function POST(request: NextRequest) {
     await asyncWrite();
 
     // Invalidate cached analytics so dashboards show fresh data
-    try { revalidateTag('analytics-overview'); } catch { /* no-op outside Next.js request context */ }
+    try {
+      revalidateTag('analytics-overview');
+    } catch {
+      /* no-op outside Next.js request context */
+    }
 
     // Fire webhooks for PRO orgs (non-blocking, OK to lose on Lambda freeze)
     if (apiKey.plan === 'PRO') {

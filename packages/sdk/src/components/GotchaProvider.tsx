@@ -19,6 +19,12 @@ export interface GotchaProviderProps {
   disabled?: boolean;
   /** Default user metadata applied to all submissions */
   defaultUser?: GotchaUser;
+  /**
+   * Default submitter email applied to all <Gotcha /> instances under this
+   * provider. Per-instance `userEmail` prop wins when both are set. Used
+   * by the dashboard to send "we shipped what you asked for" notify-back.
+   */
+  defaultUserEmail?: string;
   /** Theme configuration overrides applied to all instances */
   themeConfig?: GotchaThemeConfig;
 }
@@ -27,6 +33,7 @@ export interface GotchaContextValue {
   client: ApiClient;
   disabled: boolean;
   defaultUser: GotchaUser;
+  defaultUserEmail?: string;
   debug: boolean;
   // Modal management - only one open at a time
   activeModalId: string | null;
@@ -47,6 +54,7 @@ export function GotchaProvider({
   debug = false,
   disabled = false,
   defaultUser,
+  defaultUserEmail,
   themeConfig,
 }: GotchaProviderProps) {
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
@@ -101,13 +109,24 @@ export function GotchaProvider({
       client,
       disabled,
       defaultUser: stableDefaultUser,
+      defaultUserEmail,
       debug,
       activeModalId,
       openModal,
       closeModal,
       themeConfig,
     }),
-    [client, disabled, stableDefaultUser, debug, activeModalId, openModal, closeModal, themeConfig]
+    [
+      client,
+      disabled,
+      stableDefaultUser,
+      defaultUserEmail,
+      debug,
+      activeModalId,
+      openModal,
+      closeModal,
+      themeConfig,
+    ]
   );
 
   return (

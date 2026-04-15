@@ -65,14 +65,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Profile fields (onboarding)
-  companySize String?   // "solo" | "2-10" | "11-50" | "50+"
-  role        String?   // "founder" | "engineer" | "pm" | "designer" | "other"
-  industry    String?   // "saas" | "ecommerce" | "education" | "healthcare" | "agency" | "other"
-  useCase     String?   // "user-feedback" | "feature-validation" | "bug-reports" | "nps" | "polls" | "other"
+  companySize String? // "solo" | "2-10" | "11-50" | "50+"
+  role        String? // "founder" | "engineer" | "pm" | "designer" | "other"
+  industry    String? // "saas" | "ecommerce" | "education" | "healthcare" | "agency" | "other"
+  useCase     String? // "user-feedback" | "feature-validation" | "bug-reports" | "nps" | "polls" | "other"
   onboardedAt DateTime? // Set when user completes or skips onboarding
 
   // Relations
-  memberships    OrganizationMember[]
+  memberships     OrganizationMember[]
   sentInvitations Invitation[]
 
   @@index([email])
@@ -121,15 +121,23 @@ model Project {
   // Settings
   settings Json @default("{}")
 
+  // Notify-back abuse cap: per-project monthly counter on shipped emails.
+  // Hard cap protects Gotcha's sending reputation from a malicious or
+  // misconfigured customer seeding many submitter emails. Resets on rollover
+  // when the PATCH route observes the calendar month changed.
+  notifiesSentThisMonth Int       @default(0)
+  notifiesResetAt       DateTime?
+
   // Relations
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeys        ApiKey[]
-  elements       Element[]
-  responses      Response[]
-  experiments    Experiment[]
-  metadataFields MetadataField[]
-  webhooks       Webhook[]
-  bugTickets     BugTicket[]
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeys               ApiKey[]
+  elements              Element[]
+  responses             Response[]
+  experiments           Experiment[]
+  metadataFields        MetadataField[]
+  webhooks              Webhook[]
+  bugTickets            BugTicket[]
+  submitterSuppressions SubmitterSuppression[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -140,7 +148,7 @@ model ApiKey {
   projectId      String
   name           String // e.g., "Production", "Development"
   key            String    @unique // gtch_live_xxx or gtch_test_xxx
-  keyHash        String @unique // For secure lookup
+  keyHash        String    @unique // For secure lookup
   allowedDomains String[] // ["*.myapp.com", "localhost:*"] for origin validation
   lastUsedAt     DateTime?
   createdAt      DateTime  @default(now())
@@ -174,7 +182,7 @@ model Element {
 }
 
 model Response {
-  id           String       @id @default(cuid())
+  id           String  @id @default(cuid())
   projectId    String
   elementId    String? // FK to Element
   elementIdRaw String // Original elementId string (for unregistered elements)
@@ -201,7 +209,7 @@ model Response {
   // Context
   url         String? // Page URL where feedback was given
   userAgent   String?
-  contextMeta Json?   // Extended context (viewport, errors, etc.)
+  contextMeta Json? // Extended context (viewport, errors, etc.)
 
   // Idempotency
   idempotencyKey String?
@@ -215,6 +223,20 @@ model Response {
   reviewedAt DateTime?
   reviewedBy String?
 
+  // Loop lifecycle — see ResponseStatus enum. statusUpdatedAt/By are stamped
+  // on every transition; shippedAt is set only on the transition to SHIPPED.
+  statusUpdatedAt DateTime?
+  statusUpdatedBy String?
+  shippedAt       DateTime?
+
+  // Notify-back to the submitter. submitterEmail is captured via the SDK
+  // `userEmail` prop (optional — empty when the host app doesn't pass it).
+  // notifiedAt is the idempotency guard: one notify-back email per response,
+  // stamped only after Resend accepts the send.
+  submitterEmail String?
+  notifiedAt     DateTime?
+  shippedNote    String?
+
   // Timestamps
   createdAt DateTime @default(now())
 
@@ -226,6 +248,13 @@ model Response {
   project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   element    Element?    @relation(fields: [elementId], references: [id], onDelete: SetNull)
   experiment Experiment? @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  // Roadmap path lives in a partial index declared in the
+  // 20260415000000_response_lifecycle migration:
+  //   CREATE INDEX ... ON "Response"("projectId", "createdAt" DESC)
+  //     WHERE status IN ('PLANNED','IN_PROGRESS','SHIPPED');
+  // Smaller than a full composite, sorted-scan-friendly for the IN-list
+  // predicate the public roadmap query uses. Prisma doesn't model partial
+  // indexes natively — future migrations must preserve it manually.
 
   // Note: Unique constraint on [projectId, elementIdRaw, endUserId] not used
   // because existing data has duplicates. Edit checks handled in application layer.
@@ -247,11 +276,21 @@ enum ResponseMode {
   NPS
 }
 
+// Legacy triage values (NEW/REVIEWED/ADDRESSED/ARCHIVED) are preserved so
+// existing rows remain valid. The lifecycle values below form the Canny-style
+// loop that's surfaced on the public roadmap. UI aliases REVIEWED→UNDER_REVIEW
+// in the label map; ADDRESSED is legacy and can be bulk-migrated to SHIPPED
+// from settings if the admin wants cleanup.
 enum ResponseStatus {
   NEW
   REVIEWED
   ADDRESSED
   ARCHIVED
+  UNDER_REVIEW
+  PLANNED
+  IN_PROGRESS
+  SHIPPED
+  DECLINED
 }
 
 enum VoteType {
@@ -298,8 +337,8 @@ enum ExperimentStatus {
 model MetadataField {
   id          String   @id @default(cuid())
   projectId   String
-  fieldKey    String   // e.g., "age", "location", "plan"
-  displayName String?  // e.g., "Age Group", "Country"
+  fieldKey    String // e.g., "age", "location", "plan"
+  displayName String? // e.g., "Age Group", "Country"
   fieldType   String   @default("string") // "string" | "number" | "boolean"
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -316,17 +355,17 @@ model MetadataField {
 // ============================================
 
 model Subscription {
-  id               String    @id @default(cuid())
-  organizationId   String    @unique
-  stripeCustomerId String?
-  stripePriceId    String?
-  stripeSubId      String?
-  plan             Plan      @default(FREE)
-  status           SubStatus @default(ACTIVE)
+  id                String    @id @default(cuid())
+  organizationId    String    @unique
+  stripeCustomerId  String?
+  stripePriceId     String?
+  stripeSubId       String?
+  plan              Plan      @default(FREE)
+  status            SubStatus @default(ACTIVE)
   cancelAtPeriodEnd Boolean   @default(false)
   currentPeriodEnd  DateTime?
   createdAt         DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  updatedAt         DateTime  @updatedAt
 
   // Usage tracking
   responsesThisMonth Int       @default(0)
@@ -364,7 +403,7 @@ model Webhook {
   type            String    @default("custom") // "custom" | "slack" | "discord"
   url             String
   secret          String?
-  events          String[]  // e.g. ["response.created"]
+  events          String[] // e.g. ["response.created"]
   active          Boolean   @default(true)
   description     String?
   lastTriggeredAt DateTime?
@@ -403,16 +442,16 @@ model WebhookLog {
 // ============================================
 
 model BugTicket {
-  id         String      @id @default(cuid())
+  id         String @id @default(cuid())
   projectId  String
-  responseId String      @unique
+  responseId String @unique
 
   // Auto-populated from response context
-  title       String
-  description String
-  elementId   String
-  pageUrl     String?
-  userAgent   String?
+  title         String
+  description   String
+  elementId     String
+  pageUrl       String?
+  userAgent     String?
   endUserMeta   Json?
   endUserId     String?
   reporterEmail String?
@@ -432,8 +471,8 @@ model BugTicket {
   updatedAt DateTime @updatedAt
 
   // Relations
-  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  response Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  response Response  @relation(fields: [responseId], references: [id], onDelete: Cascade)
   notes    BugNote[]
 
   @@index([projectId, status])
@@ -441,13 +480,13 @@ model BugTicket {
 }
 
 model BugNote {
-  id           String   @id @default(cuid())
-  bugTicketId  String
-  authorEmail  String
-  authorName   String?
-  content      String
-  isExternal   Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  bugTicketId String
+  authorEmail String
+  authorName  String?
+  content     String
+  isExternal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   // Relations
   bugTicket BugTicket @relation(fields: [bugTicketId], references: [id], onDelete: Cascade)
@@ -469,4 +508,26 @@ enum BugPriority {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+// ============================================
+// NOTIFY-BACK SUPPRESSION
+// ============================================
+
+// Per-project email suppression. Populated when a recipient clicks the
+// signed-token unsubscribe link in a shipped-notification email. The PATCH
+// status route must check this table before sending a notify-back. Email is
+// stored verbatim (not hashed) because we need exact-match lookup; the
+// email is already public PII the customer's user supplied themselves.
+model SubmitterSuppression {
+  id        String   @id @default(cuid())
+  projectId String
+  email     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, email])
+  @@index([projectId])
 }

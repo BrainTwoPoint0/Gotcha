@@ -7,6 +7,8 @@ interface UseSubmitOptions {
   mode: ResponseMode;
   pollOptions?: string[];
   user?: GotchaUser;
+  /** Opt-in submitter email for notify-back when feedback ships */
+  userEmail?: string;
   onePerUser?: boolean;
   /** When onePerUser is true, allow a new submission after this many days */
   cooldownDays?: number;
@@ -119,6 +121,7 @@ export function useSubmit(options: UseSubmitOptions) {
             isBug: data.isBug,
             screenshot: data.screenshot,
             user: { ...defaultUser, ...options.user },
+            userEmail: options.userEmail,
           });
         }
 
