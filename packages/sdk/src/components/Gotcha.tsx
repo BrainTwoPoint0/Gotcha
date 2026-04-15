@@ -309,7 +309,7 @@ export function Gotcha({
         autoCloseTimerRef.current = setTimeout(() => {
           closeModal();
           setPhase('form');
-        }, 3000);
+        }, 4000);
       }
     },
     onError: (err) => {
@@ -363,7 +363,7 @@ export function Gotcha({
         autoCloseTimerRef.current = setTimeout(() => {
           closeModal();
           setPhase('form');
-        }, 3000);
+        }, 4000);
       }
     },
     [lastResponseId, closeModal, client]

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GotchaStyles } from '../../types';
 import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
-import { Spinner } from '../Spinner';
 import { ScreenshotPreview } from '../ScreenshotPreview';
 
 interface FeedbackModeProps {
@@ -24,6 +23,22 @@ interface FeedbackModeProps {
   enableScreenshot?: boolean;
 }
 
+/**
+ * Feedback mode — stars + textarea + optional bug flag + screenshot.
+ *
+ * Editorial details:
+ *   - Stars: ink stroke when empty, ink fill when rated. Hover cascades the
+ *     fill up to the cursor with a 30ms per-star stagger. No glow, no pulse.
+ *   - Textarea: transparent, hairline border, italic placeholder. Focus
+ *     darkens the border to ink — no 3px glow ring.
+ *   - Submit: ink pill, "Sending…" italic for the loading state, no spinner.
+ *   - Bug flag: a hairline-bordered row with a checkbox-style indicator
+ *     on the right. Active state uses sienna (warning token) — aligned
+ *     with the dashboard's bug-report affordance.
+ *   - Screenshot: paper-framed preview with a mono caption and a remove
+ *     affordance that surfaces on hover (clay colour — the destructive
+ *     brand moment).
+ */
 export function FeedbackMode({
   resolvedTheme: t,
   placeholder,
@@ -52,12 +67,8 @@ export function FeedbackMode({
   }, []);
 
   useEffect(() => {
-    if (initialValues?.content !== undefined) {
-      setContent(initialValues.content || '');
-    }
-    if (initialValues?.rating !== undefined) {
-      setRating(initialValues.rating ?? null);
-    }
+    if (initialValues?.content !== undefined) setContent(initialValues.content || '');
+    if (initialValues?.rating !== undefined) setRating(initialValues.rating ?? null);
   }, [initialValues?.content, initialValues?.rating]);
 
   const canSubmit = (() => {
@@ -73,23 +84,21 @@ export function FeedbackMode({
     try {
       const { captureScreenshot } = await import('../../utils/screenshot');
       const result = await captureScreenshot();
-      if (result) {
-        setScreenshot(result);
-      } else {
-        setScreenshotError(true);
-        setTimeout(() => setScreenshotError(false), 3000);
-      }
+      if (result) setScreenshot(result);
+      else setScreenshotError(true);
     } catch {
       setScreenshotError(true);
-      setTimeout(() => setScreenshotError(false), 3000);
     } finally {
       setCapturingScreenshot(false);
     }
+    // Deliberately no auto-clear — 3s dismiss was too fast to read on
+    // mobile. The error persists until the user taps "Try again" or
+    // toggles bug-flag off.
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || isLoading) return;
     onSubmit({
       content: showText && content.trim() ? content.trim() : undefined,
       rating: showRating && rating !== null ? rating : undefined,
@@ -100,74 +109,56 @@ export function FeedbackMode({
 
   const inputStyles: React.CSSProperties = {
     width: '100%',
-    padding: isTouch ? '12px 14px' : '10px 12px',
-    border: `1px solid ${t.colors.inputBorder}`,
-    borderRadius: t.borders.radius.md,
-    backgroundColor: t.colors.inputBackground,
+    padding: isTouch ? '12px 0' : '10px 0',
+    border: 'none',
+    borderBottom: `1px solid ${t.colors.inputBorder}`,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
     color: t.colors.text,
     fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
     resize: 'none',
-    minHeight: isTouch ? 100 : 80,
+    minHeight: isTouch ? 96 : 80,
     fontFamily: t.typography.fontFamily,
     outline: 'none',
-    transition: `border-color ${t.animation.duration.fast} ${t.animation.easing.default}, box-shadow ${t.animation.duration.fast} ${t.animation.easing.default}`,
-    lineHeight: 1.5,
-    boxShadow: `inset 0 1px 2px rgba(0,0,0,0.04)`,
+    transition: `border-color ${t.animation.duration.fast} ${t.animation.easing.default}`,
+    lineHeight: 1.55,
     ...customStyles?.input,
-  };
-
-  const buttonStyles: React.CSSProperties = {
-    width: '100%',
-    padding: isTouch ? '14px 16px' : '10px 16px',
-    border: t.colors.buttonBorder,
-    borderRadius: t.borders.radius.md,
-    backgroundColor: t.colors.buttonBackground,
-    color: t.colors.buttonColor,
-    fontSize: isTouch ? t.typography.fontSize.lg : t.typography.fontSize.md,
-    fontWeight: t.typography.fontWeight.medium,
-    fontFamily: t.typography.fontFamily,
-    cursor: isLoading ? 'not-allowed' : 'pointer',
-    transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
-    letterSpacing: '0.01em',
-    ...customStyles?.submitButton,
   };
 
   return (
     <form onSubmit={handleSubmit}>
       {/* Rating */}
       {showRating && (
-        <div style={{
-          marginBottom: showText ? (isTouch ? 16 : 12) : 0,
-          ...(!showText ? { display: 'flex', justifyContent: 'center', padding: '8px 0' } : {}),
-        }}>
+        <div
+          style={{
+            marginBottom: showText ? (isTouch ? 18 : 16) : 0,
+            ...(!showText ? { display: 'flex', justifyContent: 'center', padding: '6px 0' } : {}),
+          }}
+        >
           <StarRating value={rating} onChange={setRating} theme={t} isTouch={isTouch} large={!showText} />
         </div>
       )}
 
-      {/* Text input */}
+      {/* Text input — hairline-only bottom border, transparent ground */}
       {showText && (
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder={placeholder || 'Share your thoughts...'}
+          placeholder={placeholder || 'Share your thoughts…'}
           maxLength={5000}
           style={inputStyles}
           disabled={isLoading}
           aria-label="Your feedback"
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = t.colors.inputBorderFocus;
-            e.currentTarget.style.boxShadow = `0 0 0 3px ${t.colors.inputFocusRing}`;
-            e.currentTarget.style.backgroundColor = t.colors.inputBackgroundFocus;
+            e.currentTarget.style.borderBottomColor = t.colors.inputBorderFocus;
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = t.colors.inputBorder;
-            e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04)';
-            e.currentTarget.style.backgroundColor = t.colors.inputBackground;
+            e.currentTarget.style.borderBottomColor = t.colors.inputBorder;
           }}
         />
       )}
 
-      {/* Bug flag toggle */}
+      {/* Bug flag toggle — editorial row with a checkbox indicator */}
       {enableBugFlag && (
         <button
           type="button"
@@ -177,86 +168,64 @@ export function FeedbackMode({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 7,
+            gap: 10,
             width: '100%',
-            marginTop: 10,
-            padding: '7px 10px',
-            border: `1px solid ${
-              isBug ? t.colors.warningBorder : t.colors.border
-            }`,
-            borderRadius: 7,
+            marginTop: 16,
+            padding: isTouch ? '12px 12px' : '10px 12px',
+            border: `1px solid ${isBug ? t.colors.warningBorder : t.colors.border}`,
+            borderRadius: t.borders.radius.sm,
             backgroundColor: isBug ? t.colors.warningSurface : 'transparent',
             cursor: 'pointer',
             transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
             fontFamily: t.typography.fontFamily,
             ...customStyles?.bugFlag,
           }}
-          onMouseEnter={(e) => {
-            if (!isBug) {
-              e.currentTarget.style.backgroundColor = t.colors.surfaceHover === t.colors.inputBackgroundFocus
-                ? 'rgba(0,0,0,0.02)' : t.colors.surfaceHover;
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isBug) {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }
-          }}
         >
-          <svg
-            width={14}
-            height={14}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={isBug ? t.colors.warningActive : t.colors.textDisabled}
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ flexShrink: 0, transition: `stroke ${t.animation.duration.fast}` }}
+          {/* Checkbox indicator (left) — hairline square that fills sienna when active */}
+          <span
+            aria-hidden="true"
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: 3,
+              border: `1px solid ${isBug ? t.colors.warningActive : t.colors.border}`,
+              backgroundColor: isBug ? t.colors.warning : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
+            }}
           >
-            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
+            {isBug && (
+              <svg width={8} height={8} viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <path
+                  d="M2 5L4 7L8 3"
+                  stroke={t.colors.primaryText}
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+
           <span
             style={{
-              fontSize: 12,
-              fontWeight: isBug ? t.typography.fontWeight.medium : t.typography.fontWeight.normal,
-              color: isBug ? t.colors.warningActive : t.colors.textDisabled,
-              transition: `color ${t.animation.duration.fast}`,
-              letterSpacing: '0.01em',
+              fontSize: t.typography.fontSize.sm,
+              fontWeight: t.typography.fontWeight.normal,
+              color: isBug ? t.colors.text : t.colors.textSecondary,
+              letterSpacing: '0',
+              textAlign: 'left',
+              flex: 1,
             }}
           >
-            {isBug ? 'Issue reported' : (bugFlagLabel || 'Report an issue')}
+            {isBug ? 'Reported as an issue' : (bugFlagLabel || 'Report an issue')}
           </span>
-          <div
-            style={{
-              marginLeft: 'auto',
-              width: 28,
-              height: 16,
-              borderRadius: 8,
-              backgroundColor: isBug ? t.colors.warning : t.colors.border,
-              position: 'relative',
-              transition: `background-color ${t.animation.duration.fast} ${t.animation.easing.default}`,
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: isBug ? 14 : 2,
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                backgroundColor: isBug ? '#ffffff' : t.colors.textDisabled,
-                transition: `left ${t.animation.duration.fast} ${t.animation.easing.default}, background-color ${t.animation.duration.fast}`,
-                boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-              }}
-            />
-          </div>
         </button>
       )}
 
-      {/* Screenshot capture — shown when bug flag is active */}
+      {/* Screenshot capture button — ghost with mono label */}
       {enableBugFlag && enableScreenshot && isBug && !screenshot && (
         <button
           type="button"
@@ -265,44 +234,74 @@ export function FeedbackMode({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 8,
             width: '100%',
             marginTop: 8,
-            padding: '7px 10px',
+            padding: '9px 12px',
             border: `1px solid ${t.colors.border}`,
-            borderRadius: 7,
+            borderRadius: t.borders.radius.sm,
             backgroundColor: 'transparent',
-            cursor: capturingScreenshot ? 'not-allowed' : 'pointer',
+            cursor: capturingScreenshot ? 'progress' : 'pointer',
             fontFamily: t.typography.fontFamily,
-            fontSize: 12,
+            fontSize: t.typography.fontSize.xs,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
             color: t.colors.textSecondary,
             transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = t.colors.surfaceHover; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = t.colors.inputBorderFocus;
+            e.currentTarget.style.color = t.colors.text;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = t.colors.border;
+            e.currentTarget.style.color = t.colors.textSecondary;
+          }}
         >
-          {capturingScreenshot ? (
-            <Spinner size={14} color={t.colors.textSecondary} />
-          ) : (
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <circle cx="12" cy="10" r="3" />
-              <path d="M2 17l4-4 3 3 4-4 9 9" />
-            </svg>
-          )}
-          {capturingScreenshot ? 'Capturing...' : 'Capture screenshot'}
+          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <circle cx="12" cy="10" r="3" />
+            <path d="M2 17l4-4 3 3 4-4 9 9" />
+          </svg>
+          {capturingScreenshot ? 'Capturing…' : 'Attach screenshot'}
         </button>
       )}
 
       {screenshotError && (
-        <div style={{
-          fontSize: 11,
-          color: t.colors.textSecondary,
-          marginTop: 4,
-          padding: '4px 0',
-          fontFamily: t.typography.fontFamily,
-        }}>
-          Screenshot capture unavailable
+        <div
+          role="alert"
+          style={{
+            marginTop: 8,
+            padding: '6px 0 6px 10px',
+            borderLeft: `2px solid ${t.colors.error}`,
+            fontSize: t.typography.fontSize.xs,
+            color: t.colors.text,
+            fontFamily: t.typography.fontFamily,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span>Screenshot capture unavailable.</span>
+          <button
+            type="button"
+            onClick={handleScreenshotCapture}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: t.colors.text,
+              fontFamily: t.typography.fontFamily,
+              fontSize: t.typography.fontSize.xs,
+              textDecoration: 'underline',
+              textDecorationColor: t.colors.border,
+              textUnderlineOffset: 3,
+              cursor: 'pointer',
+            }}
+          >
+            Try again
+          </button>
         </div>
       )}
 
@@ -315,43 +314,42 @@ export function FeedbackMode({
         />
       )}
 
-      {/* Submit button */}
+      {/* Submit — ink button, italic "Sending…" when loading, no spinner */}
       <button
         type="submit"
         disabled={isLoading || !canSubmit}
         style={{
-          ...buttonStyles,
-          marginTop: 12,
-          opacity: isLoading ? 0.8 : 1,
-          backgroundColor: !canSubmit ? t.colors.buttonBackgroundDisabled : t.colors.buttonBackground,
+          width: '100%',
+          padding: isTouch ? '14px 16px' : '11px 16px',
+          marginTop: 18,
+          border: 'none',
+          borderRadius: t.borders.radius.sm,
+          backgroundColor: !canSubmit
+            ? t.colors.buttonBackgroundDisabled
+            : t.colors.buttonBackground,
           color: !canSubmit ? t.colors.buttonColorDisabled : t.colors.buttonColor,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          ...(isLoading ? {
-            backgroundImage: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)`,
-            backgroundSize: '200% 100%',
-            animation: 'gotcha-shimmer 1.5s ease infinite',
-          } : {}),
+          fontSize: t.typography.fontSize.sm,
+          fontWeight: t.typography.fontWeight.medium,
+          fontFamily: t.typography.fontFamily,
+          cursor: isLoading || !canSubmit ? 'not-allowed' : 'pointer',
+          transition: `background-color ${t.animation.duration.fast} ${t.animation.easing.default}`,
+          fontStyle: isLoading ? 'italic' : 'normal',
+          ...customStyles?.submitButton,
         }}
         onMouseEnter={(e) => {
           if (!e.currentTarget.disabled) {
             e.currentTarget.style.backgroundColor = t.colors.buttonBackgroundHover;
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = t.shadows.button;
           }
         }}
         onMouseLeave={(e) => {
           if (!e.currentTarget.disabled) {
             e.currentTarget.style.backgroundColor = t.colors.buttonBackground;
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
           }
         }}
       >
-        {isLoading && <Spinner size={isTouch ? 18 : 16} color={t.colors.buttonColor} />}
-        {isLoading ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update' : submitText)}
+        {isLoading
+          ? (isEditing ? 'Updating…' : 'Sending…')
+          : (isEditing ? 'Update' : submitText)}
       </button>
     </form>
   );
@@ -367,30 +365,25 @@ interface StarRatingProps {
 
 function StarRating({ value, onChange, theme: t, isTouch, large = false }: StarRatingProps) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const [pulsing, setPulsing] = useState<number | null>(null);
-  const pulseTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const starSize = large ? (isTouch ? 36 : 28) : (isTouch ? 28 : 18);
-  const buttonPadding = large ? (isTouch ? 8 : 5) : (isTouch ? 8 : 3);
+  const starSize = large ? (isTouch ? 34 : 28) : (isTouch ? 26 : 20);
+  const gap = large ? (isTouch ? 8 : 8) : (isTouch ? 6 : 6);
+  const buttonPadding = large ? (isTouch ? 6 : 4) : (isTouch ? 6 : 2);
 
-  useEffect(() => {
-    return () => { clearTimeout(pulseTimerRef.current); };
-  }, []);
-
-  const handleClick = (star: number) => {
-    setPulsing(star);
-    onChange(star);
-    clearTimeout(pulseTimerRef.current);
-    pulseTimerRef.current = setTimeout(() => setPulsing(null), 300);
-  };
+  // Hover cascade: when the cursor lands on a star, fill light-to-right up
+  // to that position with a 30ms stagger so each star lights in sequence.
+  // When the cursor leaves, every star returns to resting state in
+  // parallel (no reverse cascade — felt wrong on unhover). Clicks commit
+  // immediately (value update) and the stagger no longer applies because
+  // hovered is still the cursor position.
+  const delayFor = (star: number): string =>
+    hovered !== null && hovered >= star ? `${(star - 1) * 30}ms` : '0ms';
 
   return (
     <div
-      style={{
-        display: 'flex',
-        gap: large ? (isTouch ? 8 : 6) : (isTouch ? 6 : 2),
-      }}
+      style={{ display: 'flex', gap }}
       role="group"
       aria-label="Rating"
+      onMouseLeave={() => setHovered(null)}
     >
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = (hovered ?? value ?? 0) >= star;
@@ -398,9 +391,8 @@ function StarRating({ value, onChange, theme: t, isTouch, large = false }: StarR
           <button
             key={star}
             type="button"
-            onClick={() => handleClick(star)}
+            onClick={() => onChange(star)}
             onMouseEnter={() => setHovered(star)}
-            onMouseLeave={() => setHovered(null)}
             aria-label={`Rate ${star} out of 5`}
             aria-pressed={value === star}
             style={{
@@ -409,15 +401,22 @@ function StarRating({ value, onChange, theme: t, isTouch, large = false }: StarR
               cursor: 'pointer',
               padding: buttonPadding,
               color: isFilled ? t.colors.starFilled : t.colors.starEmpty,
-              transition: `color 0.15s ${t.animation.easing.default}`,
-              transform: pulsing === star ? 'scale(1)' : ((hovered !== null && hovered >= star) ? 'scale(1.1)' : 'scale(1)'),
-              animation: pulsing === star ? `gotcha-star-pulse 0.3s ${t.animation.easing.spring}` : 'none',
-              filter: isFilled ? `drop-shadow(0 0 3px ${t.colors.starFilled}40)` : 'none',
-              transitionDelay: `${(star - 1) * 30}ms`,
+              transition: `color 180ms ${t.animation.easing.default}`,
+              transitionDelay: delayFor(star),
+              outline: 'none',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <svg width={starSize} height={starSize} viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            <svg
+              width={starSize}
+              height={starSize}
+              viewBox="0 0 24 24"
+              fill={isFilled ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth={isFilled ? 0 : 1.5}
+              strokeLinejoin="round"
+            >
+              <path d="M12 3.5L14.472 8.506L20 9.308L16 13.205L16.944 18.706L12 16.107L7.056 18.706L8 13.205L4 9.308L9.528 8.506L12 3.5Z" />
             </svg>
           </button>
         );

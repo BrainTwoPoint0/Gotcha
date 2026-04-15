@@ -62,6 +62,40 @@ export interface GotchaModalProps {
   useFixedPosition?: boolean;
 }
 
+// ── Mode label (small-caps above the H1) ─────────────────────
+//
+// Matches the dashboard's mono-uppercase eyebrow pattern. The label tells
+// the user at a glance what kind of response the modal expects — without
+// decoration, without colour. It's the editorial "section name" above the
+// headline.
+const MODE_LABEL: Record<ResponseMode, string> = {
+  feedback: 'Feedback',
+  vote: 'Vote',
+  poll: 'Poll',
+  nps: 'Rate',
+};
+
+// ── Default prompts ──────────────────────────────────────────
+function getDefaultPrompt(mode: ResponseMode, npsQuestion?: string): string {
+  switch (mode) {
+    case 'vote':
+      return 'What do you think?';
+    case 'poll':
+      return 'Cast your vote.';
+    case 'nps':
+      return npsQuestion || 'How likely are you to recommend us?';
+    case 'feedback':
+    default:
+      return 'What do you think of this feature?';
+  }
+}
+
+// Autoclose timeout in ms — must match the value in Gotcha.tsx so the
+// progress rule finishes just as the modal dismisses. 4s gives the
+// reading tempo room: the user can take in the "Thanks." + subline
+// before the modal slides away.
+const AUTOCLOSE_MS = 4000;
+
 export function GotchaModal({
   mode,
   theme,
@@ -131,12 +165,11 @@ export function GotchaModal({
     injectStyles(t);
   }, [t]);
 
-  // Determine if modal should appear above or below
-  // Only compute on client after mount (anchorRect is only set on client)
+  // Determine if modal should appear above or below the anchor.
   const showAbove = (() => {
     if (typeof window === 'undefined' || !anchorRect) return false;
     const spaceBelow = window.innerHeight - anchorRect.bottom;
-    return spaceBelow < 300;
+    return spaceBelow < 340;
   })();
 
   // Focus trap — use ref for onClose so effect runs once
@@ -173,16 +206,13 @@ export function GotchaModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const defaultPrompt = mode === 'vote'
-    ? 'What do you think?'
-    : mode === 'poll'
-    ? 'Cast your vote'
-    : mode === 'nps'
-    ? (npsQuestion || 'How likely are you to recommend us?')
-    : 'What do you think of this feature?';
+  const prompt = promptText || getDefaultPrompt(mode, npsQuestion);
+  const modeLabel = MODE_LABEL[mode];
 
-  const modalPadding = isMobile ? 24 : 20;
-  const modalWidth = mode === 'nps' ? 420 : 340;
+  // Slightly wider on NPS because the 0–10 scale needs elbow room; poll
+  // wants room for 4-word options. Feedback/vote stay tight.
+  const modalPadding = isMobile ? 24 : 28;
+  const modalWidth = mode === 'nps' ? 420 : mode === 'poll' ? 400 : 360;
 
   // Animation class
   const animationClass = isMobile
@@ -193,82 +223,79 @@ export function GotchaModal({
 
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
 
+  // Modal container styles. Editorial card: flat paper, hairline border,
+  // soft layered shadow, no gradient, no backdrop blur. The container is
+  // a composed object on a page, not a glass panel floating above one.
+  const baseContainer: React.CSSProperties = {
+    padding: 0, // padding now lives per-section so we can hairline-rule the header
+    borderRadius: t.borders.radius.lg,
+    background: t.colors.background,
+    color: t.colors.text,
+    boxShadow: t.shadows.modal,
+    border: `${t.borders.width}px solid ${t.colors.border}`,
+    fontFamily: t.typography.fontFamily,
+    textAlign: 'left' as const,
+    overflow: 'hidden', // so the success-autoclose progress rule clips cleanly
+  };
+
   const modalStyles: React.CSSProperties = isMobile
     ? {
+        ...baseContainer,
         position: 'fixed',
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
         width: 'calc(100vw - 32px)',
         maxWidth: modalWidth,
-        padding: modalPadding,
-        borderRadius: t.borders.radius.lg + 2,
-        background: t.colors.backgroundGradient,
-        color: t.colors.text,
-        boxShadow: t.shadows.modal,
-        border: `${t.borders.width}px solid ${t.colors.border}`,
         zIndex: 9999,
-        fontFamily: t.typography.fontFamily,
         ...customStyles?.modal,
-        textAlign: 'left' as const,
       }
     : useFixedPosition && anchorRect && viewportHeight
     ? (() => {
         const viewportWidth = window.innerWidth;
         const edgePadding = 24;
         const centerX = anchorRect.left + anchorRect.width / 2;
-        // Clamp so modal stays within viewport
         const idealLeft = centerX - modalWidth / 2;
         const clampedLeft = Math.max(edgePadding, Math.min(idealLeft, viewportWidth - modalWidth - edgePadding));
         return {
+          ...baseContainer,
           position: 'fixed' as const,
           left: clampedLeft,
           width: modalWidth,
-          padding: modalPadding,
-          borderRadius: t.borders.radius.lg,
-          background: t.colors.backgroundGradient,
-          color: t.colors.text,
-          boxShadow: t.shadows.modal,
-          border: `${t.borders.width}px solid ${t.colors.border}`,
           zIndex: 99999,
-          fontFamily: t.typography.fontFamily,
           ...(showAbove
-            ? { bottom: viewportHeight - anchorRect.top + 8 }
-            : { top: anchorRect.bottom + 8 }),
+            ? { bottom: viewportHeight - anchorRect.top + 10 }
+            : { top: anchorRect.bottom + 10 }),
           ...customStyles?.modal,
-          textAlign: 'left' as const,
         };
       })()
     : {
+        ...baseContainer,
         position: 'absolute' as const,
         left: '50%',
         width: modalWidth,
-        padding: modalPadding,
-        borderRadius: t.borders.radius.lg,
-        background: t.colors.backgroundGradient,
-        color: t.colors.text,
-        boxShadow: t.shadows.modal,
-        border: `${t.borders.width}px solid ${t.colors.border}`,
         zIndex: 9999,
-        fontFamily: t.typography.fontFamily,
         ...(showAbove
-          ? { bottom: '100%', marginBottom: 8, transform: 'translateX(-50%)' }
-          : { top: '100%', marginTop: 8, transform: 'translateX(-50%)' }),
+          ? { bottom: '100%', marginBottom: 10, transform: 'translateX(-50%)' }
+          : { top: '100%', marginTop: 10, transform: 'translateX(-50%)' }),
         ...customStyles?.modal,
-        textAlign: 'left' as const,
       };
 
-  // Stagger delay for form elements (desktop only — mobile centering is disrupted by staggered opacity)
+  // Form-field stagger (desktop only — on mobile the modal centers via
+  // translate, which conflicts with per-child translateY animations).
   const fadeUpStyle = (index: number): React.CSSProperties =>
     isMobile
       ? {}
       : {
           animation: `gotcha-fade-up ${t.animation.duration.normal} ${t.animation.easing.default} both`,
-          animationDelay: `${index * 0.05}s`,
+          animationDelay: `${index * 0.04}s`,
         };
 
-  // "Gotcha!" success branding
-  const isDefaultThankYou = thankYouMessage === 'Gotcha!' || thankYouMessage === 'Thanks for your feedback!';
+  // Padding around the body content (below the header rule). 20/20 top
+  // keeps the rule 20px off the content (vs the header's 16px rule gap) —
+  // ~36px total around the hairline, matching editorial print discipline
+  // of ~1.5× cap-height.
+  const bodyPadding = isMobile ? '20px 24px 24px' : '20px 28px 24px';
 
   return (
     <div
@@ -279,269 +306,331 @@ export function GotchaModal({
       aria-labelledby={isSubmitted ? undefined : 'gotcha-modal-title'}
       data-gotcha
       style={modalStyles}
-      className={cn('gotcha-modal', animationClass)}
+      className={cn('gotcha-modal', 'gotcha-root', animationClass)}
     >
-      {/* Close button */}
-      <button
-        ref={firstFocusableRef}
-        type="button"
-        onClick={onClose}
-        aria-label="Close feedback form"
-        style={{
-          position: 'absolute',
-          top: isMobile ? 10 : 6,
-          right: isMobile ? 10 : 6,
-          width: isMobile ? 40 : 36,
-          height: isMobile ? 40 : 36,
-          border: 'none',
-          background: 'transparent',
-          outline: 'none',
-          cursor: 'pointer',
-          zIndex: 10,
-          color: t.colors.closeButton,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: t.borders.radius.sm,
-          transition: `all ${t.animation.duration.fast} ${t.animation.easing.default}`,
-          ...customStyles?.closeButton,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = t.colors.closeButtonBg;
-          e.currentTarget.style.color = t.colors.closeButtonHover;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = t.colors.closeButton;
-        }}
-      >
-        <svg width={isMobile ? 16 : 14} height={isMobile ? 16 : 14} viewBox="0 0 14 14" fill="none">
-          <path
-            d="M1 1L13 13M1 13L13 1"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
-
-      {/* Title */}
+      {/* Header — small-caps eyebrow, serif H1, hairline rule beneath.
+          Not rendered on success state (see below). */}
       {!isSubmitted && (
-        <h2
-          id="gotcha-modal-title"
+        <header
           style={{
-            margin: '0 0 16px 0',
-            fontSize: isMobile ? t.typography.fontSize.lg : t.typography.fontSize.md,
-            fontWeight: t.typography.fontWeight.semibold,
-            paddingRight: isMobile ? 44 : 38,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.4,
-            textAlign: 'left',
-            fontFamily: t.typography.fontFamily,
-            ...fadeUpStyle(0),
-            ...customStyles?.title,
+            padding: isMobile ? '20px 24px 16px' : '22px 28px 16px',
+            borderBottom: `${t.borders.width}px solid ${t.colors.border}`,
+            position: 'relative',
           }}
         >
-          {promptText || defaultPrompt}
-        </h2>
-      )}
-
-      {/* Success state — "Gotcha!" branding moment */}
-      {isSubmitted && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '28px 0 20px',
-          }}
-        >
-          {/* Animated checkmark circle */}
+          {/* Small-caps mode label — eyebrow hairline at 16px + 8px gap
+              reads as a single typographic unit (hairline+label), not two
+              parts of a form. */}
           <div
             style={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              backgroundColor: t.colors.successSurface,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 10,
+              ...fadeUpStyle(0),
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'inline-block',
+                width: 16,
+                height: 1,
+                backgroundColor: t.colors.warning /* sienna hairline — brand accent */,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: t.typography.fontFamily,
+                fontSize: 10,
+                fontWeight: t.typography.fontWeight.medium,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: t.colors.textSecondary,
+              }}
+            >
+              {modeLabel}
+            </span>
+          </div>
+
+          {/* Serif H1 — the prompt itself. Tracking -0.01em matches
+              Georgia's already-narrow letter-fit. Fraunces at display
+              optical sizes will tolerate -0.015em; guard that for 1.2.1. */}
+          <h2
+            id="gotcha-modal-title"
+            style={{
+              margin: 0,
+              paddingRight: isMobile ? 52 : 44,
+              fontFamily: t.typography.fontFamilyDisplay,
+              fontSize: isMobile ? 22 : 20,
+              fontWeight: t.typography.fontWeight.semibold,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.25,
+              color: t.colors.text,
+              ...fadeUpStyle(1),
+              ...customStyles?.title,
+            }}
+          >
+            {prompt}
+          </h2>
+
+          {/* Close — muted → ink on hover. Hit target 32×32 desktop (WCAG
+              2.5.5 minimum) / 44×44 mobile (HIG); visible glyph stays
+              compact. Denser stroke (1.5) at 12×12 reads as a
+              typographic mark rather than a thin ui control. */}
+          <button
+            ref={firstFocusableRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close feedback form"
+            style={{
+              position: 'absolute',
+              top: isMobile ? 14 : 16,
+              right: isMobile ? 14 : 18,
+              width: isMobile ? 44 : 32,
+              height: isMobile ? 44 : 32,
+              border: 'none',
+              background: 'transparent',
+              outline: 'none',
+              cursor: 'pointer',
+              color: t.colors.closeButton,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 16px',
-              animation: `gotcha-success-pop 0.4s ${t.animation.easing.spring} both, gotcha-glow-pulse 0.8s ease 0.4s`,
-              ...customStyles?.successIcon,
+              borderRadius: t.borders.radius.sm,
+              transition: `color ${t.animation.duration.fast} ${t.animation.easing.default}`,
+              ...customStyles?.closeButton,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = t.colors.closeButtonHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = t.colors.closeButton;
             }}
           >
+            <svg width={12} height={12} viewBox="0 0 12 12" fill="none">
+              <path
+                d="M1 1L11 11M1 11L11 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </header>
+      )}
+
+      {/* Body */}
+      <div style={{ padding: isSubmitted ? 0 : bodyPadding, position: 'relative' }}>
+        {/* Error — left-edge clay bar only. No tinted background; the
+            edge + ink body carries the signal with editorial restraint.
+            The " — try again?" suffix uses a real em-dash (already in
+            source) as the visual separator, so no marginLeft needed. */}
+        {error && !isSubmitted && (
+          <div
+            role="alert"
+            style={{
+              padding: '2px 0 2px 14px',
+              marginBottom: 16,
+              borderLeft: `2px solid ${t.colors.error}`,
+              color: t.colors.text,
+              fontSize: t.typography.fontSize.sm,
+              lineHeight: 1.55,
+              ...fadeUpStyle(2),
+              ...customStyles?.errorMessage,
+            }}
+          >
+            {error}
+            <span style={{ color: t.colors.textSecondary }}>
+              {' '}— try again?
+            </span>
+          </div>
+        )}
+
+        {/* Success — editorial checkmark + serif "Thanks." + progress rule */}
+        {isSubmitted && (
+          <div
+            style={{
+              padding: isMobile ? '32px 24px 28px' : '36px 28px 28px',
+              textAlign: 'center',
+              position: 'relative',
+            }}
+          >
+            {/* Check path length ~30 units — dasharray + offset 30 means
+                the stroke starts fully hidden and draws in over 320ms. */}
             <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
+              width="40"
+              height="40"
+              viewBox="0 0 40 40"
               fill="none"
+              style={{
+                display: 'block',
+                margin: '0 auto 14px',
+                ...customStyles?.successIcon,
+              }}
             >
               <path
-                d="M20 6L9 17L4 12"
+                d="M10 20.5L17 27.5L31 13.5"
                 stroke={t.colors.success}
-                strokeWidth="2.5"
+                strokeWidth="1.75"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
-                  strokeDasharray: 24,
-                  strokeDashoffset: 0,
-                  animation: `gotcha-check-draw 0.4s ease 0.2s both`,
+                  strokeDasharray: 30,
+                  strokeDashoffset: 30,
+                  animation: `gotcha-check-draw 320ms ${t.animation.easing.default} forwards`,
                 }}
               />
             </svg>
-          </div>
 
-          {/* Primary message */}
-          <p
-            style={{
-              margin: 0,
-              fontSize: isDefaultThankYou ? 22 : t.typography.fontSize.md,
-              fontWeight: isDefaultThankYou ? t.typography.fontWeight.bold : t.typography.fontWeight.medium,
-              color: t.colors.text,
-              fontFamily: isDefaultThankYou ? "'Carter One', cursive" : t.typography.fontFamily,
-              animation: `gotcha-success-text 0.3s ease 0.3s both`,
-              ...customStyles?.successMessage,
-            }}
-          >
-            {isDefaultThankYou ? 'Gotcha!' : thankYouMessage}
-          </p>
-
-          {/* Subtitle (only for default message) */}
-          {isDefaultThankYou && (
             <p
               style={{
-                margin: '6px 0 0',
-                fontSize: t.typography.fontSize.sm,
-                fontWeight: t.typography.fontWeight.normal,
-                color: t.colors.textSecondary,
-                animation: `gotcha-success-text 0.3s ease 0.45s both`,
+                margin: 0,
+                fontFamily: t.typography.fontFamilyDisplay,
+                fontSize: 22,
+                fontWeight: t.typography.fontWeight.semibold,
+                letterSpacing: '-0.015em',
+                color: t.colors.text,
+                ...customStyles?.successMessage,
               }}
             >
-              Thanks for your feedback!
+              {thankYouMessage === 'Gotcha!' || thankYouMessage === 'Thanks for your feedback!'
+                ? 'Thanks.'
+                : thankYouMessage}
             </p>
-          )}
-        </div>
-      )}
 
-      {/* Error state */}
-      {error && !isSubmitted && (
-        <div
-          style={{
-            padding: '8px 10px',
-            marginBottom: 12,
-            borderRadius: t.borders.radius.sm,
-            backgroundColor: t.colors.errorSurface,
-            border: `1px solid ${t.colors.errorBorder}`,
-            color: t.colors.error,
-            fontSize: t.typography.fontSize.sm,
-            lineHeight: 1.4,
+            <p
+              style={{
+                margin: '8px 0 0',
+                fontFamily: t.typography.fontFamily,
+                fontSize: t.typography.fontSize.sm,
+                color: t.colors.textSecondary,
+                fontStyle: 'italic',
+              }}
+            >
+              We&rsquo;ll close this in a moment.
+            </p>
+
+            {/* Autoclose progress rule — 1px sage bar across the modal's
+                inner bottom edge that fills left-to-right over the
+                autoclose period. Inset by 1px so it doesn't visually
+                fight the modal's bottom border. Subtle affordance; the
+                modal is dismissing on its own without any chrome shout. */}
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 1,
+                right: 1,
+                bottom: 1,
+                height: 1,
+                backgroundColor: t.colors.success,
+                transformOrigin: 'left center',
+                animation: `gotcha-progress ${AUTOCLOSE_MS}ms linear forwards`,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Follow-up question */}
+        {phase === 'followUp' && followUpConfig && onFollowUpSubmit && !isSubmitted && (
+          <div style={fadeUpStyle(2)}>
+            <FollowUpPrompt
+              resolvedTheme={t}
+              promptText={followUpConfig.promptText}
+              placeholder={followUpConfig.placeholder}
+              isLoading={followUpLoading}
+              onSubmit={onFollowUpSubmit}
+            />
+          </div>
+        )}
+
+        {/* Checking for existing response */}
+        {phase === 'form' && isCheckingExisting && (
+          <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            ...fadeUpStyle(1),
-            ...customStyles?.errorMessage,
-          }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {error}
-        </div>
-      )}
+            justifyContent: 'center',
+            padding: '24px 0',
+            ...fadeUpStyle(2),
+          }}>
+            <Spinner size={20} color={t.colors.textSecondary} />
+          </div>
+        )}
 
-      {/* Follow-up question */}
-      {phase === 'followUp' && followUpConfig && onFollowUpSubmit && (
-        <div style={fadeUpStyle(1)}>
-          <FollowUpPrompt
-            resolvedTheme={t}
-            promptText={followUpConfig.promptText}
-            placeholder={followUpConfig.placeholder}
-            isLoading={followUpLoading}
-            onSubmit={onFollowUpSubmit}
-          />
-        </div>
-      )}
+        {/* Form content based on mode */}
+        {phase === 'form' && !isCheckingExisting && !isSubmitted && (
+          <div style={fadeUpStyle(2)}>
+            {mode === 'feedback' && (
+              <FeedbackMode
+                resolvedTheme={t}
+                placeholder={placeholder}
+                submitText={submitText}
+                isLoading={isLoading}
+                onSubmit={onSubmit}
+                customStyles={customStyles}
+                initialValues={existingResponse ? {
+                  content: existingResponse.content,
+                  rating: existingResponse.rating,
+                } : undefined}
+                isEditing={isEditing}
+                showText={showText}
+                showRating={showRating}
+                enableBugFlag={enableBugFlag}
+                bugFlagLabel={bugFlagLabel}
+                enableScreenshot={enableScreenshot}
+              />
+            )}
+            {mode === 'vote' && (
+              <VoteMode
+                resolvedTheme={t}
+                isLoading={isLoading}
+                onSubmit={onSubmit}
+                initialVote={existingResponse?.vote || undefined}
+                isEditing={isEditing}
+                labels={voteLabels}
+              />
+            )}
+            {mode === 'nps' && (
+              <NpsMode
+                resolvedTheme={t}
+                submitText={submitText}
+                isLoading={isLoading}
+                onSubmit={onSubmit}
+                showFollowUp={npsFollowUp}
+                followUpPlaceholder={npsFollowUpPlaceholder}
+                lowLabel={npsLowLabel}
+                highLabel={npsHighLabel}
+                customStyles={customStyles}
+                initialValues={existingResponse ? {
+                  rating: existingResponse.rating,
+                  content: existingResponse.content,
+                } : undefined}
+                isEditing={isEditing}
+              />
+            )}
+            {mode === 'poll' && options && options.length > 0 && (
+              <PollMode
+                resolvedTheme={t}
+                options={options}
+                allowMultiple={allowMultiple}
+                isLoading={isLoading}
+                onSubmit={onSubmit}
+                initialSelected={existingResponse?.pollSelected || undefined}
+                isEditing={isEditing}
+              />
+            )}
+          </div>
+        )}
+      </div>
 
-      {/* Loading state while checking for existing response */}
-      {phase === 'form' && isCheckingExisting && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '24px 0',
-          ...fadeUpStyle(1),
-        }}>
-          <Spinner size={24} color={t.colors.textSecondary} />
-        </div>
-      )}
-
-      {/* Form content based on mode */}
-      {phase === 'form' && !isCheckingExisting && (
-        <div style={fadeUpStyle(1)}>
-          {mode === 'feedback' && (
-            <FeedbackMode
-              resolvedTheme={t}
-              placeholder={placeholder}
-              submitText={submitText}
-              isLoading={isLoading}
-              onSubmit={onSubmit}
-              customStyles={customStyles}
-              initialValues={existingResponse ? {
-                content: existingResponse.content,
-                rating: existingResponse.rating,
-              } : undefined}
-              isEditing={isEditing}
-              showText={showText}
-              showRating={showRating}
-              enableBugFlag={enableBugFlag}
-              bugFlagLabel={bugFlagLabel}
-              enableScreenshot={enableScreenshot}
-            />
-          )}
-          {mode === 'vote' && (
-            <VoteMode
-              resolvedTheme={t}
-              isLoading={isLoading}
-              onSubmit={onSubmit}
-              initialVote={existingResponse?.vote || undefined}
-              isEditing={isEditing}
-              labels={voteLabels}
-            />
-          )}
-          {mode === 'nps' && (
-            <NpsMode
-              resolvedTheme={t}
-              submitText={submitText}
-              isLoading={isLoading}
-              onSubmit={onSubmit}
-              showFollowUp={npsFollowUp}
-              followUpPlaceholder={npsFollowUpPlaceholder}
-              lowLabel={npsLowLabel}
-              highLabel={npsHighLabel}
-              customStyles={customStyles}
-              initialValues={existingResponse ? {
-                rating: existingResponse.rating,
-                content: existingResponse.content,
-              } : undefined}
-              isEditing={isEditing}
-            />
-          )}
-          {mode === 'poll' && options && options.length > 0 && (
-            <PollMode
-              resolvedTheme={t}
-              options={options}
-              allowMultiple={allowMultiple}
-              isLoading={isLoading}
-              onSubmit={onSubmit}
-              initialSelected={existingResponse?.pollSelected || undefined}
-              isEditing={isEditing}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Screen reader announcement */}
+      {/* Screen reader announcement — single announcement at a time so
+          AT doesn't read both "submitted" and "error" if a race occurs. */}
       <div aria-live="polite" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
-        {isSubmitted && 'Thank you! Your feedback has been submitted.'}
-        {error && `Error: ${error}`}
+        {isSubmitted
+          ? 'Thank you. Your feedback has been submitted.'
+          : error
+            ? `Error: ${error}`
+            : ''}
       </div>
     </div>
   );

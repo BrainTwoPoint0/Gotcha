@@ -5,35 +5,50 @@ interface SpinnerProps {
   color?: string;
 }
 
+/**
+ * Editorial spinner — a hairline arc rotating over a faint full circle.
+ * Only used in the "checking for existing response" path on the modal;
+ * submit buttons switched to italic "Sending…" text instead. Minimal,
+ * quiet, matches the one-px-hairline discipline of the rest of the
+ * widget.
+ */
 export function Spinner({ size = 16, color = 'currentColor' }: SpinnerProps) {
+  const radius = 9;
+  const circumference = 2 * Math.PI * radius;
+  // Show a ~25% arc (90 degrees).
+  const arc = circumference * 0.25;
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
+      role="img"
+      aria-label="Loading"
       style={{
-        animation: 'gotcha-spin 0.8s linear infinite',
+        animation: 'gotcha-spin 1.1s linear infinite',
+        transformOrigin: 'center',
       }}
     >
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r={radius}
         stroke={color}
-        strokeWidth="2"
-        strokeOpacity="0.12"
+        strokeOpacity="0.18"
+        strokeWidth="1.25"
+        fill="none"
       />
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r={radius}
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="1.25"
         strokeLinecap="round"
-        style={{
-          animation: 'gotcha-dash 1.2s ease-in-out infinite',
-        }}
+        fill="none"
+        strokeDasharray={`${arc} ${circumference}`}
+        strokeDashoffset="0"
       />
     </svg>
   );

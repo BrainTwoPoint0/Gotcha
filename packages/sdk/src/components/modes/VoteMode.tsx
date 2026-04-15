@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ResolvedTheme } from '../../theme/tokens';
 import { isTouchDevice } from '../../utils/device';
-import { Spinner } from '../Spinner';
 
 interface VoteModeProps {
   resolvedTheme: ResolvedTheme;
@@ -12,7 +11,29 @@ interface VoteModeProps {
   labels?: { up: string; down: string };
 }
 
-export function VoteMode({ resolvedTheme: t, isLoading, onSubmit, initialVote, isEditing = false, labels }: VoteModeProps) {
+/**
+ * Vote mode — two editorial pills. Up/down semantics come from the icon
+ * shape and the label, not from colour. Selected state fills the pill
+ * with ink. Unselected is paper with a hairline border; hover darkens
+ * the border to ink.
+ *
+ * Loading affordance: the active pill's label switches to italic
+ * "Sending…". No translateY bounce, no spinner, no shimmer — the
+ * editorial discipline is to stay still while waiting.
+ *
+ * Back-compat: reads vote* tokens (voteUp / voteUpSurface / voteUpBorder
+ * and down equivalents) so customers who override them via `themeConfig`
+ * still get their override. Default values in tokens.ts now resolve to
+ * the same ink/rule pair, so the default aesthetic is uniform.
+ */
+export function VoteMode({
+  resolvedTheme: t,
+  isLoading,
+  onSubmit,
+  initialVote,
+  isEditing = false,
+  labels,
+}: VoteModeProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [activeVote, setActiveVote] = useState<'up' | 'down' | null>(initialVote || null);
   const [previousVote, setPreviousVote] = useState<'up' | 'down' | null>(initialVote || null);
@@ -39,121 +60,91 @@ export function VoteMode({ resolvedTheme: t, isLoading, onSubmit, initialVote, i
     onSubmit({ vote });
   };
 
+  const iconSize = isTouch ? 24 : 20;
+
   const getButtonStyles = (voteType: 'up' | 'down'): React.CSSProperties => {
     const isSelected = previousVote === voteType;
-    const color = voteType === 'up' ? t.colors.voteUp : t.colors.voteDown;
+    // Read through the vote-specific tokens so customer overrides survive.
+    const accent = voteType === 'up' ? t.colors.voteUp : t.colors.voteDown;
     const surface = voteType === 'up' ? t.colors.voteUpSurface : t.colors.voteDownSurface;
     const border = voteType === 'up' ? t.colors.voteUpBorder : t.colors.voteDownBorder;
-
     return {
       flex: 1,
       minWidth: 0,
-      overflow: 'hidden' as const,
-      padding: isTouch ? '14px 18px' : '10px 14px',
-      border: isSelected
-        ? `2px solid ${border}`
-        : `1px solid ${t.colors.border}`,
-      borderRadius: t.borders.radius.lg - 2,
-      background: isSelected
-        ? `linear-gradient(135deg, ${surface}, ${surface})`
-        : t.colors.surface,
-      color: isSelected ? color : t.colors.textSecondary,
-      fontSize: isTouch ? 28 : 24,
+      padding: isTouch ? '14px 18px' : '11px 16px',
+      border: `1px solid ${isSelected ? accent : border}`,
+      borderRadius: t.borders.radius.full,
+      background: isSelected ? accent : surface,
+      color: isSelected ? t.colors.primaryText : t.colors.text,
+      fontSize: isTouch ? 15 : 13,
+      fontWeight: t.typography.fontWeight.medium,
       fontFamily: t.typography.fontFamily,
       cursor: isLoading ? 'not-allowed' : 'pointer',
-      transition: `all 0.2s ${t.animation.easing.default}`,
+      transition: `background-color ${t.animation.duration.fast} ${t.animation.easing.default}, border-color ${t.animation.duration.fast} ${t.animation.easing.default}, color ${t.animation.duration.fast} ${t.animation.easing.default}`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: isTouch ? 10 : 8,
+      outline: 'none',
     };
   };
 
-  const iconSize = isTouch ? 24 : 20;
+  const buildLabel = (voteType: 'up' | 'down', isSelected: boolean): string => {
+    if (labels?.[voteType]) return labels[voteType];
+    if (voteType === 'up') return isSelected ? 'Liked' : 'Like';
+    return isSelected ? 'Disliked' : 'Dislike';
+  };
 
   return (
     <div
-      style={{
-        display: 'flex',
-        gap: isTouch ? 12 : 10,
-      }}
+      style={{ display: 'flex', gap: isTouch ? 12 : 10 }}
       role="group"
       aria-label="Vote"
     >
-      <button
-        type="button"
-        onClick={() => handleVote('up')}
-        disabled={isLoading}
-        style={getButtonStyles('up')}
-        aria-label="Vote up - I like this"
-        aria-pressed={previousVote === 'up'}
-        onMouseEnter={(e) => {
-          if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-            e.currentTarget.style.boxShadow = t.shadows.button;
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
-        {isLoading && activeVote === 'up' ? (
-          <>
-            <Spinner size={iconSize} color={t.colors.text} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
-              {isEditing ? 'Updating...' : 'Sending...'}
+      {(['up', 'down'] as const).map((voteType) => {
+        const isSelected = previousVote === voteType;
+        const isActiveLoading = isLoading && activeVote === voteType;
+        const label = buildLabel(voteType, isSelected);
+        // aria-label matches the visible label so screen-reader users hear
+        // "Like / Liked" rather than a longer expanded description that
+        // drifts from sighted UX.
+        const ariaLabel = isActiveLoading
+          ? `${label}, submitting`
+          : label;
+        const inactiveBorder =
+          voteType === 'up' ? t.colors.voteUpBorder : t.colors.voteDownBorder;
+        return (
+          <button
+            key={voteType}
+            type="button"
+            onClick={() => handleVote(voteType)}
+            disabled={isLoading}
+            style={getButtonStyles(voteType)}
+            aria-label={ariaLabel}
+            aria-pressed={isSelected}
+            onMouseEnter={(e) => {
+              if (isLoading || isSelected) return;
+              e.currentTarget.style.borderColor = t.colors.inputBorderFocus;
+            }}
+            onMouseLeave={(e) => {
+              if (isSelected) return;
+              e.currentTarget.style.borderColor = inactiveBorder;
+            }}
+          >
+            {voteType === 'up' ? <ThumbsUpIcon size={iconSize} /> : <ThumbsDownIcon size={iconSize} />}
+            <span style={{ fontStyle: isActiveLoading ? 'italic' : 'normal' }}>
+              {isActiveLoading
+                ? (isEditing ? 'Updating…' : 'Sending…')
+                : label}
             </span>
-          </>
-        ) : (
-          <>
-            <ThumbsUpIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
-              {labels?.up || (previousVote === 'up' ? 'Liked' : 'Like')}
-            </span>
-          </>
-        )}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleVote('down')}
-        disabled={isLoading}
-        style={getButtonStyles('down')}
-        aria-label="Vote down - I don't like this"
-        aria-pressed={previousVote === 'down'}
-        onMouseEnter={(e) => {
-          if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-            e.currentTarget.style.boxShadow = t.shadows.button;
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
-        {isLoading && activeVote === 'down' ? (
-          <>
-            <Spinner size={iconSize} color={t.colors.text} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
-              {isEditing ? 'Updating...' : 'Sending...'}
-            </span>
-          </>
-        ) : (
-          <>
-            <ThumbsDownIcon size={iconSize} />
-            <span style={{ fontSize: isTouch ? 15 : 13, fontWeight: t.typography.fontWeight.medium, letterSpacing: '0.01em' }}>
-              {labels?.down || (previousVote === 'down' ? 'Disliked' : 'Dislike')}
-            </span>
-          </>
-        )}
-      </button>
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function ThumbsUpIcon({ size = 24 }: { size?: number }) {
+function ThumbsUpIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
@@ -161,7 +152,7 @@ function ThumbsUpIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-function ThumbsDownIcon({ size = 24 }: { size?: number }) {
+function ThumbsDownIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />

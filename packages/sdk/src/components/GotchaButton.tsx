@@ -14,7 +14,7 @@ export interface GotchaButtonProps {
   onClick: () => void;
   isOpen: boolean;
   isParentHovered?: boolean;
-  /** Enable entrance animations (default: true) */
+  /** Enable entrance animation (default: true) */
   animated?: boolean;
   /** Number of queued offline submissions */
   queuedCount?: number;
@@ -27,6 +27,24 @@ function getInitialSystemTheme(): 'light' | 'dark' {
     : 'light';
 }
 
+/**
+ * The floating G button — the single most-seen surface of the widget.
+ *
+ * Editorial aesthetic: a composed paper card (not glassmorphism), hairline
+ * border, soft directional shadow, serif G. On hover the button lifts by
+ * 1px and the shadow deepens — a quiet, confident hover. On active (press)
+ * it settles back by 1px, scales to 97%.
+ *
+ * The open state is the one brand moment: border switches to burnt sienna
+ * and the G glyph turns sienna too. This is the only place on the button
+ * the accent appears. It tells the user "you've activated this — it's
+ * listening."
+ *
+ * Entrance: opacity 0 → 1 with a 6px rise over 320ms page-turn. No bubble-
+ * pop, no arrive-glow, no letter-in flutter. The whole pre-editorial
+ * animation vocabulary is gone; the widget arrives like a card settling
+ * onto a page, not a chat bubble bursting onto screen.
+ */
 export function GotchaButton({
   size,
   theme,
@@ -44,7 +62,7 @@ export function GotchaButton({
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(getInitialSystemTheme);
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
-  const [hasPopped, setHasPopped] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
 
   const { themeConfig } = useGotchaContext();
 
@@ -67,13 +85,14 @@ export function GotchaButton({
     return true;
   })();
 
-  // Mark bubble pop as done after first appearance
+  // Mark the entrance animation complete so subsequent hover/press
+  // transforms use the smooth page-turn easing.
   useEffect(() => {
-    if (shouldShow && !hasPopped) {
-      const timer = setTimeout(() => setHasPopped(true), 600);
+    if (shouldShow && !hasEntered) {
+      const timer = setTimeout(() => setHasEntered(true), 320);
       return () => clearTimeout(timer);
     }
-  }, [shouldShow, hasPopped]);
+  }, [shouldShow, hasEntered]);
 
   const handleClick = () => {
     if (isTouch && touchBehavior === 'tap-to-reveal' && !tapRevealed) {
@@ -89,36 +108,48 @@ export function GotchaButton({
     [theme, systemTheme, themeConfig]
   );
 
-  // Compute transform based on state
+  // The open-state brand moment — border + glyph colour switch to the
+  // editorial accent. Computed once per render so the transition can
+  // interpolate borderColor smoothly.
+  const borderColor = isOpen
+    ? t.colors.warning /* sienna */
+    : t.colors.border;
+  const glyphColor = isOpen ? t.colors.warning : t.colors.glassColor;
+
+  // Transform ladder:
+  //   hidden:  scale(0.96), opacity 0 (pre-entrance)
+  //   press:   translateY(0) scale(0.97)   — 90ms
+  //   hover:   translateY(-1px) scale(1)   — 180ms
+  //   rest:    translateY(0) scale(1)      — 180ms
   const getTransform = () => {
-    if (!shouldShow) return 'scale(0.6)';
-    if (isPressed) return 'scale(0.95)';
-    if (isHovered) return 'scale(1.08)';
-    return 'scale(1)';
+    if (!shouldShow) return 'translateY(0) scale(0.96)';
+    if (isPressed) return 'translateY(0) scale(0.97)';
+    if (isHovered) return 'translateY(-1px) scale(1)';
+    return 'translateY(0) scale(1)';
   };
 
+  const transitionDur = isPressed ? '90ms' : '180ms';
+  const easing = t.animation.easing.default;
+
   const baseStyles: React.CSSProperties = {
+    position: 'relative',
     width: buttonSize,
     height: buttonSize,
-    borderRadius: '50%',
-    border: t.colors.glassBorder,
+    borderRadius: t.borders.radius.full,
+    border: `1px solid ${borderColor}`,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     background: t.colors.glassBackground,
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    color: t.colors.glassColor,
+    color: glyphColor,
     boxShadow: isHovered ? t.colors.glassHoverShadow : t.colors.glassShadow,
-    transition: hasPopped ? `all 0.3s ${t.animation.easing.spring}` : 'none',
+    transition: hasEntered
+      ? `transform ${transitionDur} ${easing}, box-shadow ${transitionDur} ${easing}, border-color ${transitionDur} ${easing}, color ${transitionDur} ${easing}`
+      : `opacity 320ms ${easing}, transform 320ms ${easing}`,
     opacity: shouldShow ? 1 : 0,
     transform: getTransform(),
-    filter: isPressed ? 'brightness(0.95)' : 'brightness(1)',
     pointerEvents: shouldShow ? 'auto' : 'none',
-    ...(animated && shouldShow && !hasPopped ? {
-      animation: 'gotcha-bubble-pop 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) both, gotcha-arrive-glow 1200ms ease-in-out 600ms both',
-    } : {}),
     ...customStyles?.button,
   };
 
@@ -138,9 +169,14 @@ export function GotchaButton({
       aria-expanded={isOpen}
       aria-haspopup="dialog"
     >
-      <GotchaIcon size={buttonSize * 0.65} animated={animated} />
+      <GotchaIcon
+        size={buttonSize * 0.58}
+        color={glyphColor}
+        fontFamilyDisplay={t.typography.fontFamilyDisplay}
+        animated={animated && !hasEntered}
+      />
       {queuedCount > 0 && (
-        <div
+        <span
           aria-label={`${queuedCount} queued`}
           style={{
             position: 'absolute',
@@ -150,7 +186,7 @@ export function GotchaButton({
             height: 8,
             borderRadius: '50%',
             backgroundColor: t.colors.warning,
-            border: '1.5px solid rgba(255,255,255,0.9)',
+            border: `1.5px solid ${t.colors.background}`,
           }}
         />
       )}
@@ -158,7 +194,17 @@ export function GotchaButton({
   );
 }
 
-function GotchaIcon({ size, animated = true }: { size: number; animated?: boolean }) {
+function GotchaIcon({
+  size,
+  color,
+  fontFamilyDisplay,
+  animated,
+}: {
+  size: number;
+  color: string;
+  fontFamilyDisplay: string;
+  animated: boolean;
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -166,19 +212,24 @@ function GotchaIcon({ size, animated = true }: { size: number; animated?: boolea
     <span
       aria-hidden="true"
       style={{
-        fontFamily: "'Carter One', cursive",
+        // The serif G is the brand mark. Fraunces-first with system-serif
+        // fallback; weight 600 gives the display-optical character we want.
+        fontFamily: fontFamilyDisplay,
+        fontWeight: 600,
         fontSize: size,
+        fontStyle: 'normal',
         lineHeight: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: size * 0.05,
-        marginRight: size * 0.05,
+        color,
+        // Fraunces 'G' sits low on the baseline; pull it up 1px so the
+        // glyph is optically centred inside the circle. Also nudge right
+        // by 0.5px to compensate for the spur's visual weight on the left.
+        transform: 'translate(0.5px, -1px)',
+        letterSpacing: '-0.02em',
         userSelect: 'none',
-        opacity: animated ? 0 : (mounted ? 1 : 0),
-        ...(animated && mounted ? {
-          animation: 'gotcha-letter-in 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) 200ms both',
-        } : {}),
+        opacity: animated ? (mounted ? 1 : 0) : 1,
+        transition: animated
+          ? 'opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms'
+          : 'none',
       }}
     >
       G
