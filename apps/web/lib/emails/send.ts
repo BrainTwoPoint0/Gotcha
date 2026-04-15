@@ -282,7 +282,7 @@ export async function sendShippedNotification({
       subject,
       html,
       headers: {
-        'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:unsubscribe@gotcha.cx?subject=unsubscribe-${projectSlug}>`,
+        'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@braintwopoint0.com?subject=unsubscribe-${projectSlug}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       },
     });

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { VoteButton } from './vote-button';
 
 /**
  * Public roadmap page — opt-in per project via `project.settings.roadmapEnabled`.
@@ -30,6 +31,7 @@ interface RoadmapItem {
   title: string;
   createdAt: Date;
   shippedAt: Date | null;
+  upvoteCount: number;
 }
 
 interface ProjectSettings {
@@ -136,13 +138,19 @@ export default async function PublicRoadmapPage({ params }: Props) {
       // one-click title-from-content prompt as a follow-up.
       title: { not: null },
     },
-    orderBy: [{ shippedAt: 'desc' }, { createdAt: 'desc' }],
+    // Sort: upvote count first (top-requested bubbles up), then recency.
+    // `shippedAt DESC NULLS LAST` not expressible in Prisma's client API
+    // cleanly; using the composite below which naturally NULL-sorts last
+    // under Postgres default semantics since non-SHIPPED rows have null
+    // shippedAt and we'd only see non-null on SHIPPED column anyway.
+    orderBy: [{ upvoteCount: 'desc' }, { shippedAt: 'desc' }, { createdAt: 'desc' }],
     select: {
       id: true,
       status: true,
       title: true,
       createdAt: true,
       shippedAt: true,
+      upvoteCount: true,
     },
     take: 300,
   })) as Array<{
@@ -151,6 +159,7 @@ export default async function PublicRoadmapPage({ params }: Props) {
     title: string | null;
     createdAt: Date;
     shippedAt: Date | null;
+    upvoteCount: number;
   }>;
 
   const cards: RoadmapItem[] = items
@@ -163,6 +172,7 @@ export default async function PublicRoadmapPage({ params }: Props) {
       title: truncate(r.title, TITLE_MAX_LEN),
       createdAt: r.createdAt,
       shippedAt: r.shippedAt,
+      upvoteCount: r.upvoteCount,
     }));
 
   const grouped: Record<RoadmapItem['status'], RoadmapItem[]> = {
@@ -229,7 +239,16 @@ export default async function PublicRoadmapPage({ params }: Props) {
                         key={item.id}
                         className="rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 py-3"
                       >
-                        <p className="text-[14px] leading-[1.5] text-editorial-ink">{item.title}</p>
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="min-w-0 flex-1 text-[14px] leading-[1.5] text-editorial-ink">
+                            {item.title}
+                          </p>
+                          <VoteButton
+                            slug={slug}
+                            responseId={item.id}
+                            initialCount={item.upvoteCount}
+                          />
+                        </div>
                         <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
                           {col.key === 'SHIPPED' && item.shippedAt
                             ? `Shipped ${fmtDate(item.shippedAt)}`

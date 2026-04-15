@@ -28,6 +28,7 @@ interface ResponseRowProps {
     status: string;
     tags: string[];
     createdAt: Date;
+    upvoteCount?: number;
     project: { name: string; slug: string };
   };
   isGated: boolean;
@@ -205,10 +206,42 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
 
         <EditorialTD onClick={(e) => e.stopPropagation()}>
           {!isGated ? (
-            <StatusBadge
-              responseId={response.id}
-              status={response.status as 'NEW' | 'REVIEWED' | 'ADDRESSED' | 'ARCHIVED'}
-            />
+            <div className="flex items-center gap-2">
+              <StatusBadge
+                responseId={response.id}
+                status={
+                  response.status as
+                    | 'NEW'
+                    | 'REVIEWED'
+                    | 'ADDRESSED'
+                    | 'ARCHIVED'
+                    | 'UNDER_REVIEW'
+                    | 'PLANNED'
+                    | 'IN_PROGRESS'
+                    | 'SHIPPED'
+                    | 'DECLINED'
+                }
+              />
+              {typeof response.upvoteCount === 'number' &&
+                response.upvoteCount > 0 &&
+                (
+                  ['UNDER_REVIEW', 'PLANNED', 'IN_PROGRESS', 'SHIPPED', 'DECLINED'] as const
+                ).includes(
+                  response.status as
+                    | 'UNDER_REVIEW'
+                    | 'PLANNED'
+                    | 'IN_PROGRESS'
+                    | 'SHIPPED'
+                    | 'DECLINED'
+                ) && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
+                    title={`${response.upvoteCount} upvote${response.upvoteCount === 1 ? '' : 's'} from the public roadmap`}
+                  >
+                    ↑ {response.upvoteCount}
+                  </span>
+                )}
+            </div>
           ) : (
             <span className="select-none font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3/60 blur-sm">
               New

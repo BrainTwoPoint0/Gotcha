@@ -35,6 +35,7 @@ interface ResponseItem {
   status: string;
   tags: string[];
   createdAt: Date;
+  upvoteCount: number;
   project: { name: string; slug: string };
 }
 

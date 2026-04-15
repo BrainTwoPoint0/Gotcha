@@ -128,6 +128,13 @@ model Project {
   notifiesSentThisMonth Int       @default(0)
   notifiesResetAt       DateTime?
 
+  // Per-project salt for roadmap upvote voter hashes. Lazy-generated on
+  // first vote (cuid()), immutable after. Salting per-project means the
+  // same browser voting on two different customers' roadmaps produces two
+  // different voterHash values — cross-project voter correlation is
+  // cryptographically infeasible.
+  votingSalt String?
+
   // Relations
   organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   apiKeys               ApiKey[]
@@ -237,6 +244,16 @@ model Response {
   notifiedAt     DateTime?
   shippedNote    String?
 
+  // Materialised public roadmap upvote counter. Kept in sync with RoadmapVote
+  // row count inside the vote-toggle transaction so the public page can read
+  // it without a COUNT(*) scan on every render.
+  //
+  // CONTRACT: this column must ONLY be mutated by the /api/public/roadmap/
+  // [slug]/vote route (inside its $transaction), which couples the increment
+  // with a matching RoadmapVote insert. Any other write path will drift the
+  // counter from row-count and break the public roadmap's sort order.
+  upvoteCount Int @default(0)
+
   // Timestamps
   createdAt DateTime @default(now())
 
@@ -245,9 +262,10 @@ model Response {
   bugTicket BugTicket?
 
   // Relations
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  element    Element?    @relation(fields: [elementId], references: [id], onDelete: SetNull)
-  experiment Experiment? @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  element      Element?      @relation(fields: [elementId], references: [id], onDelete: SetNull)
+  experiment   Experiment?   @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  roadmapVotes RoadmapVote[]
   // Roadmap path lives in a partial index declared in the
   // 20260415000000_response_lifecycle migration:
   //   CREATE INDEX ... ON "Response"("projectId", "createdAt" DESC)
@@ -508,6 +526,32 @@ enum BugPriority {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+// ============================================
+// ROADMAP UPVOTES
+// ============================================
+
+// Anonymous upvotes on the public roadmap. Dedup is enforced by the
+// (responseId, voterHash) unique constraint — the same primitive also
+// authorises toggle-off (the returning browser hashes identically and
+// deletes its own row).
+//
+// voterHash = sha256(project.votingSalt | ip | ua-normalised). Per-project
+// salting makes cross-project voter correlation infeasible.
+model RoadmapVote {
+  id         String   @id @default(cuid())
+  responseId String
+  voterHash  String
+  createdAt  DateTime @default(now())
+
+  response Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+
+  // The unique composite's leading column serves any responseId-only
+  // lookup (FK cascade, count-by-response), so a standalone
+  // @@index([responseId]) would be strictly redundant — same selectivity,
+  // extra write amplification. Leaving it off intentionally.
+  @@unique([responseId, voterHash])
 }
 
 // ============================================

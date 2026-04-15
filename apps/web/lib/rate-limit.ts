@@ -112,6 +112,18 @@ export const orgManagementLimiter = new Ratelimit({
   prefix: 'gotcha:ratelimit:org-mgmt',
 });
 
+// Rate limiter for public-roadmap upvotes. Keyed by IP. 10 votes per 5 min
+// is generous for legitimate voters (one user rarely cares about more than
+// a handful of features in a sitting) but tight enough that a scripted
+// attacker spraying distinct (responseId, voterHash) rows is capped.
+// Per-row dedup is still enforced at the DB layer by the unique constraint.
+export const upvoteLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '5 m'),
+  analytics: true,
+  prefix: 'gotcha:ratelimit:upvote',
+});
+
 export async function checkIdempotency(
   key: string,
   apiKeyId: string
