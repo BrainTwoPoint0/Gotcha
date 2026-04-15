@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -11,6 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EditorialButton } from '../../../components/editorial/button';
+import {
+  EditorialCard,
+  EditorialCardBody,
+  EditorialCardHeader,
+} from '../../../components/editorial/card';
+import { EditorialTextarea } from '../../../components/editorial/form-field';
 
 const STATUSES = [
   { value: 'OPEN', label: 'Open' },
@@ -18,7 +23,7 @@ const STATUSES = [
   { value: 'FIXING', label: 'Fixing' },
   { value: 'RESOLVED', label: 'Resolved' },
   { value: 'CLOSED', label: 'Closed' },
-  { value: 'WONT_FIX', label: "Won't Fix" },
+  { value: 'WONT_FIX', label: "Won't fix" },
 ];
 
 const PRIORITIES = [
@@ -33,6 +38,17 @@ interface BugActionsProps {
   currentStatus: string;
   currentPriority: string;
   reporterEmail?: string | null;
+}
+
+const SELECT_TRIGGER_CLASS =
+  'h-10 w-full rounded-md border-editorial-neutral-2 bg-editorial-paper text-[13px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25';
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+      {children}
+    </span>
+  );
 }
 
 export function BugActions({
@@ -52,12 +68,15 @@ export function BugActions({
   const [isResolving, setIsResolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync local state when server data changes (e.g. after resolve)
+  // Don't clobber optimistic local edits on re-render; only sync when the
+  // underlying server value genuinely changes (matches status-badge pattern).
   useEffect(() => {
-    setStatus(currentStatus);
+    if (!isSaving) setStatus(currentStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStatus]);
   useEffect(() => {
-    setPriority(currentPriority);
+    if (!isSaving) setPriority(currentPriority);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPriority]);
 
   const hasChanges = status !== currentStatus || priority !== currentPriority;
@@ -127,20 +146,29 @@ export function BugActions({
   }
 
   return (
-    <Card className="p-5">
-      <h2 className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-4">Actions</h2>
+    <EditorialCard>
+      <EditorialCardHeader>
+        <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+          Actions
+        </h2>
+      </EditorialCardHeader>
+      <EditorialCardBody className="space-y-5">
+        {error && (
+          <div
+            role="alert"
+            className="border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
+          >
+            {error}
+          </div>
+        )}
 
-      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
-
-      {/* Status & Priority */}
-      <div className="space-y-3">
         <div>
-          <span className="text-[11px] text-gray-400 block mb-1.5">Status</span>
+          <FieldLabel>Status</FieldLabel>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-full text-sm">
+            <SelectTrigger aria-label="Status" className={SELECT_TRIGGER_CLASS}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
               {STATUSES.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
@@ -151,12 +179,12 @@ export function BugActions({
         </div>
 
         <div>
-          <span className="text-[11px] text-gray-400 block mb-1.5">Priority</span>
+          <FieldLabel>Priority</FieldLabel>
           <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger className="w-full text-sm">
+            <SelectTrigger aria-label="Priority" className={SELECT_TRIGGER_CLASS}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
               {PRIORITIES.map((p) => (
                 <SelectItem key={p.value} value={p.value}>
                   {p.label}
@@ -167,78 +195,82 @@ export function BugActions({
         </div>
 
         {hasChanges && (
-          <Button onClick={handleSave} disabled={isSaving} className="w-full" size="sm">
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        )}
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-gray-100 my-4" />
-
-      {/* Note */}
-      <div className="space-y-3">
-        <span className="text-[11px] text-gray-400 block">Note</span>
-        <textarea
-          value={noteContent}
-          onChange={(e) => setNoteContent(e.target.value)}
-          placeholder="Add a note or resolution message..."
-          rows={3}
-          maxLength={5000}
-          className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 resize-none transition-colors"
-        />
-
-        {reporterEmail && (
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={isExternal}
-              onChange={(e) => setIsExternal(e.target.checked)}
-              className="rounded border-gray-300 text-slate-700 focus:ring-slate-500 transition-colors"
-            />
-            <span className="text-[11px] text-gray-400 group-hover:text-gray-500 transition-colors">
-              Also email to <span className="text-gray-500 font-medium">{reporterEmail}</span>
-            </span>
-          </label>
-        )}
-
-        <Button
-          onClick={handleAddNote}
-          disabled={isAddingNote || !hasNote}
-          variant="outline"
-          className="w-full"
-          size="sm"
-        >
-          {isAddingNote ? 'Adding...' : 'Add Note'}
-        </Button>
-
-        {!isResolved && (
-          <Button
-            onClick={handleResolve}
-            disabled={isResolving}
-            variant="outline"
-            className="w-full border-emerald-200/60 text-emerald-700 hover:bg-emerald-50/80 hover:text-emerald-800 transition-colors"
+          <EditorialButton
+            onClick={handleSave}
+            disabled={isSaving}
+            variant="ink"
             size="sm"
+            className="w-full"
           >
-            {isResolving ? (
-              'Resolving...'
-            ) : (
-              <span className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M3.5 7L6 9.5L10.5 4.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {hasNote ? 'Resolve with Note' : 'Mark as Resolved'}
-              </span>
-            )}
-          </Button>
+            {isSaving ? 'Saving…' : 'Save changes'}
+          </EditorialButton>
         )}
-      </div>
-    </Card>
+
+        <div className="space-y-3 border-t border-editorial-neutral-2 pt-4">
+          <div>
+            <FieldLabel>Note</FieldLabel>
+            <EditorialTextarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Add a note or resolution message…"
+              rows={3}
+              maxLength={5000}
+              className="min-h-[88px] text-[13px]"
+            />
+          </div>
+
+          {reporterEmail && (
+            <label className="group flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isExternal}
+                onChange={(e) => setIsExternal(e.target.checked)}
+                className="h-4 w-4 rounded border-editorial-neutral-2 text-editorial-accent focus:ring-editorial-accent/40"
+              />
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3 transition-colors group-hover:text-editorial-ink">
+                Also email to <span className="text-editorial-ink">{reporterEmail}</span>
+              </span>
+            </label>
+          )}
+
+          <EditorialButton
+            onClick={handleAddNote}
+            disabled={isAddingNote || !hasNote}
+            variant="ghost"
+            size="sm"
+            className="w-full"
+          >
+            {isAddingNote ? 'Adding…' : 'Add note'}
+          </EditorialButton>
+
+          {!isResolved && (
+            <EditorialButton
+              onClick={handleResolve}
+              disabled={isResolving}
+              variant="ghost"
+              size="sm"
+              className="w-full border-editorial-success/30 text-editorial-success hover:bg-editorial-success/[0.05] hover:text-editorial-success"
+            >
+              {isResolving ? (
+                'Resolving…'
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path
+                      d="M3.5 7L6 9.5L10.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {hasNote ? 'Resolve with note' : 'Mark as resolved'}
+                </>
+              )}
+            </EditorialButton>
+          )}
+        </div>
+      </EditorialCardBody>
+    </EditorialCard>
   );
 }

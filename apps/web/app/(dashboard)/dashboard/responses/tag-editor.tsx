@@ -9,6 +9,25 @@ interface TagEditorProps {
   availableTags?: { tag: string; count: number }[];
 }
 
+const TAG_ICON = (
+  <svg
+    width="9"
+    height="9"
+    viewBox="0 0 10 10"
+    fill="none"
+    className="opacity-50"
+    aria-hidden="true"
+  >
+    <path
+      d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z"
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinejoin="round"
+    />
+    <circle cx="3.5" cy="3.5" r="0.75" fill="currentColor" />
+  </svg>
+);
+
 export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }: TagEditorProps) {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isAdding, setIsAdding] = useState(false);
@@ -16,7 +35,6 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
   const [saving, setSaving] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const suggestions = inputValue.trim()
     ? availableTags
@@ -101,29 +119,21 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
     }
   };
 
-  // Read-only display for non-PRO users
+  // Read-only display for non-PRO users — no add affordance.
   if (!isPro) {
     if (tags.length === 0) return null;
     return (
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">
+      <div className="flex items-start gap-5">
+        <span className="w-20 shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
           Tags
         </span>
         <div className="flex flex-wrap gap-1.5">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-sky-50/80 text-sky-700 border border-sky-200/60"
+              className="inline-flex items-center gap-1.5 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2 py-0.5 text-[12px] text-editorial-ink"
             >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
-                <path
-                  d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinejoin="round"
-                />
-                <circle cx="3.5" cy="3.5" r="0.75" fill="currentColor" />
-              </svg>
+              <span className="text-editorial-accent/70">{TAG_ICON}</span>
               {tag}
             </span>
           ))}
@@ -133,43 +143,31 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 w-16">Tags</span>
+    <div className="flex items-start gap-5">
+      <span className="w-20 shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        Tags
+      </span>
       <div className="flex flex-wrap items-center gap-1.5">
         {tags.map((tag) => (
           <span
             key={tag}
-            className={`
-              inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs
-              bg-sky-50/80 text-sky-700 border border-sky-200/60
-              transition-opacity duration-150
-              ${saving ? 'opacity-60' : ''}
-            `}
+            className={`inline-flex items-center gap-1.5 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2 py-0.5 text-[12px] text-editorial-ink transition-opacity duration-150 ${
+              saving ? 'opacity-60' : ''
+            }`}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
-              <path
-                d="M1.5 5.5V2.5C1.5 2 2 1.5 2.5 1.5H5.5L8.5 4.5L5 8L1.5 5.5Z"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinejoin="round"
-              />
-              <circle cx="3.5" cy="3.5" r="0.75" fill="currentColor" />
-            </svg>
+            <span className="text-editorial-accent/70">{TAG_ICON}</span>
             {tag}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 removeTag(tag);
               }}
               disabled={saving}
-              className="
-                text-sky-400 hover:text-sky-700 hover:bg-sky-100
-                rounded-sm p-0.5 -mr-0.5 ml-0.5
-                transition-all duration-100
-                disabled:opacity-40 disabled:pointer-events-none
-              "
+              aria-label={`Remove tag ${tag}`}
+              className="-mr-0.5 ml-0.5 rounded-sm p-0.5 text-editorial-neutral-3 transition-colors hover:bg-editorial-ink/[0.04] hover:text-editorial-ink disabled:pointer-events-none disabled:opacity-40"
             >
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
                 <path
                   d="M2 2L6 6M6 2L2 6"
                   stroke="currentColor"
@@ -193,7 +191,6 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
               }}
               onKeyDown={handleKeyDown}
               onBlur={() => {
-                // Delay to allow click on suggestion
                 setTimeout(() => {
                   if (inputValue.trim()) addTag();
                   else setIsAdding(false);
@@ -202,19 +199,12 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
               placeholder="add tag…"
               maxLength={30}
               autoFocus
-              className="
-                text-xs px-2 h-6 rounded-md
-                border border-sky-300 bg-white
-                outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200/50
-                w-24 text-sky-800 placeholder:text-sky-300
-                transition-all duration-150
-              "
+              autoComplete="off"
+              spellCheck={false}
+              className="h-6 w-28 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2 text-[12px] text-editorial-ink outline-none transition-colors placeholder:text-editorial-neutral-3/70 focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25"
             />
             {suggestions.length > 0 && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-7 left-0 z-50 min-w-[160px] bg-white border border-gray-200 rounded-md shadow-lg py-1"
-              >
+              <div className="absolute left-0 top-7 z-50 min-w-[180px] overflow-hidden rounded-md border border-editorial-neutral-2 bg-editorial-paper shadow-[0_8px_24px_rgba(26,23,20,0.08)]">
                 {suggestions.map((s, i) => (
                   <button
                     key={s.tag}
@@ -223,13 +213,16 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
                       e.preventDefault();
                       selectSuggestion(s.tag);
                     }}
-                    className={`
-                      w-full text-left px-2.5 py-1 text-xs flex items-center justify-between gap-3
-                      ${i === highlightIndex ? 'bg-sky-50 text-sky-700' : 'text-gray-700 hover:bg-gray-50'}
-                    `}
+                    className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-[12px] transition-colors ${
+                      i === highlightIndex
+                        ? 'bg-editorial-accent/10 text-editorial-ink'
+                        : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.03] hover:text-editorial-ink'
+                    }`}
                   >
                     <span>{s.tag}</span>
-                    <span className="text-[10px] text-gray-400">{s.count}</span>
+                    <span className="font-mono text-[10px] text-editorial-neutral-3">
+                      {s.count}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -237,21 +230,16 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
           </div>
         ) : (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setIsAdding(true);
             }}
             disabled={saving || tags.length >= 10}
-            className="
-              inline-flex items-center gap-1 px-1.5 h-6 rounded-md
-              text-[11px] text-gray-400
-              border border-dashed border-gray-300
-              hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50/50
-              transition-all duration-150
-              disabled:opacity-30 disabled:pointer-events-none
-            "
+            aria-label="Add tag"
+            className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-editorial-neutral-2 px-2 text-[11px] text-editorial-neutral-3 transition-all hover:border-editorial-accent/40 hover:bg-editorial-ink/[0.02] hover:text-editorial-ink disabled:pointer-events-none disabled:opacity-30"
           >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
               <path
                 d="M4 1V7M1 4H7"
                 stroke="currentColor"

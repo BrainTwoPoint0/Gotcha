@@ -2,9 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/app/components/AppButton';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -12,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EditorialButton } from '../components/editorial/button';
 
 const COMPANY_SIZES = [
   { value: 'solo', label: 'Solo / Freelancer' },
@@ -50,6 +48,45 @@ const USE_CASES = [
   { value: 'other', label: 'Other' },
 ];
 
+const SELECT_TRIGGER_CLASS =
+  'h-10 rounded-md border-editorial-neutral-2 bg-editorial-paper text-[14px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25';
+
+function Field({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-ink">
+        {label}
+      </span>
+      <Select
+        value={value || '__none__'}
+        onValueChange={(v) => onChange(v === '__none__' ? '' : v)}
+      >
+        <SelectTrigger aria-label={label} className={SELECT_TRIGGER_CLASS}>
+          <SelectValue placeholder="Select…" />
+        </SelectTrigger>
+        <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
+          <SelectItem value="__none__">Select…</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 interface OnboardingBannerProps {
   userName?: string;
 }
@@ -85,102 +122,43 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
   };
 
   return (
-    <Card className="mb-6 max-w-2xl border-l-4 border-l-primary">
-      <CardHeader>
-        <CardTitle>
-          Welcome{userName ? `, ${userName}` : ''}! Tell us a bit about yourself
-        </CardTitle>
-        <CardDescription>
-          This helps us understand our users better. You can always update this in Settings.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="space-y-1">
-            <Label>Company Size</Label>
-            <Select
-              value={companySize || '__none__'}
-              onValueChange={(v) => setCompanySize(v === '__none__' ? '' : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Select...</SelectItem>
-                {COMPANY_SIZES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Your Role</Label>
-            <Select
-              value={role || '__none__'}
-              onValueChange={(v) => setRole(v === '__none__' ? '' : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Select...</SelectItem>
-                {ROLES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Industry</Label>
-            <Select
-              value={industry || '__none__'}
-              onValueChange={(v) => setIndustry(v === '__none__' ? '' : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Select...</SelectItem>
-                {INDUSTRIES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Primary Use Case</Label>
-            <Select
-              value={useCase || '__none__'}
-              onValueChange={(v) => setUseCase(v === '__none__' ? '' : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Select...</SelectItem>
-                {USE_CASES.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="mb-10 overflow-hidden rounded-md border-l-2 border-editorial-accent bg-editorial-paper">
+      <div className="border-b border-editorial-neutral-2 px-6 py-5">
+        <div className="mb-3 flex items-center gap-3">
+          <span className="h-px w-6 bg-editorial-accent" aria-hidden="true" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+            Quick intro
+          </span>
         </div>
-
-        <Button type="button" onClick={handleSave} loading={loading} loadingText="Saving...">
-          Save &amp; Continue
-        </Button>
-      </CardContent>
-    </Card>
+        <h2 className="font-display text-[1.5rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+          Welcome{userName ? `, ${userName}` : ''} — tell us a bit about yourself
+        </h2>
+        <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-editorial-neutral-3">
+          This helps shape which features we prioritise for teams like yours. You can update it
+          anytime in Settings.
+        </p>
+      </div>
+      <div className="px-6 py-6">
+        <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Field
+            label="Company size"
+            options={COMPANY_SIZES}
+            value={companySize}
+            onChange={setCompanySize}
+          />
+          <Field label="Your role" options={ROLES} value={role} onChange={setRole} />
+          <Field label="Industry" options={INDUSTRIES} value={industry} onChange={setIndustry} />
+          <Field
+            label="Primary use case"
+            options={USE_CASES}
+            value={useCase}
+            onChange={setUseCase}
+          />
+        </div>
+        <EditorialButton type="button" variant="ink" onClick={handleSave} disabled={loading}>
+          {loading ? 'Saving…' : 'Save & continue'}
+        </EditorialButton>
+      </div>
+    </div>
   );
 }
