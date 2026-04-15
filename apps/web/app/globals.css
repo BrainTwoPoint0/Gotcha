@@ -80,6 +80,19 @@ body {
     opacity: 1;
     transform: none;
   }
+
+  /* Blanket reduced-motion suppression for the editorial surface. Disables
+     the 240ms hover/transition pulses that run across buttons, cards, table
+     rows, tab underlines, and filter chips. Keeps state changes instant
+     without breaking layout. */
+  .editorial *,
+  .editorial *::before,
+  .editorial *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {
