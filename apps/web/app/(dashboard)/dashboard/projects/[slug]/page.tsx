@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiKeyCard } from './api-key-card';
 import { DeleteProjectCard } from './delete-project-card';
+import { RoadmapCard } from './roadmap-card';
 import { EditorialPageHeader } from '../../../components/editorial/page-header';
 import { EditorialLinkButton } from '../../../components/editorial/button';
 import {
@@ -264,6 +265,19 @@ import { GotchaProvider, Gotcha } from 'gotcha-feedback';
             )}
           </EditorialCardBody>
         </EditorialCard>
+      </div>
+
+      <div className="mt-12">
+        <RoadmapCard
+          projectSlug={slug}
+          initialEnabled={
+            ((project.settings as { roadmapEnabled?: boolean } | null) ?? {}).roadmapEnabled ===
+            true
+          }
+          initialIntro={
+            ((project.settings as { roadmapIntro?: string } | null) ?? {}).roadmapIntro ?? null
+          }
+        />
       </div>
 
       <div className="mt-16">
