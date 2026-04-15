@@ -122,6 +122,13 @@ export default async function DashboardPage() {
       !overLimit &&
       shouldShowUpgradeWarning(subscription.plan, subscription.responsesThisMonth);
 
+    // First-run surface: brand-new user with no projects and no responses.
+    // The stat-zero row + dual empty panels communicate nothing — suppress
+    // them and let the onboarding checklist carry the screen. Once the user
+    // has at least one project OR at least one response, fall back to the
+    // populated layout with its stats + recent-activity panels.
+    const isFirstRun = projects.length === 0 && totalResponses === 0;
+
     return (
       <div>
         {!dbUser?.onboardedAt && <OnboardingBanner userName={dbUser?.name ?? undefined} />}
@@ -195,153 +202,159 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Total responses"
-            value={totalResponses.toLocaleString()}
-            subtext="All time"
-          />
-          <StatCard label="Projects" value={projects.length.toString()} subtext="Active" />
-          <StatCard
-            label="Plan"
-            value={subscription?.plan || 'Free'}
-            subtext={
-              subscription
-                ? `${subscription.responsesThisMonth} / ${getPlanLimit(subscription.plan)} this month`
-                : 'No subscription'
-            }
-          />
-          <StatCard
-            label="This month"
-            value={(subscription?.responsesThisMonth || 0).toLocaleString()}
-            subtext="Responses collected"
-          />
-        </div>
+        {!isFirstRun && (
+          <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Total responses"
+              value={totalResponses.toLocaleString()}
+              subtext="All time"
+            />
+            <StatCard label="Projects" value={projects.length.toString()} subtext="Active" />
+            <StatCard
+              label="Plan"
+              value={subscription?.plan || 'Free'}
+              subtext={
+                subscription
+                  ? `${subscription.responsesThisMonth} / ${getPlanLimit(subscription.plan)} this month`
+                  : 'No subscription'
+              }
+            />
+            <StatCard
+              label="This month"
+              value={(subscription?.responsesThisMonth || 0).toLocaleString()}
+              subtext="Responses collected"
+            />
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <EditorialCard>
-            <EditorialCardHeader className="flex items-center justify-between">
-              <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
-                Recent responses
-              </h2>
-              <Link
-                href="/dashboard/responses"
-                className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
-              >
-                View all →
-              </Link>
-            </EditorialCardHeader>
-            <EditorialCardBody>
-              {recentResponses.length === 0 ? (
-                <EditorialEmptyState
-                  title="No responses yet"
-                  body="Create a project and install the SDK to start collecting."
-                  action={
-                    <EditorialLinkButton href="/dashboard/responses" variant="ghost" size="sm">
-                      How to set up →
-                    </EditorialLinkButton>
-                  }
-                />
-              ) : (
-                <ul className="-my-2 divide-y divide-editorial-neutral-2">
-                  {recentResponses.map((response) => (
-                    <li key={response.id} className="flex items-start gap-4 py-3">
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-accent/70"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] text-editorial-ink">
-                          {Array.isArray(response.pollSelected) && response.pollSelected.length
-                            ? response.pollSelected.join(', ')
-                            : response.content ||
-                              response.title ||
-                              `${response.mode.toLowerCase()} response`}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-editorial-neutral-3">
-                          {response.project.name} · {formatTimeAgo(response.createdAt)}
-                        </p>
-                      </div>
-                      {response.rating && response.mode === 'NPS' && (
-                        <span className="shrink-0 font-display text-[14px] text-editorial-ink">
-                          {response.rating}
-                          <span className="text-editorial-neutral-3">/10</span>
-                        </span>
-                      )}
-                      {response.rating && response.mode !== 'NPS' && (
-                        <span className="shrink-0 font-display text-[14px] text-editorial-accent">
-                          {'★'.repeat(response.rating)}
-                        </span>
-                      )}
-                      {response.vote && (
-                        <span
-                          className={`shrink-0 text-[13px] ${response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
-                        >
-                          {response.vote === 'UP' ? 'Up' : 'Down'}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </EditorialCardBody>
-          </EditorialCard>
-
-          <EditorialCard>
-            <EditorialCardHeader className="flex items-center justify-between">
-              <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
-                Projects
-              </h2>
-              <Link
-                href="/dashboard/projects"
-                className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
-              >
-                View all →
-              </Link>
-            </EditorialCardHeader>
-            <EditorialCardBody>
-              {projects.length === 0 ? (
-                <EditorialEmptyState
-                  title="No projects yet"
-                  body="A project groups feedback from one surface — create your first to get going."
-                  action={
-                    <EditorialLinkButton href="/dashboard/projects/new" variant="ink" size="sm">
-                      Create project →
-                    </EditorialLinkButton>
-                  }
-                />
-              ) : (
-                <ul className="-my-2 divide-y divide-editorial-neutral-2">
-                  {projects.slice(0, 5).map((project) => (
-                    <li key={project.id}>
-                      <Link
-                        href={`/dashboard/projects/${project.slug}`}
-                        className="group flex items-center justify-between gap-4 py-3 transition-colors duration-240 ease-page-turn"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-[14px] text-editorial-ink">{project.name}</p>
-                          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
-                            {project._count.responses.toLocaleString()} response
-                            {project._count.responses === 1 ? '' : 's'}
-                          </p>
-                        </div>
+        {!isFirstRun && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <EditorialCard>
+              <EditorialCardHeader className="flex items-center justify-between">
+                <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+                  Recent responses
+                </h2>
+                <Link
+                  href="/dashboard/responses"
+                  className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
+                >
+                  View all →
+                </Link>
+              </EditorialCardHeader>
+              <EditorialCardBody>
+                {recentResponses.length === 0 ? (
+                  <EditorialEmptyState
+                    title="No responses yet"
+                    body="Create a project and install the SDK to start collecting."
+                    action={
+                      <EditorialLinkButton href="/dashboard/responses" variant="ghost" size="sm">
+                        How to set up →
+                      </EditorialLinkButton>
+                    }
+                  />
+                ) : (
+                  <ul className="-my-2 divide-y divide-editorial-neutral-2">
+                    {recentResponses.map((response) => (
+                      <li key={response.id} className="flex items-start gap-4 py-3">
                         <span
                           aria-hidden="true"
-                          className="text-editorial-neutral-3 transition-all duration-240 ease-page-turn group-hover:translate-x-0.5 group-hover:text-editorial-ink"
+                          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-editorial-accent/70"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14px] text-editorial-ink">
+                            {Array.isArray(response.pollSelected) && response.pollSelected.length
+                              ? response.pollSelected.join(', ')
+                              : response.content ||
+                                response.title ||
+                                `${response.mode.toLowerCase()} response`}
+                          </p>
+                          <p className="mt-0.5 font-mono text-[11px] text-editorial-neutral-3">
+                            {response.project.name} · {formatTimeAgo(response.createdAt)}
+                          </p>
+                        </div>
+                        {response.rating && response.mode === 'NPS' && (
+                          <span className="shrink-0 font-display text-[14px] text-editorial-ink">
+                            {response.rating}
+                            <span className="text-editorial-neutral-3">/10</span>
+                          </span>
+                        )}
+                        {response.rating && response.mode !== 'NPS' && (
+                          <span className="shrink-0 font-display text-[14px] text-editorial-accent">
+                            {'★'.repeat(response.rating)}
+                          </span>
+                        )}
+                        {response.vote && (
+                          <span
+                            className={`shrink-0 text-[13px] ${response.vote === 'UP' ? 'text-editorial-success' : 'text-editorial-alert'}`}
+                          >
+                            {response.vote === 'UP' ? 'Up' : 'Down'}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </EditorialCardBody>
+            </EditorialCard>
+
+            <EditorialCard>
+              <EditorialCardHeader className="flex items-center justify-between">
+                <h2 className="font-display text-[1.25rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+                  Projects
+                </h2>
+                <Link
+                  href="/dashboard/projects"
+                  className="text-[13px] text-editorial-neutral-3 underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:text-editorial-ink hover:decoration-editorial-accent"
+                >
+                  View all →
+                </Link>
+              </EditorialCardHeader>
+              <EditorialCardBody>
+                {projects.length === 0 ? (
+                  <EditorialEmptyState
+                    title="No projects yet"
+                    body="A project groups feedback from one surface — create your first to get going."
+                    action={
+                      <EditorialLinkButton href="/dashboard/projects/new" variant="ink" size="sm">
+                        Create project →
+                      </EditorialLinkButton>
+                    }
+                  />
+                ) : (
+                  <ul className="-my-2 divide-y divide-editorial-neutral-2">
+                    {projects.slice(0, 5).map((project) => (
+                      <li key={project.id}>
+                        <Link
+                          href={`/dashboard/projects/${project.slug}`}
+                          className="group flex items-center justify-between gap-4 py-3 transition-colors duration-240 ease-page-turn"
                         >
-                          →
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </EditorialCardBody>
-          </EditorialCard>
-        </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-[14px] text-editorial-ink">
+                              {project.name}
+                            </p>
+                            <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                              {project._count.responses.toLocaleString()} response
+                              {project._count.responses === 1 ? '' : 's'}
+                            </p>
+                          </div>
+                          <span
+                            aria-hidden="true"
+                            className="text-editorial-neutral-3 transition-all duration-240 ease-page-turn group-hover:translate-x-0.5 group-hover:text-editorial-ink"
+                          >
+                            →
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </EditorialCardBody>
+            </EditorialCard>
+          </div>
+        )}
 
         {totalResponses === 0 && (
-          <div className="mt-12">
+          <div className={isFirstRun ? '' : 'mt-12'}>
             <OnboardingChecklist
               hasProjects={projects.length > 0}
               hasResponses={totalResponses > 0}

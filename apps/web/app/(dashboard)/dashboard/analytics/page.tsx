@@ -19,9 +19,7 @@ import { ElementsTab } from './elements-tab';
 import { TrendsTab } from './trends-tab';
 import { PivotTab } from './pivot-tab';
 import { EditorialPageHeader } from '../../components/editorial/page-header';
-import { EditorialCard } from '../../components/editorial/card';
-import { EditorialEmptyState } from '../../components/editorial/empty-state';
-import { EditorialLinkButton } from '../../components/editorial/button';
+import { ProGateOverlay } from '../../components/editorial/pro-gate-overlay';
 import { StatCard } from '../stat-card';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
@@ -359,17 +357,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
             />
           }
         />
-        <EditorialCard>
-          <EditorialEmptyState
-            title="Analytics is a Pro feature"
-            body="Upgrade to Pro to unlock response trends, sentiment analysis, element benchmarks, and rating insights across all your projects."
-            action={
-              <EditorialLinkButton href="/dashboard/settings" variant="ink">
-                Upgrade to Pro →
-              </EditorialLinkButton>
-            }
-          />
-        </EditorialCard>
+        <ProGateOverlay
+          eyebrow="Pro · Analytics"
+          title="Unlock response trends and insights"
+          body="Element benchmarks, sentiment trends, rating distributions, NPS, and heatmaps across every project."
+        />
       </div>
     );
   }

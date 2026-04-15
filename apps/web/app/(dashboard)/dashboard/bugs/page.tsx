@@ -5,9 +5,9 @@ import { canAccessBugFeatures } from '@/lib/plan-limits';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { Pagination } from '../../components/pagination';
 import { EditorialPageHeader } from '../../components/editorial/page-header';
-import { EditorialCard, EditorialCardBody } from '../../components/editorial/card';
+import { EditorialCard } from '../../components/editorial/card';
 import { EditorialEmptyState } from '../../components/editorial/empty-state';
-import { EditorialLinkButton } from '../../components/editorial/button';
+import { ProGateOverlay } from '../../components/editorial/pro-gate-overlay';
 import {
   EditorialTable,
   EditorialTHead,
@@ -70,17 +70,13 @@ export default async function BugsPage({ searchParams }: PageProps) {
           title="Bugs"
           subtitle="Track and manage bug reports from user feedback."
         />
-        <EditorialCard>
-          <EditorialEmptyState
-            title="Bug tracking is a Pro feature"
-            body="Upgrade to Pro to unlock ticket management, email notifications, and Slack/Discord integration."
-            action={
-              <EditorialLinkButton href="/dashboard/settings" variant="ink">
-                Upgrade to Pro →
-              </EditorialLinkButton>
-            }
-          />
-          <EditorialCardBody className="border-t border-editorial-neutral-2">
+        <ProGateOverlay
+          eyebrow="Pro · Bugs"
+          title="Turn bug reports into tracked tickets"
+          body="Status lifecycle, priority, assignees, email notifications, and Slack / Discord / GitHub / Linear integration — all tied to the original user feedback."
+        />
+        <div className="mt-8">
+          <EditorialCard>
             <DashboardFeedback
               elementId="bugs-pro-gate"
               mode="poll"
@@ -103,8 +99,8 @@ export default async function BugsPage({ searchParams }: PageProps) {
                 plan: 'FREE',
               }}
             />
-          </EditorialCardBody>
-        </EditorialCard>
+          </EditorialCard>
+        </div>
       </div>
     );
   }

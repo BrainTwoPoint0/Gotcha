@@ -5,9 +5,7 @@ import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
 import { parseDevice, parseBrowser } from '@/lib/ua-parser';
 import { EditorialPageHeader } from '../../../components/editorial/page-header';
-import { EditorialCard } from '../../../components/editorial/card';
-import { EditorialEmptyState } from '../../../components/editorial/empty-state';
-import { EditorialLinkButton } from '../../../components/editorial/button';
+import { ProGateOverlay } from '../../../components/editorial/pro-gate-overlay';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,17 +57,11 @@ export default async function SegmentsPage({ searchParams }: PageProps) {
             />
           }
         />
-        <EditorialCard>
-          <EditorialEmptyState
-            title="Segmentation is a Pro feature"
-            body="Upgrade to Pro to segment feedback by plan, role, region, company size, and custom metadata fields."
-            action={
-              <EditorialLinkButton href="/dashboard/settings" variant="ink">
-                Upgrade to Pro →
-              </EditorialLinkButton>
-            }
-          />
-        </EditorialCard>
+        <ProGateOverlay
+          eyebrow="Pro · Segments"
+          title="Compare feedback by user attribute"
+          body="Slice responses by plan, role, region, company size, or any custom metadata field you send with submissions."
+        />
       </div>
     );
   }
