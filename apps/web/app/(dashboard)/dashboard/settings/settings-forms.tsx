@@ -2,10 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/app/components/AppButton';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -13,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EditorialButton } from '../../components/editorial/button';
+import { EditorialFormField, EditorialInput } from '../../components/editorial/form-field';
 
 const COMPANY_SIZES = [
   { value: 'solo', label: 'Solo / Freelancer' },
@@ -50,6 +48,58 @@ const USE_CASES = [
   { value: 'polls', label: 'Polls' },
   { value: 'other', label: 'Other' },
 ];
+
+const SELECT_TRIGGER_CLASS =
+  'h-10 rounded-md border-editorial-neutral-2 bg-editorial-paper text-[14px] text-editorial-ink focus:border-editorial-accent focus:ring-2 focus:ring-editorial-accent/25';
+
+function EditorialSelect({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <Select value={value || '__none__'} onValueChange={(v) => onChange(v === '__none__' ? '' : v)}>
+      <SelectTrigger aria-label={ariaLabel} className={SELECT_TRIGGER_CLASS}>
+        <SelectValue placeholder="Not set" />
+      </SelectTrigger>
+      <SelectContent className="editorial border-editorial-neutral-2 bg-editorial-paper">
+        <SelectItem value="__none__">Not set</SelectItem>
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function StatusMessage({
+  kind,
+  children,
+}: {
+  kind: 'error' | 'success';
+  children: React.ReactNode;
+}) {
+  const tone =
+    kind === 'error'
+      ? 'border-editorial-alert bg-editorial-alert/[0.04] text-editorial-alert'
+      : 'border-editorial-success bg-editorial-success/[0.04] text-editorial-success';
+  return (
+    <div
+      role={kind === 'error' ? 'alert' : 'status'}
+      className={`border-l-2 px-4 py-3 text-[13px] ${tone}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface ProfileFormProps {
   name: string | null;
@@ -113,123 +163,68 @@ export function ProfileForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email" className="text-muted-foreground">
-          Email
-        </Label>
-        <Input type="email" id="email" value={email} disabled />
-        <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <EditorialFormField label="Email" htmlFor="email" hint="Email cannot be changed.">
+        <EditorialInput type="email" id="email" value={email} disabled />
+      </EditorialFormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
+      <EditorialFormField label="Name" htmlFor="name">
+        <EditorialInput
           type="text"
           id="name"
           value={formName}
           onChange={(e) => setFormName(e.target.value)}
           placeholder="Your name"
+          autoComplete="name"
         />
+      </EditorialFormField>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <EditorialFormField label="Company size">
+          <EditorialSelect
+            options={COMPANY_SIZES}
+            value={formCompanySize}
+            onChange={setFormCompanySize}
+            ariaLabel="Company size"
+          />
+        </EditorialFormField>
+
+        <EditorialFormField label="Role">
+          <EditorialSelect
+            options={ROLES}
+            value={formRole}
+            onChange={setFormRole}
+            ariaLabel="Role"
+          />
+        </EditorialFormField>
+
+        <EditorialFormField label="Industry">
+          <EditorialSelect
+            options={INDUSTRIES}
+            value={formIndustry}
+            onChange={setFormIndustry}
+            ariaLabel="Industry"
+          />
+        </EditorialFormField>
+
+        <EditorialFormField label="Primary use case">
+          <EditorialSelect
+            options={USE_CASES}
+            value={formUseCase}
+            onChange={setFormUseCase}
+            ariaLabel="Primary use case"
+          />
+        </EditorialFormField>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <Label>Company Size</Label>
-          <Select
-            value={formCompanySize || '__none__'}
-            onValueChange={(v) => setFormCompanySize(v === '__none__' ? '' : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Not set" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Not set</SelectItem>
-              {COMPANY_SIZES.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {error && <StatusMessage kind="error">{error}</StatusMessage>}
+      {success && <StatusMessage kind="success">Profile updated.</StatusMessage>}
 
-        <div className="space-y-1">
-          <Label>Role</Label>
-          <Select
-            value={formRole || '__none__'}
-            onValueChange={(v) => setFormRole(v === '__none__' ? '' : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Not set" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Not set</SelectItem>
-              {ROLES.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1">
-          <Label>Industry</Label>
-          <Select
-            value={formIndustry || '__none__'}
-            onValueChange={(v) => setFormIndustry(v === '__none__' ? '' : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Not set" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Not set</SelectItem>
-              {INDUSTRIES.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1">
-          <Label>Primary Use Case</Label>
-          <Select
-            value={formUseCase || '__none__'}
-            onValueChange={(v) => setFormUseCase(v === '__none__' ? '' : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Not set" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Not set</SelectItem>
-              {USE_CASES.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="pt-2">
+        <EditorialButton type="submit" variant="ink" disabled={loading}>
+          {loading ? 'Saving…' : 'Save changes'}
+        </EditorialButton>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertDescription>Profile updated successfully!</AlertDescription>
-        </Alert>
-      )}
-
-      <Button type="submit" loading={loading} loadingText="Saving...">
-        Save Changes
-      </Button>
     </form>
   );
 }
@@ -276,54 +271,47 @@ export function OrganizationForm({ name, slug }: OrganizationFormProps) {
   };
 
   const handleSlugChange = (value: string) => {
-    // Only allow lowercase letters, numbers, and hyphens
     const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     setFormSlug(sanitized);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="orgName">Workspace Name</Label>
-        <Input
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <EditorialFormField label="Workspace name" htmlFor="orgName">
+        <EditorialInput
           type="text"
           id="orgName"
           value={formName}
           onChange={(e) => setFormName(e.target.value)}
           placeholder="Workspace name"
         />
-      </div>
+      </EditorialFormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="orgSlug">Slug</Label>
-        <Input
+      <EditorialFormField
+        label="Slug"
+        htmlFor="orgSlug"
+        hint="Lowercase letters, numbers, and hyphens only."
+      >
+        <EditorialInput
           type="text"
           id="orgSlug"
           value={formSlug}
           onChange={(e) => handleSlugChange(e.target.value)}
           className="font-mono"
-          placeholder="organization-slug"
+          placeholder="workspace-slug"
+          autoComplete="off"
+          spellCheck={false}
         />
-        <p className="text-xs text-muted-foreground">
-          Only lowercase letters, numbers, and hyphens
-        </p>
+      </EditorialFormField>
+
+      {error && <StatusMessage kind="error">{error}</StatusMessage>}
+      {success && <StatusMessage kind="success">Workspace updated.</StatusMessage>}
+
+      <div className="pt-2">
+        <EditorialButton type="submit" variant="ink" disabled={loading}>
+          {loading ? 'Saving…' : 'Save changes'}
+        </EditorialButton>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertDescription>Workspace updated successfully!</AlertDescription>
-        </Alert>
-      )}
-
-      <Button type="submit" loading={loading} loadingText="Saving...">
-        Save Changes
-      </Button>
     </form>
   );
 }

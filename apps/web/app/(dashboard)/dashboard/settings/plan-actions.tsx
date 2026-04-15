@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/app/components/AppButton';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { EditorialButton } from '../../components/editorial/button';
 
 interface PlanActionsProps {
   currentPlan: string;
@@ -61,50 +60,55 @@ export function PlanActions({ currentPlan, hasStripeSubscription }: PlanActionsP
   };
 
   return (
-    <div className="mt-6 pt-6 border-t border-gray-200">
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+    <div>
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
+        >
+          {error}
+        </div>
+      )}
 
       {currentPlan === 'PRO' ? (
         hasStripeSubscription ? (
-          <Button
-            variant="secondary"
-            onClick={handleManage}
-            loading={loading}
-            loadingText="Loading..."
-          >
-            Manage Subscription
-          </Button>
+          <EditorialButton variant="ghost" onClick={handleManage} disabled={loading}>
+            {loading ? 'Loading…' : 'Manage subscription'}
+          </EditorialButton>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] text-editorial-neutral-3">
             Your Pro plan was activated manually. No billing to manage.
           </p>
         )
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span
-              className={`text-sm font-medium ${billing === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}
+              className={`text-[13px] ${billing === 'monthly' ? 'text-editorial-ink' : 'text-editorial-neutral-3'}`}
             >
               Monthly
             </span>
             <Switch
               checked={billing === 'annual'}
               onCheckedChange={(checked) => setBilling(checked ? 'annual' : 'monthly')}
+              aria-label="Toggle annual billing"
             />
             <span
-              className={`text-sm font-medium ${billing === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}
+              className={`text-[13px] ${billing === 'annual' ? 'text-editorial-ink' : 'text-editorial-neutral-3'}`}
             >
               Annual
             </span>
             {billing === 'annual' && (
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
+              <span className="inline-flex items-center rounded-md border border-editorial-success/30 bg-editorial-success/[0.08] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-success">
                 Save 17%
-              </Badge>
+              </span>
             )}
           </div>
-          <Button onClick={handleUpgrade} loading={loading} loadingText="Loading...">
-            Upgrade to Pro - {billing === 'annual' ? '$24/mo (billed annually)' : '$29/month'}
-          </Button>
+          <EditorialButton variant="ink" onClick={handleUpgrade} disabled={loading}>
+            {loading
+              ? 'Loading…'
+              : `Upgrade to Pro · ${billing === 'annual' ? '$24/mo (billed annually)' : '$29/month'}`}
+          </EditorialButton>
         </div>
       )}
     </div>
