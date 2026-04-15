@@ -272,6 +272,7 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
           <button
             className={`inline-flex items-center gap-2 rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors duration-240 ease-page-turn hover:bg-editorial-ink/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-editorial-accent/40 ${config.className} ${isUpdating ? 'pointer-events-none opacity-50' : ''}`}
             disabled={isUpdating || composing !== null}
+            aria-label={`Status: ${config.label}. Click to change.`}
           >
             {config.icon}
             <span className="hidden sm:inline-block sm:w-[80px] text-left">{config.label}</span>
@@ -298,12 +299,12 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
           className="editorial w-56 rounded-md border-editorial-neutral-2 bg-editorial-paper p-1"
         >
           <DropdownMenuLabel className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-            Triage
+            Inbox
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-editorial-neutral-2" />
           {TRIAGE_GROUP.map(renderItem)}
           <DropdownMenuLabel className="mt-1 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-            Lifecycle
+            Roadmap
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-editorial-neutral-2" />
           {LIFECYCLE_GROUP.map(renderItem)}
@@ -312,10 +313,14 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
 
       {composing && (
         <div className="z-30 w-72 rounded-md border border-editorial-neutral-2 bg-editorial-paper p-3 shadow-sm">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+          <label
+            htmlFor={`shipped-note-${responseId}`}
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3"
+          >
             Note (optional, sent to submitter)
-          </p>
+          </label>
           <textarea
+            id={`shipped-note-${responseId}`}
             value={note}
             onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX_LEN))}
             placeholder="One line of context — what you shipped, where to find it…"

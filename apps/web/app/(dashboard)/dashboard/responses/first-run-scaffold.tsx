@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { EditorialLinkButton } from '../../components/editorial/button';
 
 interface FirstRunScaffoldProps {
@@ -19,6 +20,75 @@ const SNIPPET = `import { GotchaProvider, Gotcha } from 'gotcha-feedback';
 
 export function FirstRunScaffold({ hasProject, firstProjectSlug }: FirstRunScaffoldProps) {
   const [copied, setCopied] = useState(false);
+  const [received, setReceived] = useState(false);
+  const router = useRouter();
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Poll the dashboard-internal "has any response yet?" endpoint every 30s
+  // so the listening indicator flips to a celebratory CTA the moment the
+  // first submission lands. Stops polling once flipped (or on unmount), and
+  // pauses while the tab is hidden to avoid wasted DB hits.
+  //
+  // Caps at MAX_POLL_MS so a forgotten dashboard tab doesn't generate
+  // hundreds of authenticated DB queries per hour. After the cap, polling
+  // stops until the user navigates again — the first-run scaffold is still
+  // useful as a static reference.
+  useEffect(() => {
+    let cancelled = false;
+    const startedAt = Date.now();
+    const MAX_POLL_MS = 20 * 60_000;
+
+    const check = async () => {
+      if (Date.now() - startedAt > MAX_POLL_MS) {
+        if (pollRef.current) clearInterval(pollRef.current);
+        pollRef.current = null;
+        return;
+      }
+      try {
+        const res = await fetch('/api/responses/has-any', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { hasAny?: boolean };
+        if (cancelled) return;
+        if (data.hasAny) {
+          setReceived(true);
+          if (pollRef.current) clearInterval(pollRef.current);
+          // Pull the now-populated server data so the page transitions out
+          // of the first-run state on its own.
+          router.refresh();
+        }
+      } catch {
+        /* network blip — try again next tick */
+      }
+    };
+
+    const start = () => {
+      if (pollRef.current) return;
+      if (Date.now() - startedAt > MAX_POLL_MS) return;
+      check();
+      pollRef.current = setInterval(check, 30_000);
+    };
+    const stop = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      start();
+    }
+    const onVis = () => {
+      if (document.visibilityState === 'visible') start();
+      else stop();
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    return () => {
+      cancelled = true;
+      stop();
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [router]);
 
   const handleCopy = async () => {
     try {
@@ -149,18 +219,40 @@ export function FirstRunScaffold({ hasProject, firstProjectSlug }: FirstRunScaff
         ))}
       </ol>
 
-      {/* Listening indicator — the one warm moment. A pulsing accent dot +
-          mono-uppercase status tells the 2am user "we're here, watching,
-          waiting for the first response to land." Respects reduced-motion
-          via the editorial blanket rule in globals.css. */}
+      {/* Listening indicator — the one warm moment. Polls the
+          /api/responses/has-any endpoint every 30s while the tab is
+          visible; flips to a celebratory CTA when the first submission
+          lands. Respects reduced-motion via the editorial blanket rule
+          in globals.css. */}
       <div className="flex items-center gap-3 border-t border-editorial-neutral-2 bg-editorial-ink/[0.015] px-6 py-5">
-        <span className="relative inline-flex h-2 w-2" aria-hidden="true">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-editorial-accent opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-editorial-accent" />
-        </span>
-        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-          Listening for your first response
-        </span>
+        {received ? (
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="-m-2 flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-editorial-success/[0.04]"
+          >
+            <span
+              className="inline-flex h-2 w-2 shrink-0 rounded-full bg-editorial-success"
+              aria-hidden="true"
+            />
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-success">
+              Your first feedback is in
+            </span>
+            <span className="ml-auto font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent">
+              See it →
+            </span>
+          </button>
+        ) : (
+          <>
+            <span className="relative inline-flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-editorial-accent opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-editorial-accent" />
+            </span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+              Listening for your first response
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

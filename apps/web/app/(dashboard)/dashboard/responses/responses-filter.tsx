@@ -175,7 +175,7 @@ export function ResponsesFilter({
               aria-hidden="true"
               className="pl-2 pr-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
             >
-              Triage
+              Inbox
             </span>
             {TRIAGE_STATUSES.map((s) => {
               const active = statuses.includes(s);
@@ -200,7 +200,7 @@ export function ResponsesFilter({
               aria-hidden="true"
               className="pl-1 pr-1 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3"
             >
-              Lifecycle
+              Roadmap
             </span>
             {LIFECYCLE_STATUSES.map((s) => {
               const active = statuses.includes(s);

@@ -6,6 +6,8 @@ import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { OnboardingBanner } from './onboarding-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
 import { StatCard } from './stat-card';
+import { SynthesisCard } from './synthesis-card';
+import { getTopWeeklySignal } from '@/lib/synthesis';
 import { EditorialPageHeader } from '../components/editorial/page-header';
 import {
   EditorialCard,
@@ -88,7 +90,7 @@ export default async function DashboardPage() {
     }
     const organization = activeOrg?.organization;
 
-    const [dbUser, projects, recentResponses] = organization
+    const [dbUser, projects, recentResponses, weeklySignal] = organization
       ? await Promise.all([
           prisma.user.findUnique({ where: { email: user!.email! } }),
           prisma.project.findMany({
@@ -109,8 +111,9 @@ export default async function DashboardPage() {
               },
             },
           }) as Promise<ResponseItem[]>,
+          getTopWeeklySignal(organization.id),
         ])
-      : [null, [] as ProjectItem[], [] as ResponseItem[]];
+      : [null, [] as ProjectItem[], [] as ResponseItem[], null];
 
     const totalResponses = projects.reduce((sum, p) => sum + p._count.responses, 0);
     const subscription = organization?.subscription;
@@ -179,6 +182,8 @@ export default async function DashboardPage() {
             </span>
           </div>
         )}
+
+        {weeklySignal && <SynthesisCard signal={weeklySignal} />}
 
         {!isFirstRun && (
           <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

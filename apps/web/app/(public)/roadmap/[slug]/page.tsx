@@ -130,6 +130,11 @@ export default async function PublicRoadmapPage({ params }: Props) {
       projectId: project.id,
       status: { in: ['PLANNED', 'IN_PROGRESS', 'SHIPPED'] },
       createdAt: { gte: cutoff },
+      // Untitled rows would render as "Untitled feedback" — looks broken
+      // and dilutes the public surface. Admins must give a row a title
+      // before it appears on the roadmap; the dashboard can offer a
+      // one-click title-from-content prompt as a follow-up.
+      title: { not: null },
     },
     orderBy: [{ shippedAt: 'desc' }, { createdAt: 'desc' }],
     select: {
@@ -148,13 +153,17 @@ export default async function PublicRoadmapPage({ params }: Props) {
     shippedAt: Date | null;
   }>;
 
-  const cards: RoadmapItem[] = items.map((r) => ({
-    id: r.id,
-    status: r.status,
-    title: truncate(r.title, TITLE_MAX_LEN) || 'Untitled feedback',
-    createdAt: r.createdAt,
-    shippedAt: r.shippedAt,
-  }));
+  const cards: RoadmapItem[] = items
+    // Defensive secondary filter: even though the query rejects null titles,
+    // empty-string after trim should also be filtered.
+    .filter((r) => truncate(r.title, TITLE_MAX_LEN).length > 0)
+    .map((r) => ({
+      id: r.id,
+      status: r.status,
+      title: truncate(r.title, TITLE_MAX_LEN),
+      createdAt: r.createdAt,
+      shippedAt: r.shippedAt,
+    }));
 
   const grouped: Record<RoadmapItem['status'], RoadmapItem[]> = {
     PLANNED: [],
@@ -188,42 +197,53 @@ export default async function PublicRoadmapPage({ params }: Props) {
         </p>
       </header>
 
-      <div className="grid gap-px border-y border-editorial-neutral-2 bg-editorial-neutral-2 sm:grid-cols-3">
-        {STATUS_COLUMNS.map((col) => {
-          const colItems = grouped[col.key];
-          return (
-            <section key={col.key} className="bg-editorial-paper p-6 sm:p-8">
-              <div className="mb-6 flex items-baseline justify-between">
-                <h2 className="font-display text-[1.25rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
-                  {col.label}
-                </h2>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-                  {colItems.length}
-                </span>
-              </div>
-              {colItems.length === 0 ? (
-                <p className="text-[13px] text-editorial-neutral-3/70">Nothing here yet.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {colItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className="rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 py-3"
-                    >
-                      <p className="text-[14px] leading-[1.5] text-editorial-ink">{item.title}</p>
-                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
-                        {col.key === 'SHIPPED' && item.shippedAt
-                          ? `Shipped ${fmtDate(item.shippedAt)}`
-                          : `Suggested ${fmtDate(item.createdAt)}`}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          );
-        })}
-      </div>
+      {cards.length === 0 ? (
+        <div className="border-y border-editorial-neutral-2 bg-editorial-paper py-16 text-center">
+          <p className="font-display text-[1.25rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
+            This roadmap is just getting started.
+          </p>
+          <p className="mt-3 text-[14px] text-editorial-neutral-3">
+            Check back soon — items appear here once they&rsquo;re planned, in progress, or shipped.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-px border-y border-editorial-neutral-2 bg-editorial-neutral-2 sm:grid-cols-3">
+          {STATUS_COLUMNS.map((col) => {
+            const colItems = grouped[col.key];
+            return (
+              <section key={col.key} className="bg-editorial-paper p-6 sm:p-8">
+                <div className="mb-6 flex items-baseline justify-between">
+                  <h2 className="font-display text-[1.25rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
+                    {col.label}
+                  </h2>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    {colItems.length}
+                  </span>
+                </div>
+                {colItems.length === 0 ? (
+                  <p className="text-[13px] text-editorial-neutral-3/70">Nothing here yet.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {colItems.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 py-3"
+                      >
+                        <p className="text-[14px] leading-[1.5] text-editorial-ink">{item.title}</p>
+                        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                          {col.key === 'SHIPPED' && item.shippedAt
+                            ? `Shipped ${fmtDate(item.shippedAt)}`
+                            : `Suggested ${fmtDate(item.createdAt)}`}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       <footer className="mt-16 flex items-center justify-between border-t border-editorial-neutral-2 pt-6 text-[12px] text-editorial-neutral-3">
         <span className="font-mono uppercase tracking-[0.14em]">Last 90 days</span>
