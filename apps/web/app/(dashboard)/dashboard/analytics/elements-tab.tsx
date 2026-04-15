@@ -47,17 +47,17 @@ interface ElementsTabProps {
 type SortKey = 'total' | 'avgRating' | 'positiveRate' | 'ratingDelta';
 
 function deltaColor(delta: number | null): string {
-  if (delta === null) return 'text-gray-400';
-  if (delta > 0.2) return 'text-emerald-600';
-  if (delta < -0.2) return 'text-red-500';
-  return 'text-gray-500';
+  if (delta === null) return 'text-editorial-neutral-3/80';
+  if (delta > 0.2) return 'text-editorial-success';
+  if (delta < -0.2) return 'text-editorial-alert';
+  return 'text-editorial-neutral-3';
 }
 
 function deltaPctColor(delta: number | null): string {
-  if (delta === null) return 'text-gray-400';
-  if (delta > 5) return 'text-emerald-600';
-  if (delta < -5) return 'text-red-500';
-  return 'text-gray-500';
+  if (delta === null) return 'text-editorial-neutral-3/80';
+  if (delta > 5) return 'text-editorial-success';
+  if (delta < -5) return 'text-editorial-alert';
+  return 'text-editorial-neutral-3';
 }
 
 function formatDelta(delta: number | null, suffix = ''): string {
@@ -68,18 +68,18 @@ function formatDelta(delta: number | null, suffix = ''): string {
 
 const SEVERITY_STYLES = {
   critical: {
-    bg: 'bg-red-50',
+    bg: 'bg-editorial-alert/[0.04]',
     border: 'border-red-200/60',
-    dot: 'bg-red-500',
+    dot: 'bg-editorial-alert/[0.04]0',
     text: 'text-red-800',
-    label: 'text-red-600',
+    label: 'text-editorial-alert',
   },
   warning: {
-    bg: 'bg-amber-50',
-    border: 'border-amber-200/60',
-    dot: 'bg-amber-500',
-    text: 'text-amber-800',
-    label: 'text-amber-600',
+    bg: 'bg-editorial-accent/[0.06]',
+    border: 'border-editorial-accent/30',
+    dot: 'bg-editorial-accent/[0.06]0',
+    text: 'text-editorial-alert',
+    label: 'text-editorial-accent',
   },
   info: {
     bg: 'bg-blue-50',
@@ -206,13 +206,13 @@ export function ElementsTab({
     align?: string;
   }) => (
     <TableHead
-      className={`text-xs font-medium uppercase tracking-wider text-gray-400 cursor-pointer select-none hover:text-gray-600 transition-colors ${align === 'right' ? 'text-right' : ''}`}
+      className={`text-xs font-medium uppercase tracking-wider text-editorial-neutral-3/80 cursor-pointer select-none hover:text-editorial-neutral-3 transition-colors ${align === 'right' ? 'text-right' : ''}`}
       onClick={() => handleSort(sortKey)}
     >
       <span className="inline-flex items-center gap-1">
         {label}
         {sortBy === sortKey && (
-          <span className="text-gray-500">{sortAsc ? '\u2191' : '\u2193'}</span>
+          <span className="text-editorial-neutral-3">{sortAsc ? '\u2191' : '\u2193'}</span>
         )}
       </span>
     </TableHead>
@@ -222,11 +222,11 @@ export function ElementsTab({
     <div className="space-y-6">
       {/* Error feedback */}
       {error && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-red-200/60 bg-red-50 text-sm text-red-700">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-md border border-red-200/60 bg-editorial-alert/[0.04] text-sm text-red-700">
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-400 hover:text-red-600 text-xs"
+            className="ml-auto text-red-400 hover:text-editorial-alert text-xs"
           >
             Dismiss
           </button>
@@ -235,7 +235,7 @@ export function ElementsTab({
 
       {/* Archived element filter banner */}
       {isFilteredElementArchived && (
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-amber-200/60 bg-amber-50 text-sm text-amber-800">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-md border border-editorial-accent/30 bg-editorial-accent/[0.06] text-sm text-editorial-alert">
           <span>
             Selected element{' '}
             <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded">
@@ -245,7 +245,7 @@ export function ElementsTab({
           </span>
           <button
             onClick={handleClearArchivedFilter}
-            className="ml-auto text-xs font-medium text-amber-600 hover:text-amber-800 underline underline-offset-2"
+            className="ml-auto text-xs font-medium text-editorial-accent underline underline-offset-2"
           >
             Clear filter
           </button>
@@ -260,12 +260,12 @@ export function ElementsTab({
             return (
               <div
                 key={`${anomaly.elementId}-${anomaly.type}-${i}`}
-                className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${style.bg} ${style.border}`}
+                className={`flex items-start gap-3 px-4 py-3 rounded-md border ${style.bg} ${style.border}`}
               >
                 <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${style.dot}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded text-gray-600 truncate max-w-[200px] sm:max-w-none">
+                    <code className="text-xs font-mono bg-white/60 px-1.5 py-0.5 rounded text-editorial-neutral-3 truncate max-w-[200px] sm:max-w-none">
                       {anomaly.elementId}
                     </code>
                     <span
@@ -284,15 +284,15 @@ export function ElementsTab({
 
       {/* Benchmarks summary */}
       {overallAvgRating !== null && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-editorial-neutral-3">
           <span>
             Overall avg rating:{' '}
-            <span className="font-medium text-gray-900">{overallAvgRating.toFixed(1)}/5</span>
+            <span className="font-medium text-editorial-ink">{overallAvgRating.toFixed(1)}/5</span>
           </span>
           {overallPositiveRate !== null && (
             <span>
               Overall positive rate:{' '}
-              <span className="font-medium text-gray-900">{overallPositiveRate}%</span>
+              <span className="font-medium text-editorial-ink">{overallPositiveRate}%</span>
             </span>
           )}
         </div>
@@ -301,8 +301,8 @@ export function ElementsTab({
       {/* Element Benchmarking Table */}
       {activeElements.length === 0 && archivedElements.length === 0 ? (
         <Card className="text-center py-16">
-          <h3 className="text-lg font-medium text-gray-900">No element data</h3>
-          <p className="mt-2 text-gray-500">
+          <h3 className="text-lg font-medium text-editorial-ink">No element data</h3>
+          <p className="mt-2 text-editorial-neutral-3">
             Elements appear here once you start collecting feedback.
           </p>
         </Card>
@@ -314,7 +314,7 @@ export function ElementsTab({
               {archivedElements.length > 0 && (
                 <button
                   onClick={() => setShowArchived(!showArchived)}
-                  className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-xs font-medium text-editorial-neutral-3 hover:text-editorial-ink transition-colors"
                 >
                   {showArchived ? 'Hide' : 'Show'} archived ({archivedElements.length})
                 </button>
@@ -335,39 +335,39 @@ export function ElementsTab({
                   <col className="w-[8%]" />
                 </colgroup>
                 <TableHeader>
-                  <TableRow className="border-b border-gray-200/80">
-                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                  <TableRow className="border-b border-editorial-neutral-2">
+                    <TableHead className="text-xs font-medium uppercase tracking-wider text-editorial-neutral-3/80">
                       Element
                     </TableHead>
                     <SortHeader label="Responses" sortKey="total" />
                     <SortHeader label="Avg Rating" sortKey="avgRating" />
                     <SortHeader label="vs Avg" sortKey="ratingDelta" />
                     <SortHeader label="Positive" sortKey="positiveRate" />
-                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-right">
+                    <TableHead className="text-xs font-medium uppercase tracking-wider text-editorial-neutral-3/80 text-right">
                       vs Avg
                     </TableHead>
-                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-center">
+                    <TableHead className="text-xs font-medium uppercase tracking-wider text-editorial-neutral-3/80 text-center">
                       Trend
                     </TableHead>
-                    <TableHead className="text-xs font-medium uppercase tracking-wider text-gray-400 text-center"></TableHead>
+                    <TableHead className="text-xs font-medium uppercase tracking-wider text-editorial-neutral-3/80 text-center"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sorted.map((el) => (
                     <TableRow
                       key={el.elementId}
-                      className="group cursor-pointer transition-colors duration-100 hover:bg-gray-50/50"
+                      className="group cursor-pointer transition-colors duration-100 hover:bg-editorial-ink/[0.02]"
                       onClick={() => handleElementClick(el.elementId)}
                     >
                       <TableCell>
-                        <code className="text-xs font-mono text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded group-hover:bg-gray-100 transition-colors">
+                        <code className="text-xs font-mono text-editorial-ink bg-editorial-ink/[0.02] px-1.5 py-0.5 rounded group-hover:bg-editorial-ink/[0.04] transition-colors">
                           {el.elementId}
                         </code>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums text-sm text-gray-900">
+                      <TableCell className="text-right tabular-nums text-sm text-editorial-ink">
                         {el.total}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums text-sm text-gray-900">
+                      <TableCell className="text-right tabular-nums text-sm text-editorial-ink">
                         {el.avgRating !== null ? `${el.avgRating}/5` : '-'}
                       </TableCell>
                       <TableCell
@@ -375,7 +375,7 @@ export function ElementsTab({
                       >
                         {formatDelta(el.ratingDelta)}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums text-sm text-gray-900">
+                      <TableCell className="text-right tabular-nums text-sm text-editorial-ink">
                         {el.positiveRate !== null ? `${el.positiveRate}%` : '-'}
                       </TableCell>
                       <TableCell
@@ -401,7 +401,7 @@ export function ElementsTab({
                             </ResponsiveContainer>
                           </div>
                         ) : (
-                          <span className="text-gray-300 text-xs">—</span>
+                          <span className="text-editorial-neutral-3/60 text-xs">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -411,7 +411,7 @@ export function ElementsTab({
                             handleArchiveToggle(el.elementId, true);
                           }}
                           disabled={archivingId === el.elementId}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 p-1 rounded"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-editorial-neutral-3/80 hover:text-editorial-neutral-3 p-1 rounded"
                           title="Archive element"
                         >
                           <svg
@@ -434,8 +434,8 @@ export function ElementsTab({
                 </TableBody>
               </Table>
               {showArchived && archivedElements.length > 0 && (
-                <div className="border-t border-gray-200/80 mt-2 pt-2">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-2">
+                <div className="border-t border-editorial-neutral-2 mt-2 pt-2">
+                  <p className="text-xs font-medium text-editorial-neutral-3/80 uppercase tracking-wider px-4 py-2">
                     Archived
                   </p>
                   <Table className="table-fixed w-full min-w-[750px]">
@@ -456,14 +456,14 @@ export function ElementsTab({
                           className="group opacity-50 hover:opacity-75 transition-opacity"
                         >
                           <TableCell>
-                            <code className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">
+                            <code className="text-xs font-mono text-editorial-neutral-3 bg-editorial-ink/[0.02] px-1.5 py-0.5 rounded">
                               {el.elementId}
                             </code>
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-sm text-gray-500">
+                          <TableCell className="text-right tabular-nums text-sm text-editorial-neutral-3">
                             {el.total}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-sm text-gray-500">
+                          <TableCell className="text-right tabular-nums text-sm text-editorial-neutral-3">
                             {el.avgRating !== null ? `${el.avgRating}/5` : '-'}
                           </TableCell>
                           <TableCell
@@ -471,7 +471,7 @@ export function ElementsTab({
                           >
                             {formatDelta(el.ratingDelta)}
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-sm text-gray-500">
+                          <TableCell className="text-right tabular-nums text-sm text-editorial-neutral-3">
                             {el.positiveRate !== null ? `${el.positiveRate}%` : '-'}
                           </TableCell>
                           <TableCell
@@ -480,13 +480,13 @@ export function ElementsTab({
                             {formatDelta(el.positiveDelta, 'pp')}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className="text-gray-300 text-xs">—</span>
+                            <span className="text-editorial-neutral-3/60 text-xs">—</span>
                           </TableCell>
                           <TableCell className="text-center">
                             <button
                               onClick={() => handleArchiveToggle(el.elementId, false)}
                               disabled={archivingId === el.elementId}
-                              className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
+                              className="text-editorial-neutral-3/80 hover:text-editorial-neutral-3 p-1 rounded transition-colors"
                               title="Unarchive element"
                             >
                               <svg

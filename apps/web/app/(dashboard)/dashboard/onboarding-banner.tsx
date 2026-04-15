@@ -97,10 +97,12 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
   const [industry, setIndustry] = useState('');
   const [useCase, setUseCase] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSave = async () => {
     setLoading(true);
+    setError(null);
     try {
       const body: Record<string, unknown> = { onboardedAt: true };
       if (companySize) body.companySize = companySize;
@@ -108,14 +110,23 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
       if (industry) body.industry = industry;
       if (useCase) body.useCase = useCase;
 
-      await fetch('/api/user/profile', {
+      const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(body),
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not save your profile');
+      }
+      // Success — banner disappears because onboardedAt is now set on the user.
       router.refresh();
-    } catch {
-      router.refresh();
+    } catch (err) {
+      // Leave the banner visible so the user can retry. Don't mark them
+      // onboarded if the save failed — that would silently strand them
+      // without the profile data we need.
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -155,6 +166,14 @@ export function OnboardingBanner({ userName }: OnboardingBannerProps) {
             onChange={setUseCase}
           />
         </div>
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
+          >
+            {error}
+          </div>
+        )}
         <EditorialButton type="button" variant="ink" onClick={handleSave} disabled={loading}>
           {loading ? 'Saving…' : 'Save & continue'}
         </EditorialButton>

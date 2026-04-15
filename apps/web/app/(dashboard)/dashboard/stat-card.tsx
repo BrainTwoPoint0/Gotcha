@@ -1,19 +1,35 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+export interface StatCardProps {
+  label: string;
+  value: React.ReactNode;
+  subtext?: React.ReactNode;
+  /** Optional period-over-period delta. Positive = success tone, negative = alert tone, zero = muted. */
+  delta?: number | null;
+  /** Suffix for the delta number (e.g. "%", "pp"). */
+  deltaLabel?: string;
+  accent?: boolean;
+  className?: string;
+}
+
 export function StatCard({
   label,
   value,
   subtext,
+  delta,
+  deltaLabel = '',
   accent,
   className,
-}: {
-  label: string;
-  value: React.ReactNode;
-  subtext?: React.ReactNode;
-  accent?: boolean;
-  className?: string;
-}) {
+}: StatCardProps) {
+  const hasDelta = delta !== null && delta !== undefined;
+  const deltaTone =
+    !hasDelta || delta === 0
+      ? 'text-editorial-neutral-3'
+      : delta! > 0
+        ? 'text-editorial-success'
+        : 'text-editorial-alert';
+
   return (
     <div
       className={cn(
@@ -29,9 +45,19 @@ export function StatCard({
           {label}
         </p>
       </div>
-      <p className="mt-4 font-display text-4xl font-normal leading-[1] tracking-[-0.02em] text-editorial-ink tabular-nums">
-        {value}
-      </p>
+      <div className="mt-4 flex items-baseline gap-2">
+        <p className="font-display text-4xl font-normal leading-[1] tracking-[-0.02em] text-editorial-ink tabular-nums">
+          {value}
+        </p>
+        {hasDelta && (
+          <span className={`font-mono text-[11px] uppercase tracking-[0.14em] ${deltaTone}`}>
+            {delta! > 0 ? '↑' : delta! < 0 ? '↓' : ''}
+            {delta! > 0 ? '+' : ''}
+            {delta}
+            {deltaLabel}
+          </span>
+        )}
+      </div>
       {subtext && (
         <p className="mt-3 text-[13px] leading-[1.55] text-editorial-neutral-3">{subtext}</p>
       )}

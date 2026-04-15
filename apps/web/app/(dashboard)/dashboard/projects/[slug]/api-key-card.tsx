@@ -92,7 +92,11 @@ export function ApiKeyCard({ apiKey, projectSlug }: { apiKey: ApiKey; projectSlu
               )}
             </button>
           </div>
-          <div className="border-l-2 border-editorial-accent bg-editorial-accent/[0.04] px-4 py-3 text-[13px] text-editorial-ink">
+          <div
+            role="status"
+            aria-live="polite"
+            className="border-l-2 border-editorial-accent bg-editorial-accent/[0.04] px-4 py-3 text-[13px] text-editorial-ink"
+          >
             Copy this key now — you won&apos;t be able to see it again.
           </div>
         </div>

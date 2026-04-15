@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface TagEditorProps {
   responseId: string;
@@ -35,6 +35,14 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
   const [saving, setSaving] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const suggestions = inputValue.trim()
     ? availableTags
@@ -42,52 +50,59 @@ export function TagEditor({ responseId, initialTags, isPro, availableTags = [] }
         .slice(0, 6)
     : [];
 
-  const saveTags = useCallback(
-    async (newTags: string[]) => {
-      setSaving(true);
-      try {
-        const res = await fetch(`/api/responses/${responseId}/tags`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify({ tags: newTags }),
-        });
-        if (!res.ok) {
-          setTags(tags);
-          return;
-        }
-        const data = await res.json();
-        setTags(data.tags);
-      } catch {
-        setTags(tags);
-      } finally {
-        setSaving(false);
+  /**
+   * Each call captures its own `previousTags` snapshot so rollback restores
+   * exactly what was on screen before the PATCH — not whatever `tags` happens
+   * to be at reject time (which previously caused a rapid add-then-remove to
+   * restore a deleted tag on network failure).
+   */
+  async function saveTags(newTags: string[], previousTags: string[]) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/responses/${responseId}/tags`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      if (!mountedRef.current) return;
+      if (!res.ok) {
+        setTags(previousTags);
+        return;
       }
-    },
-    [responseId, tags]
-  );
+      const data = await res.json();
+      setTags(data.tags);
+    } catch {
+      if (mountedRef.current) setTags(previousTags);
+    } finally {
+      if (mountedRef.current) setSaving(false);
+    }
+  }
 
   const addTag = () => {
     const tag = inputValue.trim().toLowerCase();
     if (!tag || tags.includes(tag) || tags.length >= 10) return;
+    const previousTags = tags;
     const newTags = [...tags, tag];
     setTags(newTags);
     setInputValue('');
-    saveTags(newTags);
+    saveTags(newTags, previousTags);
   };
 
   const removeTag = (tagToRemove: string) => {
+    const previousTags = tags;
     const newTags = tags.filter((t) => t !== tagToRemove);
     setTags(newTags);
-    saveTags(newTags);
+    saveTags(newTags, previousTags);
   };
 
   const selectSuggestion = (suggestion: string) => {
     if (tags.includes(suggestion) || tags.length >= 10) return;
+    const previousTags = tags;
     const newTags = [...tags, suggestion];
     setTags(newTags);
     setInputValue('');
     setHighlightIndex(-1);
-    saveTags(newTags);
+    saveTags(newTags, previousTags);
     inputRef.current?.focus();
   };
 

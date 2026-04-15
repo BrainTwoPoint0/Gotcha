@@ -22,6 +22,7 @@ import { EditorialPageHeader } from '../../components/editorial/page-header';
 import { EditorialCard } from '../../components/editorial/card';
 import { EditorialEmptyState } from '../../components/editorial/empty-state';
 import { EditorialLinkButton } from '../../components/editorial/button';
+import { StatCard } from '../stat-card';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
 import { calculateNPS } from '@/lib/nps';
 import { parseDevice, parseBrowser } from '@/lib/ua-parser';
@@ -1028,7 +1029,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         className="md:hidden mb-6 flex items-center justify-between rounded-md border border-editorial-neutral-2 bg-editorial-paper px-4 py-3 text-[14px] text-editorial-ink"
       >
         User Segments
-        <span className="text-gray-400">&rarr;</span>
+        <span className="text-editorial-neutral-3">&rarr;</span>
       </Link>
 
       {/* Tab Content */}
@@ -1098,37 +1099,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           selectedCol={pivotCol}
         />
       )}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  delta,
-  deltaLabel = '',
-}: {
-  label: string;
-  value: string;
-  delta?: number | null;
-  deltaLabel?: string;
-}) {
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-semibold text-gray-900 capitalize">{value}</p>
-        {delta !== null && delta !== undefined && (
-          <span
-            className={`text-xs font-medium ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}
-          >
-            {delta > 0 ? '\u2191' : delta < 0 ? '\u2193' : ''}
-            {delta > 0 ? '+' : ''}
-            {delta}
-            {deltaLabel}
-          </span>
-        )}
-      </div>
     </div>
   );
 }

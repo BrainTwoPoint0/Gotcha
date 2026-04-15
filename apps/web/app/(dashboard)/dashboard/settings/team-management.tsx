@@ -57,6 +57,7 @@ export function TeamManagement() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>('MEMBER');
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
@@ -70,6 +71,7 @@ export function TeamManagement() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchData() {
@@ -127,18 +129,25 @@ export function TeamManagement() {
   }
 
   async function handleRevokeInvite(invitationId: string) {
+    setActionError(null);
     try {
-      await fetch(`/api/organization/invitations/${invitationId}`, {
+      const res = await fetch(`/api/organization/invitations/${invitationId}`, {
         method: 'DELETE',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || 'Failed to revoke invitation');
+        return;
+      }
       fetchData();
     } catch {
-      // silent
+      setActionError('Failed to revoke invitation. Please try again.');
     }
   }
 
   async function handleRoleChange(memberId: string, newRole: string) {
+    setActionError(null);
     try {
       const res = await fetch(`/api/organization/members/${memberId}`, {
         method: 'PATCH',
@@ -147,21 +156,22 @@ export function TeamManagement() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Failed to update role');
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || 'Failed to update role');
         return;
       }
 
       fetchData();
       router.refresh();
     } catch {
-      // silent
+      setActionError('Failed to update role. Please try again.');
     }
   }
 
   async function handleRemoveMember(memberId: string, memberName: string) {
     if (!confirm(`Remove ${memberName} from the organization?`)) return;
 
+    setActionError(null);
     try {
       const res = await fetch(`/api/organization/members/${memberId}`, {
         method: 'DELETE',
@@ -169,14 +179,14 @@ export function TeamManagement() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Failed to remove member');
+        const data = await res.json().catch(() => ({}));
+        setActionError(data.error || 'Failed to remove member');
         return;
       }
 
       fetchData();
     } catch {
-      // silent
+      setActionError('Failed to remove member. Please try again.');
     }
   }
 
@@ -190,6 +200,15 @@ export function TeamManagement() {
 
   return (
     <div className="space-y-8">
+      {actionError && (
+        <div
+          role="alert"
+          className="border-l-2 border-editorial-alert bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert"
+        >
+          {actionError}
+        </div>
+      )}
+
       <div>
         <SectionLabel>Members ({members.length})</SectionLabel>
         <ul className="space-y-2">

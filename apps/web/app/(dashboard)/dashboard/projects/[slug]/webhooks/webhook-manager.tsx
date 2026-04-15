@@ -250,7 +250,9 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
     }
     if (webhook.failureCount > 0) {
       return (
-        <Badge className="bg-amber-100 text-amber-800">Failing ({webhook.failureCount})</Badge>
+        <Badge className="border border-editorial-alert/30 bg-editorial-alert/[0.08] text-editorial-alert">
+          Failing ({webhook.failureCount})
+        </Badge>
       );
     }
     return <Badge className="bg-green-100 text-green-800">Active</Badge>;
@@ -260,19 +262,19 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
     <div className="space-y-6">
       {/* Error display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+        <div className="bg-editorial-alert/[0.04] border border-red-200 rounded-md px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {/* Secret display (shown after creation) */}
       {createdSecret && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-amber-800 mb-2">
+        <div className="bg-editorial-accent/[0.06] border border-amber-200 rounded-md p-4">
+          <p className="text-sm font-medium text-editorial-alert mb-2">
             Webhook secret — copy it now, it won&apos;t be shown again:
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono">
+            <code className="flex-1 bg-editorial-paper px-3 py-2 rounded border text-sm font-mono">
               {createdSecret}
             </code>
             <Button
@@ -293,8 +295,8 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
 
       {/* Add integration flow */}
       {showAdd && !newType && (
-        <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
-          <h3 className="font-medium text-gray-900">Choose Integration Type</h3>
+        <div className="w-full bg-editorial-paper rounded-md border border-editorial-neutral-2 p-4 sm:p-6 space-y-4">
+          <h3 className="font-medium text-editorial-ink">Choose Integration Type</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(['slack', 'discord', 'custom'] as WebhookType[]).map((type) => {
               const Icon = TYPE_ICONS[type];
@@ -302,10 +304,10 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                 <button
                   key={type}
                   onClick={() => setNewType(type)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                  className="flex flex-col items-center gap-2 p-4 rounded-md border border-editorial-neutral-2 hover:border-editorial-ink/30 hover:bg-editorial-ink/[0.02] transition-colors"
                 >
-                  <Icon className="w-8 h-8 text-gray-700" />
-                  <span className="text-sm font-medium text-gray-900">
+                  <Icon className="w-8 h-8 text-editorial-ink" />
+                  <span className="text-sm font-medium text-editorial-ink">
                     {TYPE_CONFIG[type].label}
                   </span>
                 </button>
@@ -319,9 +321,12 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
       )}
 
       {showAdd && newType && (
-        <div className="w-full bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4">
+        <div className="w-full bg-editorial-paper rounded-md border border-editorial-neutral-2 p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setNewType(null)} className="text-gray-400 hover:text-gray-600">
+            <button
+              onClick={() => setNewType(null)}
+              className="text-editorial-neutral-3/80 hover:text-editorial-neutral-3"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -331,12 +336,12 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                 />
               </svg>
             </button>
-            <h3 className="font-medium text-gray-900">
+            <h3 className="font-medium text-editorial-ink">
               New {TYPE_CONFIG[newType].label} Integration
             </h3>
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">
+            <label className="text-sm text-editorial-neutral-3">
               {newType === 'slack'
                 ? 'Slack Webhook URL'
                 : newType === 'discord'
@@ -351,7 +356,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">Description (optional)</label>
+            <label className="text-sm text-editorial-neutral-3">Description (optional)</label>
             <Input
               type="text"
               placeholder={`e.g. ${newType === 'slack' ? '#feedback channel' : newType === 'discord' ? '#feedback channel' : 'Production notifications'}`}
@@ -360,7 +365,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-600">Events</label>
+            <label className="text-sm text-editorial-neutral-3">Events</label>
             <div className="flex flex-wrap gap-3">
               {[
                 { value: 'response.created', label: 'New response' },
@@ -379,10 +384,10 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                         setSelectedEvents((prev) => prev.filter((ev) => ev !== event.value));
                       }
                     }}
-                    className="rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+                    className="rounded border-editorial-neutral-2 text-editorial-ink focus:ring-editorial-accent/40"
                   />
-                  <span className="text-sm text-gray-700">{event.label}</span>
-                  <code className="text-xs text-gray-400 bg-gray-50 px-1 rounded">
+                  <span className="text-sm text-editorial-ink">{event.label}</span>
+                  <code className="text-xs text-editorial-neutral-3/80 bg-editorial-ink/[0.02] px-1 rounded">
                     {event.value}
                   </code>
                 </label>
@@ -413,7 +418,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
 
       {/* Webhook list */}
       {webhooks.length === 0 && !showAdd ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
+        <div className="bg-editorial-paper rounded-md border border-editorial-neutral-2 p-6 text-center text-editorial-neutral-3">
           <p>No integrations configured yet.</p>
           <p className="text-sm mt-1">
             Add Slack, Discord, or a custom webhook to receive real-time notifications.
@@ -422,7 +427,10 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
       ) : (
         <div className="space-y-4">
           {webhooks.map((webhook) => (
-            <div key={webhook.id} className="bg-white rounded-lg border border-gray-200">
+            <div
+              key={webhook.id}
+              className="bg-editorial-paper rounded-md border border-editorial-neutral-2"
+            >
               <div className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
@@ -436,13 +444,15 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                       </Badge>
                       {statusBadge(webhook)}
                       {webhook.description && (
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-editorial-ink">
                           {webhook.description}
                         </span>
                       )}
                     </div>
-                    <code className="text-sm text-gray-600 break-all">{webhook.url}</code>
-                    <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
+                    <code className="text-sm text-editorial-neutral-3 break-all">
+                      {webhook.url}
+                    </code>
+                    <div className="flex flex-wrap gap-3 mt-2 text-xs text-editorial-neutral-3">
                       <span>Events: {webhook.events.join(', ')}</span>
                       {webhook.lastTriggeredAt && (
                         <span>
@@ -457,8 +467,8 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                       <div
                         className={`mt-2 text-xs px-2 py-1 rounded inline-block ${
                           testResults[webhook.id]!.success
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-red-50 text-red-700'
+                            ? 'bg-editorial-success/[0.06] text-editorial-success'
+                            : 'bg-editorial-alert/[0.04] text-red-700'
                         }`}
                       >
                         {testResults[webhook.id]!.success
@@ -508,7 +518,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
 
               {/* Delivery logs */}
               {expandedLogs === webhook.id && (
-                <div className="border-t border-gray-200">
+                <div className="border-t border-editorial-neutral-2">
                   <WebhookLogs projectSlug={projectSlug} webhookId={webhook.id} />
                 </div>
               )}
