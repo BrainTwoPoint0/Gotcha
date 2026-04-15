@@ -82,6 +82,28 @@ export function LoopSection() {
             </span>
           </figcaption>
         </figure>
+
+        {/* Live proof. The roadmap we run on our own product, publicly
+            visible, cookieless, upvotable. If the claim above is real,
+            this link is the evidence. */}
+        <div className="mt-16 flex flex-col items-start gap-3 border-t border-editorial-neutral-2 pt-10 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-xl text-[15px] leading-[1.55] text-editorial-neutral-3">
+            Want to see a real one? Our own roadmap is built with Gotcha — no cookies, no
+            third-party scripts, no marketing chrome.
+          </p>
+          <a
+            href="/roadmap/gotcha"
+            className="group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.18em] text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-[6px] transition-colors hover:decoration-editorial-accent"
+          >
+            See the Gotcha roadmap
+            <span
+              aria-hidden="true"
+              className="transition-transform duration-240 ease-page-turn group-hover:translate-x-0.5"
+            >
+              →
+            </span>
+          </a>
+        </div>
       </div>
     </section>
   );

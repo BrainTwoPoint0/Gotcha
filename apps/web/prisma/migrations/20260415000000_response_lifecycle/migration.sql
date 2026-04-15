@@ -5,10 +5,12 @@
 -- the dashboard surfaces in the new "Lifecycle" group and what the public
 -- roadmap renders.
 --
--- IF NOT EXISTS guards make the enum-add idempotent so reruns are safe.
--- Postgres requires the new value to be committed before reuse — Prisma
--- migrate runs each migration file in its own transaction, so the values
--- added here are NOT referenced anywhere else in this same file.
+-- Postgres forbids reusing a newly-added enum value inside the SAME
+-- transaction that added it (error 55P04). Prisma wraps each migration
+-- file in a single transaction, so anything that references these values
+-- in a predicate (e.g. the partial index on status IN ('PLANNED', ...))
+-- MUST live in a later migration. The roadmap partial index is in
+-- 20260415500000_response_roadmap_idx for this reason.
 
 -- AlterEnum
 ALTER TYPE "ResponseStatus" ADD VALUE IF NOT EXISTS 'UNDER_REVIEW';
@@ -29,15 +31,6 @@ ALTER TABLE "Response" ADD COLUMN "shippedNote" TEXT;
 -- AlterTable: Project — per-project monthly notify-back counter (abuse cap).
 ALTER TABLE "Project" ADD COLUMN "notifiesSentThisMonth" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "Project" ADD COLUMN "notifiesResetAt" TIMESTAMP(3);
-
--- CreateIndex: roadmap query path.
--- The roadmap renders status IN ('PLANNED','IN_PROGRESS','SHIPPED') for a
--- single project, sorted newest first. A partial index on exactly that
--- predicate is smaller than a full composite and lets the planner walk
--- index-order instead of sort-after-merge across an IN-list.
-CREATE INDEX "Response_roadmap_idx"
-  ON "Response"("projectId", "createdAt" DESC)
-  WHERE "status" IN ('PLANNED', 'IN_PROGRESS', 'SHIPPED');
 
 -- CreateTable: SubmitterSuppression
 -- Populated when a notify-back email recipient clicks the signed-token
