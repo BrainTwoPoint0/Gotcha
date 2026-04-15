@@ -222,11 +222,27 @@ export function Gotcha({
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSubmitDataRef = useRef<{ rating?: number; vote?: 'up' | 'down' } | null>(null);
 
-  // SSR-safe mount detection
+  // SSR-safe mount detection + live viewport tracking. Uses matchMedia so
+  // we only re-render when the viewport actually crosses the breakpoint,
+  // not on every resize pixel.
+  //
+  // Breakpoint at 1023px (Tailwind `lg:` — standard laptop threshold).
+  // Below that, the modal centres with a full-width backdrop; above, it
+  // anchors beneath the button. Two lower breakpoints (639, 767) were
+  // tested first and both left a middle-viewport dead-zone where the
+  // modal hugged the button in a narrow column with the rest of the
+  // viewport empty — neither small enough for the mobile centered
+  // treatment nor wide enough for anchored-popover to read as integrated.
+  // Anchored-popover is a desktop pattern; it needs desktop width to work.
   useEffect(() => {
     setHasMounted(true);
-    setIsMobile(window.innerWidth < 640);
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
     return () => {
+      mq.removeEventListener('change', sync);
       clearTimeout(autoCloseTimerRef.current);
     };
   }, []);
@@ -243,6 +259,38 @@ export function Gotcha({
   }, [client]);
 
   const isOpen = activeModalId === elementId;
+
+  // Re-measure the anchor rect when viewport changes while the modal is
+  // open. Only runs on desktop (isMobile=false) because the mobile
+  // centered layout ignores anchorRect entirely — re-measuring during a
+  // drag across the breakpoint just caused a per-pixel flicker without
+  // any visual benefit.
+  //
+  // rAF-throttled: resize events fire at ~60Hz during a drag; without
+  // throttling React re-renders the portal modal dozens of times per
+  // second, causing position jitter. Coalescing into the next animation
+  // frame keeps the modal rock-steady.
+  useEffect(() => {
+    if (!isOpen || isMobile) return;
+    let rafId = 0;
+    const reanchor = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        const el = containerRef.current;
+        if (!el) return;
+        const button = el.querySelector('button');
+        setAnchorRect((button ?? el).getBoundingClientRect());
+      });
+    };
+    window.addEventListener('resize', reanchor);
+    window.addEventListener('scroll', reanchor, { passive: true });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', reanchor);
+      window.removeEventListener('scroll', reanchor);
+    };
+  }, [isOpen, isMobile]);
 
   // Reset phase when modal is closed externally (e.g., another modal opens)
   useEffect(() => {
@@ -416,6 +464,7 @@ export function Gotcha({
     onClose: handleClose,
     anchorRect: anchorRect || undefined,
     useFixedPosition: !isMobile,
+    isMobile,
   };
 
   return (
@@ -423,7 +472,14 @@ export function Gotcha({
       ref={containerRef}
       style={{
         ...positionStyles[position],
-        zIndex: isOpen ? 10000 : 'auto',
+        // Intentionally `auto` even when open: the modal is portaled to
+        // document.body and sits at z-index 99999 in the root stacking
+        // context. Elevating the container here traps it inside the host
+        // page's stacking context, and the button then renders over the
+        // portal at anchor-adjacent positions (the original "G floats on
+        // top of the modal" bug). Leave the button's own stacking to the
+        // host page — the modal's portal handles above/below behaviour.
+        zIndex: 'auto',
       }}
       className="gotcha-container"
       data-gotcha-element={elementId}
@@ -441,28 +497,41 @@ export function Gotcha({
         queuedCount={queuedCount}
       />
 
-      {/* Desktop: portal without backdrop, anchored via fixed positioning */}
-      {isOpen && !isMobile && hasMounted && createPortal(
-        <GotchaModal {...modalProps} />,
-        document.body
-      )}
+      {/* Single portal that adapts between desktop-anchored and mobile-
+          centred layouts without unmounting GotchaModal. Keeping the same
+          wrapper tree across breakpoints means form state (textarea
+          content, selected stars/poll options, NPS score, bug flag,
+          screenshot) survives a viewport resize across the 1023px
+          threshold — without this, dragging a browser narrow mid-
+          submission would wipe the user's work.
 
-      {/* Mobile: frosted glass backdrop portal */}
-      {isOpen && isMobile && hasMounted && createPortal(
+          The outer wrapper stays `position: fixed; inset: 0` in both
+          layouts; only opacity + pointer-events toggle on isMobile. On
+          desktop the backdrop is transparent + click-through (modal
+          anchors via its own internal fixed-position calc). On mobile
+          it's a 40% ink wash with 8px blur + click-to-close. Keeping
+          layout constant — no jump from static-flow to fixed-fullscreen
+          — kills the paint flicker that showed up when dragging across
+          the breakpoint. */}
+      {isOpen && hasMounted && createPortal(
         <div
           role="presentation"
+          onClick={isMobile ? handleClose : undefined}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 99999,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            backgroundColor: isMobile ? 'rgba(26,23,20,0.32)' : 'transparent',
+            backdropFilter: isMobile ? 'blur(8px)' : 'none',
+            WebkitBackdropFilter: isMobile ? 'blur(8px)' : 'none',
+            pointerEvents: isMobile ? 'auto' : 'none',
+            transition: 'background-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1)',
           }}
-          className="gotcha-overlay-enter"
-          onClick={handleClose}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={isMobile ? (e) => e.stopPropagation() : undefined}
+            style={{ pointerEvents: 'auto' }}
+          >
             <GotchaModal {...modalProps} />
           </div>
         </div>,

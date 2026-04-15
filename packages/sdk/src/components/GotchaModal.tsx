@@ -60,6 +60,14 @@ export interface GotchaModalProps {
    * instead of absolute positioning relative to the container.
    */
   useFixedPosition?: boolean;
+  /**
+   * Viewport-width state hoisted from the parent so there's a single
+   * source of truth across the portal boundary. Without this, the parent
+   * and the modal each ran their own matchMedia listeners and could
+   * temporarily disagree across React ticks — visible as one-frame flicker
+   * during breakpoint crossings.
+   */
+  isMobile?: boolean;
 }
 
 // ── Mode label (small-caps above the H1) ─────────────────────
@@ -131,28 +139,54 @@ export function GotchaModal({
   onClose,
   anchorRect,
   useFixedPosition = false,
+  isMobile: isMobileProp,
 }: GotchaModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
-  const [isMobile, setIsMobile] = useState(false);
+  // Read viewport width from the prop when provided (single source of
+  // truth — Gotcha.tsx owns the live matchMedia listener). Fall back to
+  // internal state only if the modal is rendered without the prop (legacy
+  // or direct instantiation path).
+  const [internalIsMobile, setInternalIsMobile] = useState(false);
+  const isMobile = isMobileProp ?? internalIsMobile;
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
 
   const { themeConfig } = useGotchaContext();
 
-  // Detect mobile and system theme after mount (SSR-safe)
+  // Colour-scheme tracking only. Mobile state comes from the parent via
+  // the `isMobile` prop (single source of truth across the portal
+  // boundary). If the prop isn't provided, we fall back to an internal
+  // matchMedia listener so the modal still self-adapts when rendered
+  // standalone.
   useEffect(() => {
-    setIsMobile(window.innerWidth < 640);
+    if (typeof window === 'undefined') return;
 
     const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setSystemTheme(darkQuery.matches ? 'dark' : 'light');
+    const syncTheme = (e: MediaQueryListEvent | MediaQueryList) =>
+      setSystemTheme(e.matches ? 'dark' : 'light');
+    syncTheme(darkQuery);
+    const darkHandler = (e: MediaQueryListEvent) => syncTheme(e);
+    darkQuery.addEventListener('change', darkHandler);
 
-    const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
-    darkQuery.addEventListener('change', handler);
-    return () => darkQuery.removeEventListener('change', handler);
-  }, []);
+    const listeners: Array<() => void> = [
+      () => darkQuery.removeEventListener('change', darkHandler),
+    ];
+
+    if (isMobileProp === undefined) {
+      const mobileQuery = window.matchMedia('(max-width: 1023px)');
+      const syncMobile = () => setInternalIsMobile(mobileQuery.matches);
+      syncMobile();
+      mobileQuery.addEventListener('change', syncMobile);
+      listeners.push(() => mobileQuery.removeEventListener('change', syncMobile));
+    }
+
+    return () => {
+      for (const off of listeners) off();
+    };
+  }, [isMobileProp]);
 
   // Resolve theme with provider config
   const t: ResolvedTheme = useMemo(

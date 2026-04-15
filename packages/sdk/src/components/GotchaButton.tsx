@@ -128,7 +128,11 @@ export function GotchaButton({
     return 'translateY(0) scale(1)';
   };
 
-  const transitionDur = isPressed ? '90ms' : '180ms';
+  // Asymmetric press timing: fast on the way in (80ms = "you registered my
+  // click immediately"), slower on the way out (160ms = "settling back"),
+  // smoothest on rest hover (180ms). Open-state colour swap gets its own
+  // 240ms curve — deliberate brand moment, not a reactive flicker.
+  const transitionDur = isPressed ? '80ms' : '160ms';
   const easing = t.animation.easing.default;
 
   const baseStyles: React.CSSProperties = {
@@ -145,7 +149,7 @@ export function GotchaButton({
     color: glyphColor,
     boxShadow: isHovered ? t.colors.glassHoverShadow : t.colors.glassShadow,
     transition: hasEntered
-      ? `transform ${transitionDur} ${easing}, box-shadow ${transitionDur} ${easing}, border-color ${transitionDur} ${easing}, color ${transitionDur} ${easing}`
+      ? `transform ${transitionDur} ${easing}, box-shadow 180ms ${easing}, border-color 240ms ${easing}, color 240ms ${easing}`
       : `opacity 320ms ${easing}, transform 320ms ${easing}`,
     opacity: shouldShow ? 1 : 0,
     transform: getTransform(),
@@ -170,7 +174,7 @@ export function GotchaButton({
       aria-haspopup="dialog"
     >
       <GotchaIcon
-        size={buttonSize * 0.58}
+        size={buttonSize * 0.62}
         color={glyphColor}
         fontFamilyDisplay={t.typography.fontFamilyDisplay}
         animated={animated && !hasEntered}
@@ -213,18 +217,22 @@ function GotchaIcon({
       aria-hidden="true"
       style={{
         // The serif G is the brand mark. Fraunces-first with system-serif
-        // fallback; weight 600 gives the display-optical character we want.
+        // fallback. Weight 500 renders as true Georgia Regular (no fake-
+        // bold synthesis artifact); Fraunces 144 at its real 500 master
+        // will take over once the subset ships in 1.2.1.
         fontFamily: fontFamilyDisplay,
-        fontWeight: 600,
+        fontWeight: 500,
         fontSize: size,
         fontStyle: 'normal',
         lineHeight: 1,
         color,
-        // Fraunces 'G' sits low on the baseline; pull it up 1px so the
-        // glyph is optically centred inside the circle. Also nudge right
-        // by 0.5px to compensate for the spur's visual weight on the left.
-        transform: 'translate(0.5px, -1px)',
-        letterSpacing: '-0.02em',
+        // Optical centering — a capital G's visible bowl sits slightly
+        // ABOVE the ink-rect center, so we nudge the glyph DOWN 0.5px to
+        // seat the bowl on the button's horizontal axis. The X offset is
+        // zero at weight 500 (Georgia Regular's spur + right-hand bowl
+        // terminal balance naturally).
+        transform: 'translateY(0.5px)',
+        letterSpacing: 'normal',
         userSelect: 'none',
         opacity: animated ? (mounted ? 1 : 0) : 1,
         transition: animated
