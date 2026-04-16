@@ -33,7 +33,7 @@ interface Element {
 //                full lifecycle range plus closed-out statuses.
 const TRIAGE_STATUSES = ['NEW'] as const;
 const ROADMAP_STATUSES = ['UNDER_REVIEW', 'PLANNED', 'IN_PROGRESS', 'SHIPPED'] as const;
-const ALL_ACTIVE_STATUSES = [
+const ALL_ACTIVE_STATUSES: string[] = [
   'NEW',
   'REVIEWED',
   'ADDRESSED',
@@ -41,7 +41,7 @@ const ALL_ACTIVE_STATUSES = [
   'PLANNED',
   'IN_PROGRESS',
   'SHIPPED',
-] as const;
+];
 const ALL_STATUSES = [
   'NEW',
   'REVIEWED',
