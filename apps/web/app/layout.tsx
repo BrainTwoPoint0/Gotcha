@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Sans, Carter_One, Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { NavProgress } from './components/NavProgress';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${dmSans.variable} ${carterOne.variable} ${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       >
+        <NavProgress />
         <Providers>{children}</Providers>
       </body>
     </html>

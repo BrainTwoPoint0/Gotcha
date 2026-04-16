@@ -26,6 +26,12 @@ export async function Navbar() {
             Demo
           </Link>
           <Link
+            href="/roadmap/gotcha"
+            className="text-[14px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
+          >
+            Roadmap
+          </Link>
+          <Link
             href="/pricing"
             className="text-[14px] text-editorial-neutral-3 transition-colors hover:text-editorial-ink"
           >

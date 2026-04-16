@@ -116,16 +116,17 @@ export function GotchaButton({
     : t.colors.border;
   const glyphColor = isOpen ? t.colors.warning : t.colors.glassColor;
 
-  // Transform ladder:
-  //   hidden:  scale(0.96), opacity 0 (pre-entrance)
-  //   press:   translateY(0) scale(0.97)   — 90ms
-  //   hover:   translateY(-1px) scale(1)   — 180ms
-  //   rest:    translateY(0) scale(1)      — 180ms
+  // Transform ladder — editorial button stays put on hover. Lift-on-hover
+  // reads as tech-button bounce; a quiet editorial card earns attention
+  // with shadow weight, not movement. Only press registers a scale-down
+  // (tactile "click received"), and entrance fades in from slight scale.
+  //   hidden:  scale(0.96), opacity 0
+  //   press:   scale(0.97)
+  //   rest/hover: scale(1)  — shadow + border-color carry the hover cue
   const getTransform = () => {
-    if (!shouldShow) return 'translateY(0) scale(0.96)';
-    if (isPressed) return 'translateY(0) scale(0.97)';
-    if (isHovered) return 'translateY(-1px) scale(1)';
-    return 'translateY(0) scale(1)';
+    if (!shouldShow) return 'scale(0.96)';
+    if (isPressed) return 'scale(0.97)';
+    return 'scale(1)';
   };
 
   // Asymmetric press timing: fast on the way in (80ms = "you registered my
@@ -134,6 +135,13 @@ export function GotchaButton({
   // 240ms curve — deliberate brand moment, not a reactive flicker.
   const transitionDur = isPressed ? '80ms' : '160ms';
   const easing = t.animation.easing.default;
+
+  // Hover cue: background warms one step (paper → surface-hover) + shadow
+  // deepens. Glyph stays untouched — no scale, no opacity shift. Button
+  // geometry stays put (no lift).
+  const backgroundColor = isHovered && !isOpen
+    ? t.colors.surfaceHover
+    : t.colors.glassBackground;
 
   const baseStyles: React.CSSProperties = {
     position: 'relative',
@@ -145,11 +153,11 @@ export function GotchaButton({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: t.colors.glassBackground,
+    background: backgroundColor,
     color: glyphColor,
     boxShadow: isHovered ? t.colors.glassHoverShadow : t.colors.glassShadow,
     transition: hasEntered
-      ? `transform ${transitionDur} ${easing}, box-shadow 180ms ${easing}, border-color 240ms ${easing}, color 240ms ${easing}`
+      ? `transform ${transitionDur} ${easing}, background-color 180ms ${easing}, box-shadow 180ms ${easing}, border-color 240ms ${easing}, color 240ms ${easing}`
       : `opacity 320ms ${easing}, transform 320ms ${easing}`,
     opacity: shouldShow ? 1 : 0,
     transform: getTransform(),
@@ -227,13 +235,19 @@ function GotchaIcon({
         lineHeight: 1,
         color,
         // Optical centering — a capital G's visible bowl sits slightly
-        // ABOVE the ink-rect center, so we nudge the glyph DOWN 0.5px to
-        // seat the bowl on the button's horizontal axis. The X offset is
-        // zero at weight 500 (Georgia Regular's spur + right-hand bowl
-        // terminal balance naturally).
-        transform: 'translateY(0.5px)',
+        // ABOVE the ink-rect center. Prior iteration used translateY(0.5px)
+        // which is sub-pixel; during the button's bg-color hover
+        // transition the text AA re-snapped per repaint and the glyph
+        // appeared to "twitch" each frame. Fix: snap to integer pixel
+        // with translateY(1px) (0.5px imperceptibly different from 1px
+        // at this size) and promote to its own compositor layer via
+        // translateZ(0) + will-change: transform so the glyph is
+        // composited once and not repainted with the button.
+        transform: 'translateY(1px) translateZ(0)',
+        willChange: 'transform',
         letterSpacing: 'normal',
         userSelect: 'none',
+        display: 'inline-block',
         opacity: animated ? (mounted ? 1 : 0) : 1,
         transition: animated
           ? 'opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms'

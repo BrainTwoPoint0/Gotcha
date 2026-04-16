@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,17 @@ export interface EditorialMobileDrawerProps {
 
 export function EditorialMobileDrawer({ links, topSlot, bottomSlot }: EditorialMobileDrawerProps) {
   const [open, setOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
+
+  // Portal target is document.body — required because the parent top-nav
+  // is `sticky + z-30` which creates a stacking context that scopes any
+  // `z-40` / `z-50` children. Without the portal, page content was
+  // visible through the backdrop and the drawer panel rendered on top of
+  // the sticky nav's own row rather than over the full viewport.
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on route change
   React.useEffect(() => {
@@ -84,84 +95,105 @@ export function EditorialMobileDrawer({ links, topSlot, bottomSlot }: EditorialM
         </svg>
       </button>
 
-      {/* Backdrop */}
-      <div
-        aria-hidden="true"
-        onClick={() => setOpen(false)}
-        className={cn(
-          'fixed inset-0 z-40 bg-editorial-ink/30 transition-opacity duration-240 ease-page-turn',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        )}
-      />
-
-      {/* Drawer */}
-      <div
-        className={cn(
-          'editorial fixed inset-y-0 right-0 z-50 flex w-[min(88vw,340px)] flex-col border-l border-editorial-neutral-2 bg-editorial-paper transition-transform duration-240 ease-page-turn',
-          open ? 'translate-x-0' : 'translate-x-full'
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-hidden={!open}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-editorial-neutral-2 px-5">
-          <span className="font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink">
-            Gotcha
-          </span>
-          <button
-            ref={closeBtnRef}
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-editorial-ink transition-colors hover:bg-editorial-ink/[0.04]"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
+      {mounted &&
+        createPortal(
+          <>
+            {/* Backdrop — 50% ink wash (was 30%; looked thin behind the
+                drawer) + subtle blur. pointer-events-none while closed so
+                clicks reach the page below after close animation. */}
+            <div
               aria-hidden="true"
+              onClick={() => setOpen(false)}
+              className={cn(
+                'fixed inset-0 z-[1000] bg-editorial-ink/50 backdrop-blur-sm transition-opacity duration-240 ease-page-turn',
+                open ? 'opacity-100' : 'pointer-events-none opacity-0'
+              )}
+            />
+
+            {/* Drawer panel — fixed on the right, slides in from off-screen */}
+            <div
+              className={cn(
+                'editorial fixed inset-y-0 right-0 z-[1001] flex w-[min(88vw,340px)] flex-col border-l border-editorial-neutral-2 bg-editorial-paper shadow-[0_24px_64px_-12px_rgba(26,23,20,0.2)] transition-transform duration-240 ease-page-turn',
+                open ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+              )}
+              role="dialog"
+              aria-modal="true"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+              <div className="flex h-16 shrink-0 items-center justify-between border-b border-editorial-neutral-2 px-5">
+                <span className="font-display text-xl leading-none tracking-[-0.01em] text-editorial-ink">
+                  Gotcha
+                </span>
+                <button
+                  ref={closeBtnRef}
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md text-editorial-ink transition-colors hover:bg-editorial-ink/[0.04]"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-        {topSlot && <div className="border-b border-editorial-neutral-2 px-5 py-4">{topSlot}</div>}
+              {topSlot && (
+                <div className="shrink-0 border-b border-editorial-neutral-2 px-5 py-4">{topSlot}</div>
+              )}
 
-        <nav className="flex-1 overflow-y-auto px-2 py-3">
-          {links.map((link) => {
-            const active =
-              link.href === '/dashboard'
-                ? pathname === '/dashboard'
-                : pathname === link.href || pathname.startsWith(link.href + '/');
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'flex items-center justify-between rounded-md px-3 py-3 text-[15px] transition-colors',
-                  active
-                    ? 'bg-editorial-ink/[0.05] text-editorial-ink'
-                    : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.03] hover:text-editorial-ink'
-                )}
-              >
-                <span>{link.label}</span>
-                {link.proLocked && (
-                  <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent">
-                    Pro
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+              <nav className="flex-1 overflow-y-auto px-2 py-3">
+                {links.map((link) => {
+                  // Same most-specific-match logic as the desktop top-nav
+                  // so /analytics/segments lights up Segments only, not
+                  // Analytics too.
+                  const matchesPath = (href: string) =>
+                    href === '/dashboard'
+                      ? pathname === '/dashboard'
+                      : pathname === href || pathname.startsWith(href + '/');
+                  const winnerHref = links
+                    .filter((l) => matchesPath(l.href))
+                    .reduce<string | null>(
+                      (best, l) => (best === null || l.href.length > best.length ? l.href : best),
+                      null
+                    );
+                  const active = link.href === winnerHref;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        'flex items-center justify-between rounded-md px-3 py-3 text-[15px] transition-colors',
+                        active
+                          ? 'bg-editorial-ink/[0.05] text-editorial-ink'
+                          : 'text-editorial-neutral-3 hover:bg-editorial-ink/[0.03] hover:text-editorial-ink'
+                      )}
+                    >
+                      <span>{link.label}</span>
+                      {link.proLocked && (
+                        <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-editorial-accent">
+                          Pro
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
 
-        {bottomSlot && (
-          <div className="border-t border-editorial-neutral-2 px-5 py-4">{bottomSlot}</div>
+              {bottomSlot && (
+                <div className="shrink-0 border-t border-editorial-neutral-2 px-5 py-4">
+                  {bottomSlot}
+                </div>
+              )}
+            </div>
+          </>,
+          document.body
         )}
-      </div>
     </>
   );
 }

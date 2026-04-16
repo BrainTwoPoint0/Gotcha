@@ -94,11 +94,21 @@ function PositiveBar({ rate, height, filledColor, trackColor }: {
   );
 }
 
-/** Thumbs up SVG icon */
+/** Thumbs up SVG icon — outlined stroke to match VoteMode's treatment */
 function ThumbIcon({ size, color }: { size: number; color: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ display: 'block' }}>
-      <path d="M2 20h2c.55 0 1-.45 1-1v-9c0-.55-.45-1-1-1H2v11zm19.83-7.12c.11-.25.17-.52.17-.8V11c0-1.1-.9-2-2-2h-5.5l.92-4.65c.05-.22.02-.46-.08-.66a4.8 4.8 0 00-.88-1.12L14 2 7.59 8.41C7.21 8.79 7 9.3 7 9.83v7.84C7 18.95 8.05 20 9.34 20h8.11c.7 0 1.36-.37 1.72-.97l2.66-6.15z" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: 'block' }}
+    >
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
     </svg>
   );
 }
@@ -144,9 +154,34 @@ export function GotchaScore({
     gap: s.gap,
     fontFamily: t.typography.fontFamily,
     lineHeight: 1,
-    letterSpacing: '-0.01em',
     WebkitFontSmoothing: 'antialiased',
     ...style,
+  };
+
+  // Rating number: body-sans at bold weight, tabular numerals so widths
+  // stay uniform across rating changes. Reads as a data readout — the
+  // counterpart to the editorial count label beneath.
+  const ratingNumberStyle: React.CSSProperties = {
+    fontFamily: t.typography.fontFamily,
+    fontSize: s.ratingFontSize,
+    fontWeight: 700,
+    color: ratingColor,
+    fontVariantNumeric: 'tabular-nums',
+    letterSpacing: '-0.01em',
+    lineHeight: 1,
+  };
+
+  // Count label — small-caps mono, matches modal eyebrow + dashboard
+  // stat-card sub-text pattern. Quiet typographic signature that ties
+  // the score surface into the rest of the editorial system.
+  const countLabelStyle: React.CSSProperties = {
+    fontFamily:
+      "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace",
+    fontSize: Math.max(9, s.fontSize - 1),
+    color: mutedColor,
+    fontWeight: 400,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
   };
 
   const countText = (n: number, singular: string) => {
@@ -163,14 +198,10 @@ export function GotchaScore({
     return (
       <span style={baseStyle}>
         <ThumbIcon size={s.iconSize} color={positiveColor} />
-        <span style={{ fontSize: s.ratingFontSize, fontWeight: 600, color: positiveColor, fontVariantNumeric: 'tabular-nums' }}>
-          {positiveRate}%
-        </span>
+        <span style={{ ...ratingNumberStyle, color: positiveColor }}>{positiveRate}%</span>
         <PositiveBar rate={positiveRate ?? 0} height={s.barHeight} filledColor={positiveColor} trackColor={positiveTrack} />
         {showCount && (
-          <span style={{ fontSize: s.fontSize, color: mutedColor, fontWeight: 400 }}>
-            {countText(total, 'vote')}
-          </span>
+          <span style={countLabelStyle}>{countText(total, 'vote')}</span>
         )}
       </span>
     );
@@ -192,13 +223,9 @@ export function GotchaScore({
             fill={starFilled}
           />
         </svg>
-        <span style={{ fontSize: s.ratingFontSize, fontWeight: 700, color: ratingColor, fontVariantNumeric: 'tabular-nums' }}>
-          {displayRating}
-        </span>
+        <span style={ratingNumberStyle}>{displayRating}</span>
         {showCount && (
-          <span style={{ fontSize: s.fontSize, color: mutedColor, fontWeight: 400 }}>
-            ({totalResponses.toLocaleString()})
-          </span>
+          <span style={countLabelStyle}>({totalResponses.toLocaleString()})</span>
         )}
       </span>
     );
@@ -208,17 +235,10 @@ export function GotchaScore({
   if (variant === 'number') {
     return (
       <span style={baseStyle}>
-        <span style={{ fontSize: s.ratingFontSize, fontWeight: 700, color: ratingColor, fontVariantNumeric: 'tabular-nums' }}>
-          {displayRating}
-        </span>
-        <span style={{ fontSize: s.fontSize, color: mutedColor, fontWeight: 400 }}>/ 5</span>
+        <span style={ratingNumberStyle}>{displayRating}</span>
+        <span style={{ ...countLabelStyle, marginLeft: 2 }}>/ 5</span>
         {showCount && (
-          <span style={{
-            fontSize: s.fontSize,
-            color: mutedColor,
-            fontWeight: 400,
-            marginLeft: 2,
-          }}>
+          <span style={{ ...countLabelStyle, marginLeft: 2 }}>
             ({countText(totalResponses, 'response')})
           </span>
         )}
@@ -230,13 +250,9 @@ export function GotchaScore({
   return (
     <span style={baseStyle}>
       <Stars rating={averageRating} size={s.starSize} filledColor={starFilled} emptyColor={starEmpty} />
-      <span style={{ fontSize: s.ratingFontSize, fontWeight: 700, color: ratingColor, fontVariantNumeric: 'tabular-nums' }}>
-        {displayRating}
-      </span>
+      <span style={ratingNumberStyle}>{displayRating}</span>
       {showCount && (
-        <span style={{ fontSize: s.fontSize, color: mutedColor, fontWeight: 400 }}>
-          ({countText(totalResponses, 'response')})
-        </span>
+        <span style={countLabelStyle}>({countText(totalResponses, 'response')})</span>
       )}
     </span>
   );

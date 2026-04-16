@@ -21,17 +21,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const workspaces = activeOrg?.workspaces ?? [];
   const isPro = activeOrg?.isPro ?? false;
 
-  // Free items come first, Pro-locked trail. top-nav renders a hairline
-  // divider at the group boundary so the free set reads as the primary
-  // surface and Pro items don't dominate the navigation.
+  // Working surfaces lead (Overview → Projects → Responses → Analytics →
+  // Segments → Bugs), Settings trails at the end where account-level
+  // admin tends to live in editorial product navigation.
   const links: EditorialNavLink[] = [
     { href: '/dashboard', label: 'Overview' },
     { href: '/dashboard/projects', label: 'Projects' },
     { href: '/dashboard/responses', label: 'Responses' },
-    { href: '/dashboard/settings', label: 'Settings' },
     { href: '/dashboard/analytics', label: 'Analytics', proLocked: !isPro },
     { href: '/dashboard/analytics/segments', label: 'Segments', proLocked: !isPro },
     { href: '/dashboard/bugs', label: 'Bugs', proLocked: !isPro },
+    { href: '/dashboard/settings', label: 'Settings' },
   ];
 
   const workspaceNode =
@@ -41,7 +41,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const desktopRight = (
     <>
-      <span className="truncate font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+      {/* Email hides between lg (1024) and xl (1280). Below lg the whole
+          right slot goes to the drawer; between lg and xl the 7 nav links
+          need all available space, so we keep only Sign out. Above xl the
+          email returns as the account identifier. */}
+      <span className="hidden truncate font-mono text-[11px] uppercase tracking-[0.14em] text-editorial-neutral-3 xl:inline">
         {user.email}
       </span>
       <form action="/auth/signout" method="post">

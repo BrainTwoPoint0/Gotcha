@@ -46,12 +46,24 @@ export function EditorialTopNav({
           )}
         </div>
 
-        <div className="hidden min-w-0 flex-1 items-center gap-1 md:flex">
+        <div className="hidden min-w-0 flex-1 items-center gap-1 lg:flex">
           {links.map((link, idx) => {
-            const active =
-              link.href === '/dashboard'
+            // Only the single most-specific matching href lights up. Sub-
+            // routes must not also activate their parent (e.g.
+            // /analytics/segments previously lit both Analytics and
+            // Segments). Winner = longest href that equals the current
+            // pathname or is a segment-boundary prefix of it.
+            const matchesPath = (href: string) =>
+              href === '/dashboard'
                 ? pathname === '/dashboard'
-                : pathname === link.href || pathname.startsWith(link.href + '/');
+                : pathname === href || pathname.startsWith(href + '/');
+            const winnerHref = links
+              .filter((l) => matchesPath(l.href))
+              .reduce<string | null>(
+                (best, l) => (best === null || l.href.length > best.length ? l.href : best),
+                null
+              );
+            const active = link.href === winnerHref;
             const prev = links[idx - 1];
             // Hairline + mono "Pro" eyebrow at the first pro-locked link so the
             // free items read as the primary set and the paywalled items read
@@ -94,8 +106,8 @@ export function EditorialTopNav({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-4">
-          <div className="hidden items-center gap-4 md:flex">{rightSlot}</div>
-          <div className="md:hidden">{mobileMenuSlot}</div>
+          <div className="hidden items-center gap-4 lg:flex">{rightSlot}</div>
+          <div className="lg:hidden">{mobileMenuSlot}</div>
         </div>
       </div>
     </nav>

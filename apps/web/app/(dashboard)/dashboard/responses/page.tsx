@@ -105,6 +105,37 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
     : [...defaultStatuses];
 
   const searchTerm = params.search?.trim() || '';
+
+  // Full-text search across every field that can appear in a row's
+  // visible preview — including JSON array fields (pollSelected,
+  // pollOptions) that Prisma's first-class filters can't match
+  // case-insensitively. We cast the JSONB to its text form and ILIKE it,
+  // which matches the serialised array representation ("[\"Auto-
+  // categorization\"]") — so typing "auto" finds "Auto-categorization".
+  //
+  // Runs as a scoped subquery that returns matching IDs; the main
+  // findMany below adds `id: { in: matched }` so pagination, status
+  // filter, date range, etc. still compose naturally.
+  let searchMatchedIds: string[] | null = null;
+  if (searchTerm && organization) {
+    const like = `%${searchTerm}%`;
+    const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT r."id" FROM "Response" r
+      INNER JOIN "Project" p ON p."id" = r."projectId"
+      WHERE p."organizationId" = ${organization.id}
+        AND (
+          r."content" ILIKE ${like}
+          OR r."title" ILIKE ${like}
+          OR r."elementIdRaw" ILIKE ${like}
+          OR ${searchTerm.toLowerCase()} = ANY(r."tags")
+          OR r."pollSelected"::text ILIKE ${like}
+          OR r."pollOptions"::text ILIKE ${like}
+        )
+      LIMIT 2000
+    `;
+    searchMatchedIds = rows.map((r) => r.id);
+  }
+
   const where = {
     project: {
       organizationId: organization?.id,
@@ -120,12 +151,7 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
           },
         }
       : {}),
-    ...(searchTerm && {
-      OR: [
-        { content: { contains: searchTerm, mode: 'insensitive' as const } },
-        { title: { contains: searchTerm, mode: 'insensitive' as const } },
-      ],
-    }),
+    ...(searchMatchedIds !== null && { id: { in: searchMatchedIds } }),
   };
 
   const [elements, total, gatedCount, responses, availableTags, projectCount, firstProject] =
@@ -283,14 +309,22 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         )
       ) : (
         <EditorialCard className="overflow-hidden">
-          <EditorialTable className="table-fixed">
+          {/* table-auto on mobile so the two visible columns (Response +
+              Status) distribute across full viewport width. table-fixed
+              kicks in at sm+ where all 6 columns render and the colgroup
+              proportions match visible columns. Without this the hidden
+              columns' widths were still being allocated, squashing the
+              visible content into the left half of the viewport. */}
+          <EditorialTable className="table-auto sm:table-fixed">
             <colgroup>
-              {/* Proportions sum to 100%. Date widened so "Mar 10, 12:58 AM" never clips. */}
-              <col className="w-[34%]" />
+              {/* Proportions sum to 100%. Status widened to 16% so the
+                  longest label ("Under review") doesn't overflow; borrowed
+                  1% each from Response, Element, and Type. */}
+              <col className="w-[33%]" />
               <col className="w-[13%]" />
-              <col className="w-[9%]" />
+              <col className="w-[8%]" />
+              <col className="w-[16%]" />
               <col className="w-[13%]" />
-              <col className="w-[14%]" />
               <col className="w-[17%]" />
             </colgroup>
             <EditorialTHead>

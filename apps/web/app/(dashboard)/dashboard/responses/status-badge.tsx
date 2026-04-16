@@ -275,7 +275,17 @@ export function StatusBadge({ responseId, status: initialStatus }: StatusBadgePr
             aria-label={`Status: ${config.label}. Click to change.`}
           >
             {config.icon}
-            <span className="hidden sm:inline-block sm:w-[80px] text-left">{config.label}</span>
+            {/* Fixed width so every badge in the column aligns identically
+                regardless of label length. Longer labels (Under review,
+                In progress) truncate with ellipsis — the full text stays
+                available via the trigger's aria-label + title for
+                screen readers and hover. */}
+            <span
+              title={config.label}
+              className="hidden overflow-hidden text-left sm:inline-block sm:w-[88px] sm:truncate sm:whitespace-nowrap"
+            >
+              {config.label}
+            </span>
             <svg
               width="8"
               height="8"

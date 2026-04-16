@@ -380,10 +380,14 @@ export const DARK_TOKENS: ResolvedTheme = {
     closeButtonHover: '#F2EEE6',
     closeButtonBg: 'rgba(242,238,230,0.06)',
 
-    // Floating G button — stays at the canvas tone (#141210) so it reads
-    // as part of the page, not part of the modal. Open-state sienna ring
-    // + glyph applied at component layer.
-    glassBackground: '#141210',
+    // Floating G button — lifted one step above the canvas tone (#141210
+    // → #1A1714) so the card reads as a floating object on any dark host.
+    // Prior iteration sat at canvas which made the button disappear into
+    // typical dark-mode customer sites (which also use #141210-ish
+    // backgrounds). 6% lift is enough to separate without becoming a
+    // loud chrome element. Open-state sienna ring + glyph applied at
+    // component layer.
+    glassBackground: '#1A1714',
     glassBorder: '1px solid #2A2622',
     glassColor: '#F2EEE6',
     glassShadow:
