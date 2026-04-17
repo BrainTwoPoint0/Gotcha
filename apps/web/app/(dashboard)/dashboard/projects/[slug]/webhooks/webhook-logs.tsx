@@ -58,55 +58,80 @@ export function WebhookLogs({ projectSlug, webhookId }: WebhookLogsProps) {
   };
 
   if (loading && logs.length === 0) {
-    return <div className="p-4 text-sm text-gray-500">Loading logs...</div>;
+    return <div className="p-4 text-[13px] text-editorial-neutral-3">Loading logs…</div>;
   }
 
   if (logs.length === 0) {
-    return <div className="p-4 text-sm text-gray-500">No delivery logs yet.</div>;
+    return <div className="p-4 text-[13px] text-editorial-neutral-3">No delivery logs yet.</div>;
   }
 
   return (
     <div className="p-4">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500 border-b">
-            <th className="pb-2 font-medium">Time</th>
-            <th className="pb-2 font-medium">Event</th>
-            <th className="pb-2 font-medium">Status</th>
-            <th className="pb-2 font-medium">Duration</th>
-            <th className="pb-2 font-medium">Result</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {logs.map((log) => (
-            <tr key={log.id}>
-              <td className="py-2 text-gray-600">{new Date(log.createdAt).toLocaleString()}</td>
-              <td className="py-2">
-                <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{log.event}</code>
-              </td>
-              <td className="py-2">
-                {log.statusCode ? (
-                  <span className={log.success ? 'text-green-700' : 'text-red-700'}>
-                    {log.statusCode}
-                  </span>
-                ) : (
-                  <span className="text-gray-400">—</span>
-                )}
-              </td>
-              <td className="py-2 text-gray-600">{log.responseMs ? `${log.responseMs}ms` : '—'}</td>
-              <td className="py-2">
-                {log.success ? (
-                  <span className="text-green-700 text-xs">OK</span>
-                ) : (
-                  <span className="text-red-700 text-xs" title={log.error || undefined}>
-                    {log.error || 'Failed'}
-                  </span>
-                )}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-editorial-neutral-2">
+              <th className="py-2.5 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Time
+              </th>
+              <th className="py-2.5 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Event
+              </th>
+              <th className="py-2.5 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Status
+              </th>
+              <th className="py-2.5 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Duration
+              </th>
+              <th className="py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Result
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
+              <tr key={log.id} className="border-b border-editorial-neutral-2">
+                <td className="py-2.5 pr-4 font-mono text-[12px] tabular-nums text-editorial-neutral-3">
+                  {new Date(log.createdAt).toLocaleString()}
+                </td>
+                <td className="py-2.5 pr-4">
+                  <code className="rounded-sm bg-editorial-ink/[0.04] px-1.5 py-0.5 font-mono text-[11px] text-editorial-ink">
+                    {log.event}
+                  </code>
+                </td>
+                <td className="py-2.5 pr-4">
+                  {log.statusCode ? (
+                    <span
+                      className={`font-mono text-[13px] tabular-nums ${log.success ? 'text-editorial-success' : 'text-editorial-alert'}`}
+                    >
+                      {log.statusCode}
+                    </span>
+                  ) : (
+                    <span className="text-editorial-neutral-3">—</span>
+                  )}
+                </td>
+                <td className="py-2.5 pr-4 font-mono text-[12px] tabular-nums text-editorial-neutral-3">
+                  {log.responseMs ? `${log.responseMs}ms` : '—'}
+                </td>
+                <td className="py-2.5">
+                  {log.success ? (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-success">
+                      OK
+                    </span>
+                  ) : (
+                    <span
+                      className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-alert"
+                      title={log.error || undefined}
+                    >
+                      {log.error || 'Failed'}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {hasMore && (
         <div className="mt-3 text-center">

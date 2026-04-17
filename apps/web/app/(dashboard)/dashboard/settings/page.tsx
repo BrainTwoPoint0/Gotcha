@@ -102,24 +102,24 @@ export default async function SettingsPage() {
           </EditorialCardHeader>
           <EditorialCardBody>
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
-                    Current plan
-                  </p>
-                  <p className="mt-1 font-display text-2xl font-normal leading-[1.1] tracking-[-0.01em] text-editorial-ink">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                  Current plan
+                </p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p className="font-display text-2xl font-normal leading-[1.1] tracking-[-0.01em] text-editorial-ink">
                     {planLabel === 'FREE' ? 'Free' : 'Pro'}
                   </p>
+                  <span
+                    className={`inline-flex shrink-0 items-center rounded-md border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${
+                      subscription?.status === 'ACTIVE'
+                        ? 'border-editorial-success/40 bg-editorial-success/[0.06] text-editorial-success'
+                        : 'border-editorial-neutral-2 bg-editorial-paper text-editorial-neutral-3'
+                    }`}
+                  >
+                    {subscription?.status || 'Active'}
+                  </span>
                 </div>
-                <span
-                  className={`inline-flex items-center rounded-md border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${
-                    subscription?.status === 'ACTIVE'
-                      ? 'border-editorial-success/40 bg-editorial-success/[0.06] text-editorial-success'
-                      : 'border-editorial-neutral-2 bg-editorial-paper text-editorial-neutral-3'
-                  }`}
-                >
-                  {subscription?.status || 'Active'}
-                </span>
               </div>
 
               <div>

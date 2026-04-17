@@ -34,9 +34,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: '/dashboard/settings', label: 'Settings' },
   ];
 
+  // Top-nav usage gets the default `auto` variant — anchored dropdown on
+  // desktop, portal bottom sheet on narrow viewport. The drawer usage below
+  // uses `inline` so the list expands in place instead of stacking another
+  // portal on top of the drawer's own portal (which clipped badly).
   const workspaceNode =
     activeOrg && workspaces.length > 0 ? (
       <WorkspaceSwitcher workspaces={workspaces} activeId={activeOrg.organization.id} />
+    ) : null;
+
+  const workspaceNodeInline =
+    activeOrg && workspaces.length > 0 ? (
+      <WorkspaceSwitcher
+        workspaces={workspaces}
+        activeId={activeOrg.organization.id}
+        variant="inline"
+      />
     ) : null;
 
   const desktopRight = (
@@ -61,7 +74,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const mobileDrawerBottom = (
     <div className="space-y-3">
-      {workspaceNode && <div className="text-[13px] text-editorial-neutral-3">{workspaceNode}</div>}
+      {workspaceNodeInline && (
+        <div className="text-[13px] text-editorial-neutral-3">{workspaceNodeInline}</div>
+      )}
       <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
         {user.email}
       </p>

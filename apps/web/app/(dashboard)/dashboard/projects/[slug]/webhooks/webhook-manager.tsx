@@ -255,21 +255,25 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
         </Badge>
       );
     }
-    return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    return (
+      <Badge className="border border-editorial-success/30 bg-editorial-success/[0.08] text-editorial-success">
+        Active
+      </Badge>
+    );
   };
 
   return (
     <div className="space-y-6">
       {/* Error display */}
       {error && (
-        <div className="bg-editorial-alert/[0.04] border border-red-200 rounded-md px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-editorial-alert/30 bg-editorial-alert/[0.04] px-4 py-3 text-[13px] text-editorial-alert">
           {error}
         </div>
       )}
 
       {/* Secret display (shown after creation) */}
       {createdSecret && (
-        <div className="bg-editorial-accent/[0.06] border border-amber-200 rounded-md p-4">
+        <div className="rounded-md border border-editorial-accent/30 bg-editorial-accent/[0.06] p-4">
           <p className="text-sm font-medium text-editorial-alert mb-2">
             Webhook secret — copy it now, it won&apos;t be shown again:
           </p>
@@ -468,7 +472,7 @@ export function WebhookManager({ projectSlug, webhooks }: WebhookManagerProps) {
                         className={`mt-2 text-xs px-2 py-1 rounded inline-block ${
                           testResults[webhook.id]!.success
                             ? 'bg-editorial-success/[0.06] text-editorial-success'
-                            : 'bg-editorial-alert/[0.04] text-red-700'
+                            : 'bg-editorial-alert/[0.04] text-editorial-alert'
                         }`}
                       >
                         {testResults[webhook.id]!.success

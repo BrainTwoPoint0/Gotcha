@@ -209,8 +209,15 @@ export default async function BugsPage({ searchParams }: PageProps) {
         </EditorialCard>
       ) : (
         <EditorialCard className="overflow-hidden">
-          <EditorialTable className="table-fixed">
-            <colgroup>
+          {/* Mobile: Title + Status + Date only — the three columns a
+              triager actually needs at a glance. Element, Priority, Project
+              hidden below sm to stop the 6-col grid from collapsing into an
+              unreadable smush on 375px screens. Colgroup is `hidden
+              sm:table-column-group` so the fixed-width hints below only
+              apply once all six cols are visible; on mobile we use
+              table-auto so the remaining three expand to fill. */}
+          <EditorialTable className="table-auto sm:table-fixed">
+            <colgroup className="hidden sm:table-column-group">
               <col className="w-[38%]" />
               <col className="w-[13%]" />
               <col className="w-[13%]" />
@@ -221,10 +228,10 @@ export default async function BugsPage({ searchParams }: PageProps) {
             <EditorialTHead>
               <EditorialTR className="hover:bg-transparent">
                 <EditorialTH>Title</EditorialTH>
-                <EditorialTH>Element</EditorialTH>
+                <EditorialTH className="hidden sm:table-cell">Element</EditorialTH>
                 <EditorialTH>Status</EditorialTH>
-                <EditorialTH>Priority</EditorialTH>
-                <EditorialTH>Project</EditorialTH>
+                <EditorialTH className="hidden md:table-cell">Priority</EditorialTH>
+                <EditorialTH className="hidden lg:table-cell">Project</EditorialTH>
                 <EditorialTH>Date</EditorialTH>
               </EditorialTR>
             </EditorialTHead>
@@ -243,7 +250,7 @@ export default async function BugsPage({ searchParams }: PageProps) {
                         {bug.title}
                       </Link>
                     </EditorialTD>
-                    <EditorialTD>
+                    <EditorialTD className="hidden sm:table-cell">
                       <code className="block max-w-full truncate font-mono text-[11px] text-editorial-neutral-3">
                         {bug.elementId}
                       </code>
@@ -256,14 +263,14 @@ export default async function BugsPage({ searchParams }: PageProps) {
                         {status.label}
                       </span>
                     </EditorialTD>
-                    <EditorialTD>
+                    <EditorialTD className="hidden md:table-cell">
                       <span
                         className={`font-mono text-[10px] uppercase tracking-[0.14em] ${priority.tone}`}
                       >
                         {priority.label}
                       </span>
                     </EditorialTD>
-                    <EditorialTD>
+                    <EditorialTD className="hidden lg:table-cell">
                       <span className="text-[13px] text-editorial-neutral-3">
                         {bug.project.name}
                       </span>

@@ -126,7 +126,7 @@ export function MetadataFieldsManager({
             <p className="text-sm mt-1">Add fields from the discovered list below.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-editorial-neutral-2">
             {configuredFields.map((field) => (
               <div key={field.id} className="p-4 sm:p-6">
                 {editingField === field.id ? (
@@ -227,7 +227,7 @@ export function MetadataFieldsManager({
             </p>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-editorial-neutral-2">
             {discoveredFields.map((field) => (
               <div
                 key={field.key}
@@ -263,12 +263,14 @@ export function MetadataFieldsManager({
       )}
 
       {discoveredFields.length === 0 && configuredFields.length === 0 && (
-        <div className="bg-slate-50 border border-slate-200 rounded-md p-6">
-          <h3 className="text-lg font-medium text-editorial-ink mb-2">No user metadata found</h3>
-          <p className="text-editorial-neutral-3 mb-4">
+        <div className="rounded-md border border-editorial-neutral-2 bg-editorial-paper p-6">
+          <h3 className="font-display text-[1.25rem] font-normal leading-[1.3] tracking-[-0.01em] text-editorial-ink">
+            No user metadata found
+          </h3>
+          <p className="mt-2 text-[14px] leading-[1.55] text-editorial-neutral-3">
             To configure metadata fields, start passing user attributes when collecting feedback:
           </p>
-          <pre className="bg-slate-800 text-slate-100 rounded-md p-4 text-sm overflow-x-auto">
+          <pre className="mt-4 overflow-x-auto rounded-md border border-editorial-neutral-2 bg-editorial-ink/[0.02] p-4 font-mono text-[12px] leading-[1.55] text-editorial-ink">
             {`<Gotcha
   elementId="feature-x"
   user={{
