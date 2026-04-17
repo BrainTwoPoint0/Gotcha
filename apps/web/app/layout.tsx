@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { DM_Sans, Carter_One, Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
@@ -70,7 +71,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${dmSans.variable} ${carterOne.variable} ${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       >
-        <NavProgress />
+        {/* NavProgress reads useSearchParams(), which triggers a CSR bailout
+            during static prerender. Wrapping in Suspense lets every static
+            page still prerender — the progress bar hydrates on the client. */}
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         <Providers>{children}</Providers>
       </body>
     </html>
