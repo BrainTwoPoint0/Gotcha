@@ -14,6 +14,7 @@ import { sendUsageWarningEmail, sendBugReportEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
 import { atomicIncrementUsage } from '@/lib/usage-atomic';
 import { fireWebhooks } from '@/lib/webhooks';
+import { parseScreenshotDataUrl, uploadScreenshot } from '@/lib/screenshots';
 
 // Define types locally instead of importing Prisma enums
 type ResponseMode = 'FEEDBACK' | 'VOTE' | 'POLL' | 'FEATURE_REQUEST' | 'AB' | 'NPS';
@@ -50,7 +51,19 @@ export async function POST(request: NextRequest) {
 
     const { apiKey } = authResult;
 
-    // Parse body first (can fail with invalid JSON)
+    // Parse body first (can fail with invalid JSON). Up-front content-length
+    // check so a hostile caller can't make us buffer ~5MB of junk before
+    // Zod's 2.8MB cap fires. 3MB is the tightest bound that still covers a
+    // full 2MB base64 screenshot plus the surrounding JSON envelope with
+    // comfortable headroom for context metadata.
+    const contentLengthHeader = request.headers.get('content-length');
+    if (contentLengthHeader) {
+      const contentLength = Number(contentLengthHeader);
+      if (Number.isFinite(contentLength) && contentLength > 3_145_728) {
+        return apiError('PAYLOAD_TOO_LARGE', 'Request body exceeds 3MB limit', 413, reqOrigin);
+      }
+    }
+
     const idempotencyKey = request.headers.get('idempotency-key');
     const planKey = apiKey.plan.toLowerCase() as PlanType;
 
@@ -204,6 +217,38 @@ export async function POST(request: NextRequest) {
       // Cache idempotency response after DB write succeeds (fire-and-forget)
       if (idempotencyKey) {
         cacheIdempotencyResponse(idempotencyKey, apiKey.id, JSON.stringify(result)).catch(() => {});
+      }
+
+      // Screenshot persistence — strictly opt-in (end user ticked bug flag +
+      // customer enabled capture + capture succeeded client-side). Uploaded
+      // to the private `gotcha-screenshots` bucket keyed by project + response
+      // id. The path update is awaited inside a try so an orphaned object
+      // is never left in the bucket without a matching DB pointer. A parse
+      // or upload failure is logged and swallowed — a broken screenshot
+      // must never lose the user's actual feedback content.
+      if (data.screenshot && data.isBug) {
+        const parsed = parseScreenshotDataUrl(data.screenshot);
+        if (parsed.ok) {
+          const path = await uploadScreenshot(apiKey.projectId, responseId, parsed.value);
+          if (path) {
+            try {
+              await prisma.response.update({
+                where: { id: responseId },
+                data: { screenshotPath: path, screenshotCapturedAt: new Date() },
+              });
+            } catch (err) {
+              console.warn('screenshot path persist failed', {
+                responseId,
+                message: err instanceof Error ? err.message : 'unknown',
+              });
+            }
+          }
+        } else {
+          console.warn('screenshot parse rejected', {
+            responseId,
+            reason: parsed.reason,
+          });
+        }
       }
 
       // If flagged as bug, create a BugTicket (fire-and-forget — don't block the response)

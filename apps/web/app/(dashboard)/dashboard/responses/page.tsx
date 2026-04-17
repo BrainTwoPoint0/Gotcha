@@ -36,6 +36,8 @@ interface ResponseItem {
   tags: string[];
   createdAt: Date;
   upvoteCount: number;
+  screenshotPath: string | null;
+  screenshotCapturedAt: Date | null;
   project: { name: string; slug: string };
 }
 
@@ -309,14 +311,16 @@ export default async function ResponsesPage({ searchParams }: PageProps) {
         )
       ) : (
         <EditorialCard className="overflow-hidden">
-          {/* table-auto on mobile so the two visible columns (Response +
-              Status) distribute across full viewport width. table-fixed
-              kicks in at sm+ where all 6 columns render and the colgroup
-              proportions match visible columns. Without this the hidden
-              columns' widths were still being allocated, squashing the
-              visible content into the left half of the viewport. */}
+          {/* Mobile uses table-auto so the two visible columns (Response +
+              Status) size to their content and fill the viewport. sm+
+              switches to table-fixed with the colgroup proportions below.
+              The colgroup itself is `hidden sm:table-column-group` — on
+              mobile the <col> width hints are removed from layout entirely
+              (display:none on the group), otherwise the 16% width on the
+              Status col would still cap it at ~60px at 375px viewport and
+              push the status badge off the right edge. */}
           <EditorialTable className="table-auto sm:table-fixed">
-            <colgroup>
+            <colgroup className="hidden sm:table-column-group">
               {/* Proportions sum to 100%. Status widened to 16% so the
                   longest label ("Under review") doesn't overflow; borrowed
                   1% each from Response, Element, and Type. */}

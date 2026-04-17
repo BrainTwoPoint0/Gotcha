@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { canAccessBugFeatures } from '@/lib/plan-limits';
 import { BugActions } from './bug-actions';
 import { DashboardFeedback } from '@/app/components/DashboardFeedback';
+import { ScreenshotViewer } from '../../responses/screenshot-viewer';
 import {
   EditorialCard,
   EditorialCardBody,
@@ -67,6 +68,8 @@ export default async function BugDetailPage({ params }: PageProps) {
           url: true,
           userAgent: true,
           createdAt: true,
+          screenshotPath: true,
+          screenshotCapturedAt: true,
         },
       },
       project: { select: { name: true, slug: true } },
@@ -161,6 +164,14 @@ export default async function BugDetailPage({ params }: PageProps) {
                     <p className="whitespace-pre-wrap text-[14px] leading-[1.6] text-editorial-ink">
                       {bug.response.content}
                     </p>
+                  </DetailRow>
+                )}
+                {bug.response.screenshotPath && (
+                  <DetailRow label="Screenshot">
+                    <ScreenshotViewer
+                      responseId={bug.response.id}
+                      capturedAt={bug.response.screenshotCapturedAt?.toISOString() ?? null}
+                    />
                   </DetailRow>
                 )}
                 <div className="flex items-center gap-3 border-t border-editorial-neutral-2 pt-3 font-mono text-[11px] text-editorial-neutral-3">

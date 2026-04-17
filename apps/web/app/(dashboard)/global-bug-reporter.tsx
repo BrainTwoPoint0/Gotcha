@@ -20,6 +20,7 @@ export function GlobalBugReporter({ userEmail, userName, plan }: GlobalBugReport
         promptText="Report a bug or share feedback"
         showRating={false}
         enableBugFlag
+        enableScreenshot
         showOnHover={false}
         onePerUser={false}
         user={

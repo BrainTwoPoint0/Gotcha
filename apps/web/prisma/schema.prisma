@@ -261,6 +261,16 @@ model Response {
   isBug     Boolean    @default(false)
   bugTicket BugTicket?
 
+  // Screenshot attached to the response (bug reports). Stored in Supabase
+  // Storage under `<projectId>/<responseId>.jpg` in the private
+  // `gotcha-screenshots` bucket. `screenshotPath` is the object key; the
+  // dashboard exchanges it for a short-lived signed URL at view time so
+  // the bucket itself stays locked down. Nullable — only set when the
+  // customer enabled `enableScreenshot` AND the end-user ticked the bug
+  // flag AND the capture succeeded.
+  screenshotPath        String?
+  screenshotCapturedAt  DateTime?
+
   // Relations
   project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   element      Element?      @relation(fields: [elementId], references: [id], onDelete: SetNull)

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { EditorialTD, EditorialTR } from '../../components/editorial/table';
 import { StatusBadge } from './status-badge';
 import { TagEditor } from './tag-editor';
+import { TitleEditor } from './title-editor';
+import { ScreenshotViewer } from './screenshot-viewer';
 
 const MODE_LABELS: Record<string, string> = {
   FEEDBACK: 'Feedback',
@@ -29,6 +31,8 @@ interface ResponseRowProps {
     tags: string[];
     createdAt: Date;
     upvoteCount?: number;
+    screenshotPath: string | null;
+    screenshotCapturedAt: Date | null;
     project: { name: string; slug: string };
   };
   isGated: boolean;
@@ -320,17 +324,24 @@ export function ResponseRow({ response, isGated, isPro, availableTags }: Respons
                   </DetailRow>
                 )}
 
-                {response.title && (
-                  <DetailRow label="Title">
-                    <span className="text-[14px] text-editorial-ink">{response.title}</span>
-                  </DetailRow>
-                )}
+                <DetailRow label="Title">
+                  <TitleEditor responseId={response.id} initialTitle={response.title} />
+                </DetailRow>
 
                 {response.content && (
                   <DetailRow label="Content">
                     <p className="whitespace-pre-wrap text-[14px] leading-[1.6] text-editorial-ink">
                       {response.content}
                     </p>
+                  </DetailRow>
+                )}
+
+                {response.screenshotPath && (
+                  <DetailRow label="Screenshot">
+                    <ScreenshotViewer
+                      responseId={response.id}
+                      capturedAt={response.screenshotCapturedAt?.toISOString() ?? null}
+                    />
                   </DetailRow>
                 )}
 

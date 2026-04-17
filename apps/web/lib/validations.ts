@@ -76,6 +76,18 @@ export const submitResponseSchema = z
     // notified") is explicit.
     userEmail: z.string().email().max(320).optional(),
 
+    // Base64 data URL for a viewport screenshot captured by the SDK when
+    // the end user toggles the bug flag AND the customer enabled
+    // `enableScreenshot`. Upper-bounded to 2.8MB of base64 text (~2.1MB
+    // binary, a bit over the bucket's 2MB cap — lets the Zod layer reject
+    // before reaching Supabase). Validated more thoroughly in the route
+    // handler (MIME sniff, header parse, decoded-size check).
+    screenshot: z
+      .string()
+      .max(2_800_000, 'Screenshot payload exceeds 2MB limit')
+      .regex(/^data:image\/(jpeg|png);base64,/, 'Screenshot must be a base64 JPEG or PNG data URL')
+      .optional(),
+
     // Context
     context: contextSchema,
   })

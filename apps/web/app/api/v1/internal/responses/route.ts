@@ -6,6 +6,7 @@ import { isInternalOriginAllowed } from '@/lib/origin-check';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { fireWebhooks } from '@/lib/webhooks';
 import { sendBugReportEmail } from '@/lib/emails/send';
+import { parseScreenshotDataUrl, uploadScreenshot } from '@/lib/screenshots';
 
 /**
  * Internal API route for the Gotcha website's own SDK usage.
@@ -172,6 +173,35 @@ export async function POST(request: NextRequest) {
             isBug: data.isBug || false,
           },
         });
+
+        // Screenshot persistence — mirrors the public /api/v1/responses
+        // handler. See lib/screenshots.ts for validation + upload details.
+        // A failure here is logged and swallowed; we never want the
+        // screenshot pipeline to lose the user's actual feedback content.
+        if (data.screenshot && data.isBug) {
+          const parsed = parseScreenshotDataUrl(data.screenshot);
+          if (parsed.ok) {
+            const path = await uploadScreenshot(apiKey.projectId, responseId, parsed.value);
+            if (path) {
+              try {
+                await prisma.response.update({
+                  where: { id: responseId },
+                  data: { screenshotPath: path, screenshotCapturedAt: new Date() },
+                });
+              } catch (err) {
+                console.warn('screenshot path persist failed (internal)', {
+                  responseId,
+                  message: err instanceof Error ? err.message : 'unknown',
+                });
+              }
+            }
+          } else {
+            console.warn('screenshot parse rejected (internal)', {
+              responseId,
+              reason: parsed.reason,
+            });
+          }
+        }
 
         // If flagged as bug, create a BugTicket
         if (data.isBug) {
