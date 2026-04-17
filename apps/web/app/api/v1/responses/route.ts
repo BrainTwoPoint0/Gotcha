@@ -37,7 +37,19 @@ const voteMap: Record<string, VoteType> = {
 
 export async function POST(request: NextRequest) {
   const reqOrigin = request.headers.get('origin');
+
+  // Per-stage wall-clock markers for Server-Timing. Lets us profile the
+  // hot path from browser devtools + production logs without a dedicated
+  // APM. Each segment ending writes to `stages[name] = ms`. The header
+  // is emitted on the success response; error paths skip it.
+  const pipelineT0 = performance.now();
+  const stages: Record<string, number> = {};
+  const mark = (name: string, startedAt: number) => {
+    stages[name] = Math.round((performance.now() - startedAt) * 10) / 10;
+  };
+
   try {
+    const tAuth = performance.now();
     // Validate API key
     const authResult = await validateApiKey(request);
     if (!authResult.success) {
@@ -48,6 +60,7 @@ export async function POST(request: NextRequest) {
         reqOrigin
       );
     }
+    mark('auth', tAuth);
 
     const { apiKey } = authResult;
 
@@ -67,18 +80,22 @@ export async function POST(request: NextRequest) {
     const idempotencyKey = request.headers.get('idempotency-key');
     const planKey = apiKey.plan.toLowerCase() as PlanType;
 
+    const tBody = performance.now();
     let body: unknown;
     try {
       body = await request.json();
     } catch {
       return apiError('INVALID_REQUEST', 'Invalid JSON body', 400, reqOrigin);
     }
+    mark('body', tBody);
 
     // Check rate limit + idempotency in parallel
+    const tGuards = performance.now();
     const [rateLimit, idempotencyResult] = await Promise.all([
       checkRateLimit(apiKey.id, planKey),
       idempotencyKey ? checkIdempotency(idempotencyKey, apiKey.id) : Promise.resolve(null),
     ]);
+    mark('guards', tGuards);
 
     if (!rateLimit.success) {
       return apiError('RATE_LIMITED', 'Too many requests', 429, reqOrigin);
@@ -104,6 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate request body
+    const tValidate = performance.now();
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
@@ -119,6 +137,7 @@ export async function POST(request: NextRequest) {
       experimentId?: string;
       variant?: string;
     };
+    mark('validate', tValidate);
 
     // Generate response ID and timestamp up front so we can respond immediately
     const responseId = crypto.randomUUID();
@@ -132,6 +151,7 @@ export async function POST(request: NextRequest) {
 
     // DB writes (element lookup, response creation, usage tracking)
     // No inner try/catch — errors propagate to the outer catch which returns 500
+    const tWrite = performance.now();
     const asyncWrite = async () => {
       // Element upsert + usage increment are independent — run in parallel
       const [element, _usage] = await Promise.all([
@@ -311,6 +331,7 @@ export async function POST(request: NextRequest) {
 
     // Await DB writes to ensure they complete before Lambda freezes
     await asyncWrite();
+    mark('write', tWrite);
 
     // Invalidate cached analytics so dashboards show fresh data
     try {
@@ -347,9 +368,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Server-Timing — browser devtools surfaces these per-stage durations
+    // under the Network panel's "Timing" tab. Total is tracked on the
+    // server (pipelineT0) for correlation with the SDK's client-side
+    // click→ack measurement.
+    stages.total = Math.round((performance.now() - pipelineT0) * 10) / 10;
+    const serverTiming = Object.entries(stages)
+      .map(([name, dur]) => `${name};dur=${dur}`)
+      .join(', ');
+
     return Response.json(result, {
       status: 201,
-      headers: { ...getCorsHeaders(reqOrigin), ...rateLimit.headers },
+      headers: {
+        ...getCorsHeaders(reqOrigin),
+        ...rateLimit.headers,
+        'Server-Timing': serverTiming,
+      },
     });
   } catch (error) {
     console.error(

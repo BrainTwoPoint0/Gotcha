@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   ResponseMode,
   GotchaUser,
@@ -10,14 +10,14 @@ import {
   GotchaStyles,
   GotchaResponse,
   GotchaError,
-} from '../types';
-import { DEFAULTS } from '../constants';
-import { useGotchaContext } from './GotchaProvider';
-import { useSubmit } from '../hooks/useSubmit';
-import { useHideAfterSubmit } from '../hooks/useHideAfterSubmit';
-import { useTriggerConditions } from '../hooks/useTriggerConditions';
-import { GotchaButton } from './GotchaButton';
-import { GotchaModal } from './GotchaModal';
+} from "../types";
+import { DEFAULTS } from "../constants";
+import { useGotchaContext } from "./GotchaProvider";
+import { useSubmit } from "../hooks/useSubmit";
+import { useHideAfterSubmit } from "../hooks/useHideAfterSubmit";
+import { useTriggerConditions } from "../hooks/useTriggerConditions";
+import { GotchaButton } from "./GotchaButton";
+import { GotchaModal } from "./GotchaModal";
 
 export interface GotchaProps {
   /** Unique identifier for this element */
@@ -150,7 +150,7 @@ export function Gotcha({
   elementId,
   user,
   userEmail,
-  mode = 'feedback',
+  mode = "feedback",
   showText = true,
   showRating = true,
   voteLabels,
@@ -196,6 +196,7 @@ export function Gotcha({
     defaultUser,
     defaultUserEmail,
     client,
+    debug,
   } = useGotchaContext();
 
   const { conditionsMet } = useTriggerConditions({
@@ -210,7 +211,7 @@ export function Gotcha({
     userId: user?.id || defaultUser?.id,
     hideAfterSubmitDays,
   });
-  const [phase, setPhase] = useState<'form' | 'followUp' | 'success'>('form');
+  const [phase, setPhase] = useState<"form" | "followUp" | "success">("form");
   const [lastResponseId, setLastResponseId] = useState<string | null>(null);
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [queuedCount, setQueuedCount] = useState(0);
@@ -220,7 +221,32 @@ export function Gotcha({
   const [hasMounted, setHasMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const lastSubmitDataRef = useRef<{ rating?: number; vote?: 'up' | 'down' } | null>(null);
+  const lastSubmitDataRef = useRef<{
+    rating?: number;
+    vote?: "up" | "down";
+  } | null>(null);
+
+  // Full SubmitData payload for the most recent click. Held so the failure
+  // toast's "Retry" button can re-fire the exact same payload — the modal
+  // has closed by the time the user sees the toast, so we can't re-read
+  // form state from children. Cleared on successful settle.
+  const pendingDataRef = useRef<{
+    content?: string;
+    title?: string;
+    rating?: number;
+    vote?: "up" | "down";
+    pollSelected?: string[];
+    isBug?: boolean;
+    screenshot?: string;
+  } | null>(null);
+
+  // Failure toast — only shown when the optimistic UI was already flipped
+  // to success but the background POST rejected. Preserves the payload so
+  // the user can retry without reopening the modal.
+  const [failureToast, setFailureToast] = useState<{
+    message: string;
+    retrying: boolean;
+  } | null>(null);
 
   // SSR-safe mount detection + live viewport tracking. Uses matchMedia so
   // we only re-render when the viewport actually crosses the breakpoint,
@@ -236,13 +262,13 @@ export function Gotcha({
   // Anchored-popover is a desktop pattern; it needs desktop width to work.
   useEffect(() => {
     setHasMounted(true);
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 1023px)');
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 1023px)");
     const sync = () => setIsMobile(mq.matches);
     sync();
-    mq.addEventListener('change', sync);
+    mq.addEventListener("change", sync);
     return () => {
-      mq.removeEventListener('change', sync);
+      mq.removeEventListener("change", sync);
       clearTimeout(autoCloseTimerRef.current);
     };
   }, []);
@@ -254,8 +280,8 @@ export function Gotcha({
       // Queue will be flushed by provider; update count after a delay
       setTimeout(() => setQueuedCount(client.getQueueLength()), 2000);
     };
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [client]);
 
   const isOpen = activeModalId === elementId;
@@ -279,23 +305,23 @@ export function Gotcha({
         rafId = 0;
         const el = containerRef.current;
         if (!el) return;
-        const button = el.querySelector('button');
+        const button = el.querySelector("button");
         setAnchorRect((button ?? el).getBoundingClientRect());
       });
     };
-    window.addEventListener('resize', reanchor);
-    window.addEventListener('scroll', reanchor, { passive: true });
+    window.addEventListener("resize", reanchor);
+    window.addEventListener("scroll", reanchor, { passive: true });
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', reanchor);
-      window.removeEventListener('scroll', reanchor);
+      window.removeEventListener("resize", reanchor);
+      window.removeEventListener("scroll", reanchor);
     };
   }, [isOpen, isMobile]);
 
   // Reset phase when modal is closed externally (e.g., another modal opens)
   useEffect(() => {
     if (!isOpen) {
-      setPhase('form');
+      setPhase("form");
       clearTimeout(autoCloseTimerRef.current);
     }
   }, [isOpen]);
@@ -304,8 +330,10 @@ export function Gotcha({
   useEffect(() => {
     if (!isOpen || !isMobile) return;
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [isOpen, isMobile]);
 
   // Attach hover listeners to the parent element
@@ -321,16 +349,23 @@ export function Gotcha({
     const handleMouseEnter = () => setIsParentHovered(true);
     const handleMouseLeave = () => setIsParentHovered(false);
 
-    parent.addEventListener('mouseenter', handleMouseEnter);
-    parent.addEventListener('mouseleave', handleMouseLeave);
+    parent.addEventListener("mouseenter", handleMouseEnter);
+    parent.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      parent.removeEventListener('mouseenter', handleMouseEnter);
-      parent.removeEventListener('mouseleave', handleMouseLeave);
+      parent.removeEventListener("mouseenter", handleMouseEnter);
+      parent.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [showOnHover]);
 
-  const { submit, isLoading, isCheckingExisting, error, existingResponse, isEditing } = useSubmit({
+  const {
+    submit,
+    isLoading,
+    isCheckingExisting,
+    error,
+    existingResponse,
+    isEditing,
+  } = useSubmit({
     elementId,
     mode,
     pollOptions: options,
@@ -338,31 +373,31 @@ export function Gotcha({
     userEmail: userEmail ?? defaultUserEmail,
     onePerUser,
     cooldownDays,
+    // Phase flip happens synchronously in handleSubmit (optimistic UI);
+    // onSuccess reconciles the server-returned id + clears any pending
+    // retry toast from a previous attempt.
     onSuccess: (response) => {
       setLastResponseId(response.id);
-      if (hideAfterSubmitDays) markHidden();
       onSubmit?.(response);
-
-      // Check if follow-up should trigger
-      const shouldFollowUp = followUp && lastSubmitDataRef.current && (
-        (followUp.ratingThreshold != null && lastSubmitDataRef.current.rating != null &&
-         lastSubmitDataRef.current.rating <= followUp.ratingThreshold) ||
-        (followUp.onNegativeVote && lastSubmitDataRef.current.vote === 'down')
-      );
-
-      if (shouldFollowUp && mode !== 'poll') {
-        setPhase('followUp');
-      } else {
-        setPhase('success');
-        autoCloseTimerRef.current = setTimeout(() => {
-          closeModal();
-          setPhase('form');
-        }, 4000);
-      }
+      setFailureToast(null);
+      pendingDataRef.current = null;
     },
     onError: (err) => {
-      console.warn('[Gotcha] Submission failed:', err instanceof Error ? err.message : err);
+      console.warn(
+        "[Gotcha] Submission failed:",
+        err instanceof Error ? err.message : err,
+      );
       onError?.(err as unknown as GotchaError);
+      // Background POST rejected after the optimistic success flip.
+      // Show a retry toast with the preserved payload so the user can
+      // recover without losing their input. The modal has already moved
+      // on — never silently swallow the failure.
+      if (pendingDataRef.current) {
+        setFailureToast({
+          message: err instanceof Error ? err.message : "Something went wrong",
+          retrying: false,
+        });
+      }
     },
   });
 
@@ -372,7 +407,7 @@ export function Gotcha({
       // The container (inline-flex) can be larger than the button due to
       // line-height, baseline alignment, or inherited layout styles from
       // the parent — causing the modal to appear with a gap.
-      const button = containerRef.current.querySelector('button');
+      const button = containerRef.current.querySelector("button");
       setAnchorRect((button ?? containerRef.current).getBoundingClientRect());
     }
     openModal(elementId);
@@ -382,18 +417,96 @@ export function Gotcha({
   const handleClose = useCallback(() => {
     clearTimeout(autoCloseTimerRef.current);
     closeModal();
-    setPhase('form');
+    setPhase("form");
     onClose?.();
   }, [closeModal, onClose]);
 
-  // Wrap submit to capture rating/vote for follow-up check
+  // Optimistic submit — flip phase BEFORE the server round-trip so the
+  // user sees the success state (or follow-up prompt) within one paint
+  // frame. The POST runs in the background via submit(); onSuccess
+  // reconciles the id, onError shows a retry toast with preserved data.
+  //
+  // Follow-up decision + markHidden() both run from in-hand data (rating,
+  // vote) — they never needed the server response.
   const handleSubmit = useCallback(
-    (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean }) => {
+    (data: {
+      content?: string;
+      title?: string;
+      rating?: number;
+      vote?: "up" | "down";
+      pollSelected?: string[];
+      isBug?: boolean;
+      screenshot?: string;
+    }) => {
       lastSubmitDataRef.current = { rating: data.rating, vote: data.vote };
-      submit(data);
+      pendingDataRef.current = data;
+
+      const shouldFollowUp =
+        followUp &&
+        ((followUp.ratingThreshold != null &&
+          data.rating != null &&
+          data.rating <= followUp.ratingThreshold) ||
+          (followUp.onNegativeVote && data.vote === "down"));
+
+      if (shouldFollowUp && mode !== "poll") {
+        setPhase("followUp");
+      } else {
+        setPhase("success");
+        autoCloseTimerRef.current = setTimeout(() => {
+          closeModal();
+          setPhase("form");
+        }, 4000);
+      }
+
+      if (hideAfterSubmitDays) markHidden();
+
+      // Fire the POST in background. onSuccess/onError in useSubmit
+      // handle reconciliation; swallow rejection here so the unhandled
+      // promise doesn't bubble to the host page.
+      const submitStart =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      submit(data)
+        .catch(() => {
+          // Handled in onError.
+        })
+        .finally(() => {
+          if (debug) {
+            const ms =
+              (typeof performance !== "undefined"
+                ? performance.now()
+                : Date.now()) - submitStart;
+            console.log(`[Gotcha] Server ack in ${ms.toFixed(0)}ms`);
+          }
+        });
     },
-    [submit]
+    [
+      submit,
+      followUp,
+      mode,
+      hideAfterSubmitDays,
+      markHidden,
+      closeModal,
+      debug,
+    ],
   );
+
+  // Retry the most recent failed submission. The modal has closed by
+  // this point — we fire the POST silently and dismiss the toast on
+  // success (via onSuccess → setFailureToast(null)). On a second
+  // failure, onError re-shows the toast with the new error.
+  const handleRetrySubmission = useCallback(() => {
+    const data = pendingDataRef.current;
+    if (!data || !failureToast || failureToast.retrying) return;
+    setFailureToast({ ...failureToast, retrying: true });
+    submit(data).catch(() => {
+      // onError re-paints the toast.
+    });
+  }, [failureToast, submit]);
+
+  const handleDismissToast = useCallback(() => {
+    setFailureToast(null);
+    pendingDataRef.current = null;
+  }, []);
 
   // Handle follow-up submission
   const handleFollowUpSubmit = useCallback(
@@ -404,29 +517,52 @@ export function Gotcha({
         await client.updateResponse(lastResponseId, { content });
       } catch (err) {
         // If follow-up fails, still show success — initial response is already saved
-        console.warn('[Gotcha] Follow-up submission failed:', err instanceof Error ? err.message : err);
+        console.warn(
+          "[Gotcha] Follow-up submission failed:",
+          err instanceof Error ? err.message : err,
+        );
       } finally {
         setFollowUpLoading(false);
-        setPhase('success');
+        setPhase("success");
         autoCloseTimerRef.current = setTimeout(() => {
           closeModal();
-          setPhase('form');
+          setPhase("form");
         }, 4000);
       }
     },
-    [lastResponseId, closeModal, client]
+    [lastResponseId, closeModal, client],
   );
 
-  const effectiveSubmitText = (onePerUser && isEditing) ? 'Update' : submitText;
+  const effectiveSubmitText = onePerUser && isEditing ? "Update" : submitText;
 
   if (disabled || !visible || isHidden || !conditionsMet) return null;
 
   const positionStyles: Record<Position, React.CSSProperties> = {
-    'top-right': { position: 'absolute', top: 0, right: 0, transform: 'translate(50%, -50%)' },
-    'top-left': { position: 'absolute', top: 0, left: 0, transform: 'translate(-50%, -50%)' },
-    'bottom-right': { position: 'absolute', bottom: 0, right: 0, transform: 'translate(50%, 50%)' },
-    'bottom-left': { position: 'absolute', bottom: 0, left: 0, transform: 'translate(-50%, 50%)' },
-    'inline': { position: 'relative', display: 'inline-flex' },
+    "top-right": {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      transform: "translate(50%, -50%)",
+    },
+    "top-left": {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      transform: "translate(-50%, -50%)",
+    },
+    "bottom-right": {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      transform: "translate(50%, 50%)",
+    },
+    "bottom-left": {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      transform: "translate(-50%, 50%)",
+    },
+    inline: { position: "relative", display: "inline-flex" },
   };
 
   const modalProps = {
@@ -439,7 +575,7 @@ export function Gotcha({
     thankYouMessage,
     isLoading,
     isCheckingExisting: onePerUser && isCheckingExisting,
-    isSubmitted: phase === 'success',
+    isSubmitted: phase === "success",
     phase,
     followUpConfig: followUp,
     followUpLoading,
@@ -479,7 +615,7 @@ export function Gotcha({
         // portal at anchor-adjacent positions (the original "G floats on
         // top of the modal" bug). Leave the button's own stacking to the
         // host page — the modal's portal handles above/below behaviour.
-        zIndex: 'auto',
+        zIndex: "auto",
       }}
       className="gotcha-container"
       data-gotcha-element={elementId}
@@ -513,30 +649,147 @@ export function Gotcha({
           layout constant — no jump from static-flow to fixed-fullscreen
           — kills the paint flicker that showed up when dragging across
           the breakpoint. */}
-      {isOpen && hasMounted && createPortal(
-        <div
-          role="presentation"
-          onClick={isMobile ? handleClose : undefined}
+      {failureToast &&
+        hasMounted &&
+        createPortal(
+          <FailureToast
+            message={failureToast.message}
+            retrying={failureToast.retrying}
+            onRetry={handleRetrySubmission}
+            onDismiss={handleDismissToast}
+          />,
+          document.body,
+        )}
+
+      {isOpen &&
+        hasMounted &&
+        createPortal(
+          <div
+            role="presentation"
+            onClick={isMobile ? handleClose : undefined}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 99999,
+              backgroundColor: isMobile ? "rgba(26,23,20,0.32)" : "transparent",
+              backdropFilter: isMobile ? "blur(8px)" : "none",
+              WebkitBackdropFilter: isMobile ? "blur(8px)" : "none",
+              pointerEvents: isMobile ? "auto" : "none",
+              transition:
+                "background-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+            }}
+          >
+            <div
+              onClick={isMobile ? (e) => e.stopPropagation() : undefined}
+              style={{ pointerEvents: "auto" }}
+            >
+              <GotchaModal {...modalProps} />
+            </div>
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+/**
+ * Failure toast — shown only when the background POST rejects after the
+ * optimistic phase flip. Bottom-right on desktop, bottom-centre on mobile.
+ * Never blocks interaction with the host page; `role="status"` +
+ * `aria-live="polite"` so screen readers announce without interrupting.
+ *
+ * Keeps the retry count implicit: if the retry also fails, the `onError`
+ * callback re-renders this same toast with a fresh message. If the retry
+ * succeeds, `onSuccess` clears `failureToast` state and the toast unmounts.
+ */
+function FailureToast({
+  message,
+  retrying,
+  onRetry,
+  onDismiss,
+}: {
+  message: string;
+  retrying: boolean;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="editorial"
+      style={{
+        position: "fixed",
+        bottom: 16,
+        right: 16,
+        zIndex: 99998,
+        maxWidth: 360,
+        borderRadius: 6,
+        border: "1px solid rgba(155, 58, 46, 0.35)",
+        backgroundColor: "#FAF8F4",
+        boxShadow: "0 4px 16px rgba(26, 23, 20, 0.12)",
+        padding: "14px 16px",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif",
+        color: "#1A1714",
+        animation: "gotcha-fade-up 240ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily:
+            "ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace",
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.18em",
+          color: "#9B3A2E",
+          marginBottom: 6,
+        }}
+      >
+        Couldn&rsquo;t save
+      </div>
+      <p
+        style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "#1A1714" }}
+      >
+        {message || "Your feedback didn\u2019t reach us. Retry?"}
+      </p>
+      <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={retrying}
           style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 99999,
-            backgroundColor: isMobile ? 'rgba(26,23,20,0.32)' : 'transparent',
-            backdropFilter: isMobile ? 'blur(8px)' : 'none',
-            WebkitBackdropFilter: isMobile ? 'blur(8px)' : 'none',
-            pointerEvents: isMobile ? 'auto' : 'none',
-            transition: 'background-color 180ms cubic-bezier(0.22, 0.61, 0.36, 1)',
+            backgroundColor: "#1A1714",
+            color: "#FAF8F4",
+            border: "none",
+            borderRadius: 4,
+            padding: "6px 14px",
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: retrying ? "default" : "pointer",
+            opacity: retrying ? 0.6 : 1,
+            transition: "opacity 180ms",
           }}
         >
-          <div
-            onClick={isMobile ? (e) => e.stopPropagation() : undefined}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <GotchaModal {...modalProps} />
-          </div>
-        </div>,
-        document.body
-      )}
+          {retrying ? "Retrying\u2026" : "Retry"}
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          style={{
+            backgroundColor: "transparent",
+            color: "#6B655D",
+            border: "1px solid #E8E2D9",
+            borderRadius: 4,
+            padding: "6px 14px",
+            fontSize: 12,
+            cursor: "pointer",
+            transition: "color 180ms",
+          }}
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
