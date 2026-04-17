@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   Select,
@@ -9,27 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
+  EDITORIAL,
+  CHART_TICK,
+  CHART_AXIS_LINE,
+  TOOLTIP_STYLE,
+  TOOLTIP_CURSOR,
+  EditorialCard,
+  ChartFrame,
+  EditorialTable,
   TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  TableCell,
+  truncateLabel,
+  npsFill,
+} from '../editorial-chart';
 
 interface Project {
   id: string;
@@ -65,8 +59,6 @@ interface SegmentChartsProps {
   selectedGroupBy?: string;
 }
 
-const COLORS = ['#64748b', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
 export function SegmentCharts({
   projects,
   elements,
@@ -77,8 +69,8 @@ export function SegmentCharts({
   selectedGroupBy,
 }: SegmentChartsProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [projectId, setProjectId] = useState(selectedProjectId || '');
   const [elementId, setElementId] = useState(selectedElementId || '');
@@ -86,7 +78,17 @@ export function SegmentCharts({
 
   useEffect(() => {
     setMounted(true);
+    // Track viewport for Y-axis label widths. On narrow screens a wide
+    // label column crushes the bars to a few pixels — drop to 100px.
+    const mq = window.matchMedia('(max-width: 639px)');
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
   }, []);
+
+  const yAxisWidth = isMobile ? 100 : 160;
+  const labelMax = isMobile ? 14 : 22;
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -98,114 +100,122 @@ export function SegmentCharts({
 
   const hasData = segmentData.length > 0;
 
-  // Prepare chart data
+  // Prepare chart data — keep the full raw segment name on a `fullName`
+  // field so the tooltip can show the un-truncated value even when the
+  // Y-axis label is shortened.
   const countData = segmentData.map((d) => ({
-    name: d.segment,
+    name: truncateLabel(d.segment, labelMax),
+    fullName: d.segment,
     value: d.count,
   }));
 
   const ratingData = segmentData
     .filter((d) => d.avgRating !== null)
     .map((d) => ({
-      name: d.segment,
+      name: truncateLabel(d.segment, labelMax),
+      fullName: d.segment,
       value: d.avgRating,
     }));
 
   const sentimentData = segmentData
     .filter((d) => d.positiveRate !== null)
     .map((d) => ({
-      name: d.segment,
+      name: truncateLabel(d.segment, labelMax),
+      fullName: d.segment,
       value: d.positiveRate,
     }));
 
   const npsData = segmentData
     .filter((d) => d.npsScore !== null)
     .map((d) => ({
-      name: d.segment,
+      name: truncateLabel(d.segment, labelMax),
+      fullName: d.segment,
       value: d.npsScore,
     }));
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-            <div className="w-full sm:w-auto space-y-1">
-              <Label>Project</Label>
-              <Select
-                value={projectId || '__all__'}
-                onValueChange={(v) => setProjectId(v === '__all__' ? '' : v)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="All Projects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Projects</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Filters card */}
+      <EditorialCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <FilterField label="Project">
+            <Select
+              value={projectId || '__all__'}
+              onValueChange={(v) => setProjectId(v === '__all__' ? '' : v)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="All projects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All projects</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-            <div className="w-full sm:w-auto space-y-1">
-              <Label>Element</Label>
-              <Select
-                value={elementId || '__all__'}
-                onValueChange={(v) => setElementId(v === '__all__' ? '' : v)}
-              >
-                <SelectTrigger className="w-full sm:w-[220px]">
-                  <SelectValue placeholder="All Elements" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Elements</SelectItem>
-                  {elements.map((el) => (
-                    <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
-                      {el.elementIdRaw} ({el.count})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <FilterField label="Element">
+            <Select
+              value={elementId || '__all__'}
+              onValueChange={(v) => setElementId(v === '__all__' ? '' : v)}
+            >
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectValue placeholder="All elements" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All elements</SelectItem>
+                {elements.map((el) => (
+                  <SelectItem key={el.elementIdRaw} value={el.elementIdRaw}>
+                    {el.elementIdRaw} ({el.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-            <div className="w-full sm:w-auto space-y-1">
-              <Label>Group By</Label>
-              <Select
-                value={groupBy || '__none__'}
-                onValueChange={(v) => setGroupBy(v === '__none__' ? '' : v)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Select a field" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Select a field</SelectItem>
-                  {availableFields.map((field) => (
-                    <SelectItem key={field.key} value={field.key}>
-                      {field.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <FilterField label="Group by">
+            <Select
+              value={groupBy || '__none__'}
+              onValueChange={(v) => setGroupBy(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Select a field" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select a field</SelectItem>
+                {availableFields.map((field) => (
+                  <SelectItem key={field.key} value={field.key}>
+                    {field.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-            <Button onClick={applyFilters} className="flex-1 sm:flex-none">
-              Apply
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="inline-flex items-center justify-center rounded-md bg-editorial-ink px-4 py-2 text-[13px] font-medium text-editorial-paper transition-colors duration-240 ease-page-turn hover:bg-editorial-ink/90 sm:self-end"
+          >
+            Apply
+          </button>
+        </div>
+      </EditorialCard>
 
       {availableFields.length === 0 && (
-        <Card className="p-6 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No user metadata found</h3>
-          <p className="text-gray-600 mb-4">
-            To use segmentation, pass user attributes when collecting feedback:
-          </p>
-          <pre className="bg-slate-800 text-slate-100 rounded-lg p-4 text-left text-sm overflow-x-auto">
-            {`<Gotcha
+        <EditorialCard>
+          <div className="py-4 text-center">
+            <h3 className="font-display text-[1.25rem] font-normal leading-[1.3] tracking-[-0.01em] text-editorial-ink">
+              No user metadata found
+            </h3>
+            <p className="mx-auto mt-2 max-w-md text-[13px] leading-[1.55] text-editorial-neutral-3">
+              To use segmentation, pass user attributes when collecting feedback.
+            </p>
+            <pre className="mx-auto mt-5 max-w-lg overflow-x-auto rounded-md border border-editorial-neutral-2 bg-editorial-ink/[0.02] p-4 text-left font-mono text-[12px] leading-[1.55] text-editorial-ink">
+              {`<Gotcha
   elementId="feature-x"
   user={{
     id: 'user_123',
@@ -214,214 +224,263 @@ export function SegmentCharts({
     age: 28
   }}
 />`}
-          </pre>
-        </Card>
+            </pre>
+          </div>
+        </EditorialCard>
       )}
 
       {!hasData && availableFields.length > 0 && groupBy && (
-        <Card className="p-12 text-center">
-          <p className="text-muted-foreground">No response data for the selected filters.</p>
-        </Card>
+        <EditorialCard>
+          <p className="py-10 text-center text-[13px] text-editorial-neutral-3">
+            No response data for the selected filters.
+          </p>
+        </EditorialCard>
       )}
 
       {!mounted && hasData && (
-        <Card className="p-12 text-center">
-          <p className="text-muted-foreground">Loading charts...</p>
-        </Card>
+        <EditorialCard>
+          <p className="py-10 text-center text-[13px] text-editorial-neutral-3">Loading charts…</p>
+        </EditorialCard>
       )}
 
       {mounted && hasData && (
         <>
           {/* Response Volume by Segment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Response Volume by Segment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                  <BarChart data={countData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      {countData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <EditorialCard eyebrow="Volume" title="Response volume by segment">
+            <ChartFrame>
+              <BarChart data={countData} layout="vertical">
+                <CartesianGrid strokeDasharray="2 3" stroke={EDITORIAL.rule} horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={CHART_TICK}
+                  tickLine={false}
+                  axisLine={CHART_AXIS_LINE}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={CHART_TICK}
+                  tickLine={false}
+                  axisLine={CHART_AXIS_LINE}
+                  width={yAxisWidth}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(26,23,20,0.04)' }}
+                  contentStyle={TOOLTIP_STYLE}
+                  labelFormatter={(_, payload) =>
+                    (payload?.[0]?.payload as { fullName?: string } | undefined)?.fullName ?? ''
+                  }
+                  formatter={(value) => [String(value), 'Responses']}
+                />
+                <Bar dataKey="value" radius={[0, 2, 2, 0]} fill={EDITORIAL.ink} />
+              </BarChart>
+            </ChartFrame>
+          </EditorialCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Average Rating by Segment */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {ratingData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CardTitle>Avg Rating by Segment</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                      <BarChart data={ratingData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 5]} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px',
-                          }}
-                          formatter={(value) => [`${value ?? 0}/5`, 'Rating']}
-                        />
-                        <Bar dataKey="value" fill="#eab308" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              <EditorialCard eyebrow="Rating" title="Average rating by segment">
+                <ChartFrame>
+                  <BarChart data={ratingData} layout="vertical">
+                    <CartesianGrid
+                      strokeDasharray="2 3"
+                      stroke={EDITORIAL.rule}
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={CHART_TICK}
+                      tickLine={false}
+                      axisLine={CHART_AXIS_LINE}
+                      domain={[0, 5]}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={CHART_TICK}
+                      tickLine={false}
+                      axisLine={CHART_AXIS_LINE}
+                      width={yAxisWidth}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(26,23,20,0.04)' }}
+                      contentStyle={TOOLTIP_STYLE}
+                      labelFormatter={(_, payload) =>
+                        (payload?.[0]?.payload as { fullName?: string } | undefined)?.fullName ?? ''
+                      }
+                      formatter={(value) => [`${value ?? 0} / 5`, 'Rating']}
+                    />
+                    <Bar dataKey="value" radius={[0, 2, 2, 0]} fill={EDITORIAL.ink} />
+                  </BarChart>
+                </ChartFrame>
+              </EditorialCard>
             )}
 
-            {/* Positive Rate by Segment */}
             {sentimentData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CardTitle>Positive Rate by Segment</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                      <BarChart data={sentimentData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 100]} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px',
-                          }}
-                          formatter={(value) => [`${value ?? 0}%`, 'Positive']}
-                        />
-                        <Bar dataKey="value" fill="#22c55e" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              <EditorialCard eyebrow="Sentiment" title="Positive rate by segment">
+                <ChartFrame>
+                  <BarChart data={sentimentData} layout="vertical">
+                    <CartesianGrid
+                      strokeDasharray="2 3"
+                      stroke={EDITORIAL.rule}
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={CHART_TICK}
+                      tickLine={false}
+                      axisLine={CHART_AXIS_LINE}
+                      domain={[0, 100]}
+                      tickFormatter={(v) => `${v}%`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={CHART_TICK}
+                      tickLine={false}
+                      axisLine={CHART_AXIS_LINE}
+                      width={yAxisWidth}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(26,23,20,0.04)' }}
+                      contentStyle={TOOLTIP_STYLE}
+                      labelFormatter={(_, payload) =>
+                        (payload?.[0]?.payload as { fullName?: string } | undefined)?.fullName ?? ''
+                      }
+                      formatter={(value) => [`${value ?? 0}%`, 'Positive']}
+                    />
+                    <Bar dataKey="value" radius={[0, 2, 2, 0]} fill={EDITORIAL.ink} />
+                  </BarChart>
+                </ChartFrame>
+              </EditorialCard>
             )}
           </div>
 
-          {/* NPS by Segment */}
-          {npsData.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>NPS by Segment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-48 sm:h-64 min-h-[192px] sm:min-h-[256px]">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+          {/* NPS by Segment — semantic three-tier colour (sage / muted / clay).
+              Matches the rest of the product's "max 2 jobs per colour" discipline:
+              the tiers aren't reached for anywhere else on this page. */}
+          {npsData.length > 0 &&
+            (() => {
+              // Clamp the NPS axis to the actual data range instead of the
+              // theoretical [-100, 100]. If every segment is positive we
+              // start at 0; if every one is negative we end at 0. Only show
+              // both halves when the data actually crosses zero.
+              const values = npsData.map((d) => d.value).filter((v): v is number => v !== null);
+              const minV = Math.min(...values);
+              const maxV = Math.max(...values);
+              const npsDomain: [number, number] =
+                minV >= 0 ? [0, 100] : maxV <= 0 ? [-100, 0] : [-100, 100];
+              return (
+                <EditorialCard eyebrow="NPS" title="NPS by segment">
+                  <ChartFrame>
                     <BarChart data={npsData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} domain={[-100, 100]} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                      <CartesianGrid
+                        strokeDasharray="2 3"
+                        stroke={EDITORIAL.rule}
+                        horizontal={false}
+                      />
+                      <XAxis
+                        type="number"
+                        tick={CHART_TICK}
+                        tickLine={false}
+                        axisLine={CHART_AXIS_LINE}
+                        domain={npsDomain}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={CHART_TICK}
+                        tickLine={false}
+                        axisLine={CHART_AXIS_LINE}
+                        width={yAxisWidth}
+                      />
                       <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '6px',
-                        }}
+                        cursor={{ fill: 'rgba(26,23,20,0.04)' }}
+                        contentStyle={TOOLTIP_STYLE}
+                        labelFormatter={(_, payload) =>
+                          (payload?.[0]?.payload as { fullName?: string } | undefined)?.fullName ??
+                          ''
+                        }
                         formatter={(value) => [`${value ?? 0}`, 'NPS']}
                       />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="value" radius={[0, 2, 2, 0]}>
                         {npsData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={
-                              (entry.value ?? 0) >= 50
-                                ? '#10B981'
-                                : (entry.value ?? 0) >= 0
-                                  ? '#F59E0B'
-                                  : '#EF4444'
-                            }
-                          />
+                          <Cell key={`cell-${index}`} fill={npsFill(entry.value)} />
                         ))}
                       </Bar>
                     </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  </ChartFrame>
+                </EditorialCard>
+              );
+            })()}
 
-          {/* Comparison Table */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Segment Comparison</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
+          {/* Comparison table */}
+          <EditorialCard eyebrow="Detail" title="Segment comparison">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-y border-editorial-neutral-2">
                     <TableHead>Segment</TableHead>
                     <TableHead>Responses</TableHead>
-                    <TableHead>Avg Rating</TableHead>
-                    <TableHead>Positive Rate</TableHead>
+                    <th className="hidden py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3 sm:table-cell">
+                      Avg rating
+                    </th>
+                    <th className="hidden py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3 sm:table-cell">
+                      Positive rate
+                    </th>
                     <TableHead>NPS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {segmentData.map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{row.segment}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                      <TableCell>{row.avgRating !== null ? `${row.avgRating}/5` : '-'}</TableCell>
-                      <TableCell>
-                        {row.positiveRate !== null ? `${row.positiveRate}%` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {row.npsScore !== null ? (
-                          <span
-                            className="font-medium"
-                            style={{
-                              color:
-                                row.npsScore >= 50
-                                  ? '#10B981'
-                                  : row.npsScore >= 0
-                                    ? '#F59E0B'
-                                    : '#EF4444',
-                            }}
-                          >
-                            {row.npsScore}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Drop zero-count rows — pure noise, no data to compare. */}
+                  {segmentData
+                    .filter((r) => r.count > 0)
+                    .map((row, idx) => (
+                      <tr
+                        key={idx}
+                        className="border-b border-editorial-neutral-2 transition-colors duration-240 hover:bg-editorial-ink/[0.02]"
+                      >
+                        <TableCell>
+                          <span className="block truncate" title={row.segment}>
+                            {row.segment}
                           </span>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                        </TableCell>
+                        <TableCell mono>{row.count}</TableCell>
+                        <td className="hidden py-3 text-left font-mono text-[13px] tabular-nums text-editorial-ink sm:table-cell">
+                          {row.avgRating !== null ? `${row.avgRating} / 5` : '—'}
+                        </td>
+                        <td className="hidden py-3 text-left font-mono text-[13px] tabular-nums text-editorial-ink sm:table-cell">
+                          {row.positiveRate !== null ? `${row.positiveRate}%` : '—'}
+                        </td>
+                        <TableCell mono>
+                          {row.npsScore !== null ? (
+                            <span style={{ color: npsFill(row.npsScore) }}>{row.npsScore}</span>
+                          ) : (
+                            '—'
+                          )}
+                        </TableCell>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </EditorialCard>
         </>
       )}
+    </div>
+  );
+}
+
+/** FilterField — mono-caps label over a shadcn Select. Local because
+ *  it's specific to the segments filter row; not reused elsewhere. */
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="w-full sm:w-auto">
+      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -10,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { EditorialCard } from './editorial-chart';
 
 interface PivotTabProps {
   data: {
@@ -40,7 +38,8 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
     router.push(`/dashboard/analytics?${params.toString()}`);
   };
 
-  // Calculate max for intensity shading
+  // Heatmap intensity — editorial ink at progressive alpha. Matches the
+  // heatmap-chart on the main analytics page (5-step ink ramp on paper).
   let maxCell = 0;
   if (data) {
     data.rows.forEach((r) => {
@@ -54,173 +53,188 @@ export function PivotTab({ data, dimensions, selectedRow, selectedCol }: PivotTa
   const cellBg = (count: number): string => {
     if (!count || !maxCell) return '';
     const intensity = count / maxCell;
-    if (intensity < 0.2) return 'bg-slate-50';
-    if (intensity < 0.4) return 'bg-slate-100';
-    if (intensity < 0.6) return 'bg-slate-200';
-    if (intensity < 0.8) return 'bg-slate-300';
-    return 'bg-slate-400 text-white';
+    if (intensity < 0.2) return 'bg-editorial-ink/[0.05]';
+    if (intensity < 0.4) return 'bg-editorial-ink/[0.12]';
+    if (intensity < 0.6) return 'bg-editorial-ink/[0.24]';
+    if (intensity < 0.8) return 'bg-editorial-ink/[0.55] text-editorial-paper';
+    return 'bg-editorial-ink text-editorial-paper';
   };
 
   return (
     <div className="space-y-6">
       {/* Dimension selectors */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-            <div className="w-full sm:w-auto space-y-1">
-              <Label>Row Dimension</Label>
-              <Select
-                value={rowDim || '__none__'}
-                onValueChange={(v) => setRowDim(v === '__none__' ? '' : v)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Select dimension" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Select dimension</SelectItem>
-                  {dimensions.map((d) => (
-                    <SelectItem key={d.key} value={d.key}>
-                      {d.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <EditorialCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <DimensionField label="Row dimension">
+            <Select
+              value={rowDim || '__none__'}
+              onValueChange={(v) => setRowDim(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Select dimension" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select dimension</SelectItem>
+                {dimensions.map((d) => (
+                  <SelectItem key={d.key} value={d.key}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DimensionField>
 
-            <div className="w-full sm:w-auto space-y-1">
-              <Label>Column Dimension</Label>
-              <Select
-                value={colDim || '__none__'}
-                onValueChange={(v) => setColDim(v === '__none__' ? '' : v)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Select dimension" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Select dimension</SelectItem>
-                  {dimensions.map((d) => (
-                    <SelectItem key={d.key} value={d.key}>
-                      {d.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <DimensionField label="Column dimension">
+            <Select
+              value={colDim || '__none__'}
+              onValueChange={(v) => setColDim(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Select dimension" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Select dimension</SelectItem>
+                {dimensions.map((d) => (
+                  <SelectItem key={d.key} value={d.key}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DimensionField>
 
-            <Button onClick={applyPivot} className="flex-1 sm:flex-none">
-              Apply
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <button
+            type="button"
+            onClick={applyPivot}
+            className="inline-flex items-center justify-center rounded-md bg-editorial-ink px-4 py-2 text-[13px] font-medium text-editorial-paper transition-colors duration-240 ease-page-turn hover:bg-editorial-ink/90 sm:self-end"
+          >
+            Apply
+          </button>
+        </div>
+      </EditorialCard>
 
       {/* Empty state */}
       {!data && (
-        <Card className="text-center py-16">
-          <h3 className="text-lg font-medium text-gray-900">Select dimensions</h3>
-          <p className="mt-2 text-gray-500">
-            Choose a row and column dimension to see a cross-tabulation of your responses.
-          </p>
-        </Card>
+        <EditorialCard>
+          <div className="py-10 text-center">
+            <p className="text-[14px] text-editorial-ink">Select dimensions</p>
+            <p className="mt-1.5 text-[13px] text-editorial-neutral-3">
+              Choose a row and column dimension to see a cross-tabulation of your responses.
+            </p>
+          </div>
+        </EditorialCard>
       )}
 
       {/* Pivot table */}
       {data && data.rows.length > 0 && data.cols.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {dimensions.find((d) => d.key === selectedRow)?.label ?? selectedRow} ×{' '}
-              {dimensions.find((d) => d.key === selectedCol)?.label ?? selectedCol}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 sm:px-6 pb-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[400px]">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left p-2 pl-4 sm:pl-2 text-xs font-medium uppercase text-gray-400">
-                      {dimensions.find((d) => d.key === selectedRow)?.label ?? 'Row'}
+        <EditorialCard
+          eyebrow="Pivot"
+          title={`${dimensions.find((d) => d.key === selectedRow)?.label ?? selectedRow} × ${
+            dimensions.find((d) => d.key === selectedCol)?.label ?? selectedCol
+          }`}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[400px] border-collapse text-[13px]">
+              <thead>
+                <tr className="border-y border-editorial-neutral-2">
+                  <th className="py-2.5 pr-3 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    {dimensions.find((d) => d.key === selectedRow)?.label ?? 'Row'}
+                  </th>
+                  {data.cols.map((col) => (
+                    <th
+                      key={col}
+                      className="whitespace-nowrap px-2 py-2.5 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3"
+                    >
+                      {col}
                     </th>
-                    {data.cols.map((col) => (
-                      <th
-                        key={col}
-                        className="text-center p-2 text-xs font-medium uppercase text-gray-400 whitespace-nowrap"
-                      >
-                        {col}
-                      </th>
-                    ))}
-                    <th className="text-center p-2 pr-4 sm:pr-2 text-xs font-medium uppercase text-gray-500">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rows.map((row) => {
-                    const rowTotal = data.cols.reduce(
-                      (sum, col) => sum + (data.cells[row]?.[col] || 0),
+                  ))}
+                  <th className="py-2.5 pl-3 text-right font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((row) => {
+                  const rowTotal = data.cols.reduce(
+                    (sum, col) => sum + (data.cells[row]?.[col] || 0),
+                    0
+                  );
+                  return (
+                    <tr
+                      key={row}
+                      className="border-b border-editorial-neutral-2 transition-colors duration-240 hover:bg-editorial-ink/[0.02]"
+                    >
+                      <td className="whitespace-nowrap py-3 pr-3 text-[13px] text-editorial-ink">
+                        {row}
+                      </td>
+                      {data.cols.map((col) => {
+                        const count = data.cells[row]?.[col] || 0;
+                        return (
+                          <td
+                            key={col}
+                            className={`px-2 py-3 text-center font-mono text-[13px] tabular-nums ${cellBg(count)}`}
+                          >
+                            {count || '—'}
+                          </td>
+                        );
+                      })}
+                      <td className="py-3 pl-3 text-right font-mono text-[13px] tabular-nums text-editorial-ink">
+                        {rowTotal}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {/* Column totals */}
+                <tr className="border-t-2 border-editorial-neutral-2">
+                  <td className="py-3 pr-3 font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Total
+                  </td>
+                  {data.cols.map((col) => {
+                    const colTotal = data.rows.reduce(
+                      (sum, row) => sum + (data.cells[row]?.[col] || 0),
                       0
                     );
                     return (
-                      <tr key={row} className="border-b border-gray-100 hover:bg-gray-50/50">
-                        <td className="p-2 pl-4 sm:pl-2 font-medium text-gray-700 whitespace-nowrap">
-                          {row}
-                        </td>
-                        {data.cols.map((col) => {
-                          const count = data.cells[row]?.[col] || 0;
-                          return (
-                            <td
-                              key={col}
-                              className={`text-center p-2 tabular-nums ${cellBg(count)}`}
-                            >
-                              {count || '-'}
-                            </td>
-                          );
-                        })}
-                        <td className="text-center p-2 pr-4 sm:pr-2 font-medium tabular-nums text-gray-900">
-                          {rowTotal}
-                        </td>
-                      </tr>
+                      <td
+                        key={col}
+                        className="px-2 py-3 text-center font-mono text-[13px] tabular-nums text-editorial-ink"
+                      >
+                        {colTotal}
+                      </td>
                     );
                   })}
-                  {/* Column totals */}
-                  <tr className="border-t-2 border-gray-200">
-                    <td className="p-2 pl-4 sm:pl-2 font-medium text-gray-500 text-xs uppercase">
-                      Total
-                    </td>
-                    {data.cols.map((col) => {
-                      const colTotal = data.rows.reduce(
-                        (sum, row) => sum + (data.cells[row]?.[col] || 0),
-                        0
-                      );
-                      return (
-                        <td
-                          key={col}
-                          className="text-center p-2 font-medium tabular-nums text-gray-900"
-                        >
-                          {colTotal}
-                        </td>
-                      );
-                    })}
-                    <td className="text-center p-2 pr-4 sm:pr-2 font-bold tabular-nums text-gray-900">
-                      {data.rows.reduce(
-                        (sum, row) =>
-                          sum + data.cols.reduce((s, col) => s + (data.cells[row]?.[col] || 0), 0),
-                        0
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  <td className="py-3 pl-3 text-right font-mono text-[13px] font-semibold tabular-nums text-editorial-ink">
+                    {data.rows.reduce(
+                      (sum, row) =>
+                        sum + data.cols.reduce((s, col) => s + (data.cells[row]?.[col] || 0), 0),
+                      0
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </EditorialCard>
       )}
 
       {data && (data.rows.length === 0 || data.cols.length === 0) && (
-        <Card className="text-center py-12">
-          <p className="text-gray-500">No data for the selected dimensions.</p>
-        </Card>
+        <EditorialCard>
+          <p className="py-10 text-center text-[13px] text-editorial-neutral-3">
+            No data for the selected dimensions.
+          </p>
+        </EditorialCard>
       )}
+    </div>
+  );
+}
+
+function DimensionField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="w-full sm:w-auto">
+      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }

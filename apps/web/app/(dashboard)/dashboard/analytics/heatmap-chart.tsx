@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EditorialCard } from './editorial-chart';
 
 interface HeatmapChartProps {
   data: Array<{ dow: number; hour: number; count: number }>;
@@ -10,6 +10,27 @@ interface HeatmapChartProps {
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+// Editorial five-step intensity scale — paper at zero, ramping through
+// progressively deeper ink tints. Matches the rest of the dashboard's
+// ink-on-paper vocabulary; no slate-blue.
+const CELL_EMPTY = 'rgb(250 248 244)'; // paper
+const CELL_STEPS = [
+  'rgba(26, 23, 20, 0.08)',
+  'rgba(26, 23, 20, 0.22)',
+  'rgba(26, 23, 20, 0.45)',
+  'rgba(26, 23, 20, 0.72)',
+  'rgba(26, 23, 20, 1)',
+];
+
+function stepForIntensity(intensity: number): string {
+  if (intensity === 0) return CELL_EMPTY;
+  if (intensity < 0.25) return CELL_STEPS[0];
+  if (intensity < 0.5) return CELL_STEPS[1];
+  if (intensity < 0.75) return CELL_STEPS[2];
+  if (intensity < 1) return CELL_STEPS[3];
+  return CELL_STEPS[4];
+}
 
 export function HeatmapChart({ data }: HeatmapChartProps) {
   const [tooltip, setTooltip] = useState<{
@@ -36,7 +57,7 @@ export function HeatmapChart({ data }: HeatmapChartProps) {
 
   const handleMouseLeave = useCallback(() => setTooltip(null), []);
 
-  // Build lookup
+  // Build lookup + find max for intensity normalization.
   const lookup: Record<string, number> = {};
   let maxCount = 0;
   data.forEach((d) => {
@@ -47,103 +68,94 @@ export function HeatmapChart({ data }: HeatmapChartProps) {
 
   if (maxCount === 0) {
     return (
-      <Card className="text-center py-12">
-        <p className="text-gray-500 text-sm">No activity data to display.</p>
-      </Card>
+      <EditorialCard>
+        <p className="py-10 text-center text-[13px] text-editorial-neutral-3">
+          No activity data to display.
+        </p>
+      </EditorialCard>
     );
   }
 
-  const getCellColor = (count: number): string => {
-    if (count === 0) return '#f8fafc';
-    const intensity = count / maxCount;
-    if (intensity < 0.25) return '#cbd5e1';
-    if (intensity < 0.5) return '#94a3b8';
-    if (intensity < 0.75) return '#475569';
-    return '#1e293b';
-  };
-
   return (
-    <Card>
-      <CardHeader className="pb-2 px-4 sm:px-6">
-        <CardTitle className="text-base sm:text-lg">Activity Heatmap</CardTitle>
-        <p className="text-xs text-gray-400 mt-0.5">Responses by day of week and hour</p>
-      </CardHeader>
-      <CardContent className="px-2 sm:px-6 pb-4">
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
-          <div className="min-w-[520px]" onMouseLeave={handleMouseLeave}>
-            {/* Hour labels */}
-            <div className="flex ml-10 mb-1">
-              {HOURS.map((h) => (
-                <div key={h} className="flex-1 text-center text-[9px] sm:text-[10px] text-gray-400">
-                  {h % 3 === 0 ? `${h}:00` : ''}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid */}
-            {DAYS.map((day, dayIdx) => (
-              <div key={day} className="flex items-center mb-0.5">
-                <div className="w-10 text-right pr-2 text-[10px] sm:text-xs text-gray-500 flex-shrink-0">
-                  {day}
-                </div>
-                <div className="flex flex-1 gap-px">
-                  {HOURS.map((hour) => {
-                    const count = lookup[`${dayIdx}-${hour}`] || 0;
-                    return (
-                      <div
-                        key={hour}
-                        className="flex-1 aspect-square rounded-[2px] sm:rounded-[3px] cursor-pointer transition-transform hover:scale-110"
-                        style={{ backgroundColor: getCellColor(count) }}
-                        onMouseEnter={(e) => handleMouseEnter(e, day, hour, count)}
-                      />
-                    );
-                  })}
-                </div>
+    <EditorialCard
+      eyebrow="Activity"
+      title="When feedback arrives"
+      subtitle="Responses by day of week and hour of day."
+    >
+      <div className="-mx-2 overflow-x-auto px-2 sm:mx-0 sm:px-0">
+        <div className="min-w-[540px]" onMouseLeave={handleMouseLeave}>
+          {/* Hour tick labels */}
+          <div className="mb-2 ml-12 flex">
+            {HOURS.map((h) => (
+              <div
+                key={h}
+                className="flex-1 text-center font-mono text-[9px] uppercase tracking-[0.14em] text-editorial-neutral-3/80 sm:text-[10px]"
+              >
+                {h % 3 === 0 ? `${h}:00` : ''}
               </div>
             ))}
+          </div>
 
-            {/* Legend */}
-            <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-gray-400">
-              <span>Less</span>
-              {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
-                <div
-                  key={i}
-                  className="w-3 h-3 rounded-[2px]"
-                  style={{
-                    backgroundColor:
-                      intensity === 0
-                        ? '#f8fafc'
-                        : intensity < 0.25
-                          ? '#cbd5e1'
-                          : intensity < 0.5
-                            ? '#94a3b8'
-                            : intensity < 0.75
-                              ? '#475569'
-                              : '#1e293b',
-                  }}
-                />
-              ))}
-              <span>More</span>
+          {/* Grid */}
+          {DAYS.map((day, dayIdx) => (
+            <div key={day} className="mb-0.5 flex items-center">
+              <div className="w-12 shrink-0 pr-3 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+                {day}
+              </div>
+              <div className="flex flex-1 gap-[2px]">
+                {HOURS.map((hour) => {
+                  const count = lookup[`${dayIdx}-${hour}`] || 0;
+                  const intensity = count / maxCount;
+                  return (
+                    <div
+                      key={hour}
+                      className="aspect-square flex-1 cursor-pointer rounded-[2px] border border-editorial-neutral-2/60 transition-transform duration-240 hover:scale-[1.08]"
+                      style={{ backgroundColor: stepForIntensity(intensity) }}
+                      onMouseEnter={(e) => handleMouseEnter(e, day, hour, count)}
+                    />
+                  );
+                })}
+              </div>
             </div>
+          ))}
+
+          {/* Legend */}
+          <div className="mt-5 flex items-center justify-end gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+              Less
+            </span>
+            {[CELL_EMPTY, ...CELL_STEPS].map((color, i) => (
+              <div
+                key={i}
+                className="h-3 w-3 rounded-[2px] border border-editorial-neutral-2/60"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-editorial-neutral-3">
+              More
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Portal tooltip — renders outside all overflow containers */}
-        {tooltip &&
-          typeof document !== 'undefined' &&
-          createPortal(
-            <div
-              className="fixed pointer-events-none bg-gray-900 text-white text-xs px-2.5 py-1.5 rounded shadow-lg -translate-x-1/2 -translate-y-full whitespace-nowrap"
-              style={{ left: tooltip.x, top: tooltip.y, zIndex: 9999 }}
-            >
-              {tooltip.day} {tooltip.hour}:00–{tooltip.hour + 1}:00 ·{' '}
-              <span className="font-medium">
-                {tooltip.count} response{tooltip.count !== 1 ? 's' : ''}
-              </span>
-            </div>,
-            document.body
-          )}
-      </CardContent>
-    </Card>
+      {/* Portal tooltip — renders outside all overflow containers */}
+      {tooltip &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md border border-editorial-neutral-2 bg-editorial-paper px-2.5 py-1.5 font-mono text-[11px] text-editorial-ink"
+            style={{ left: tooltip.x, top: tooltip.y, zIndex: 9999 }}
+          >
+            <span className="uppercase tracking-[0.14em] text-editorial-neutral-3">
+              {tooltip.day} {tooltip.hour}:00
+            </span>
+            <span className="mx-2 text-editorial-neutral-3">·</span>
+            <span className="tabular-nums text-editorial-ink">
+              {tooltip.count} response{tooltip.count !== 1 ? 's' : ''}
+            </span>
+          </div>,
+          document.body
+        )}
+    </EditorialCard>
   );
 }
