@@ -67,9 +67,33 @@ function cacheSet(keyHash: string, data: ApiKeyData): void {
  * path so revocations propagate immediately rather than waiting for the
  * 60s TTL. Safe to call from anywhere; no-op on cold instances that
  * never saw the key.
+ *
+ * Note: this only clears the cache on the Lambda instance that runs it.
+ * Other warm instances retain their cached entry until TTL expiry — the
+ * documented worst-case propagation is one TTL window. If instant
+ * cross-fleet revocation is ever required, broadcast over Redis pub/sub
+ * (see `lib/redis.ts`) and have each instance subscribe on cold start.
  */
 export function invalidateApiKeyCache(keyHash: string): void {
   apiKeyCache.delete(keyHash);
+}
+
+/**
+ * Invalidate every cached entry whose `ApiKeyData.organizationId` matches.
+ * Used on plan changes (Stripe subscription.updated / subscription.deleted)
+ * so the new plan is picked up on the next submission without waiting for
+ * TTL expiry. Walks the Map once — O(n) over the cache size, capped at
+ * API_KEY_CACHE_MAX (500). Cheap compared to the DB roundtrip it prevents.
+ */
+export function invalidateApiKeyCacheByOrganization(organizationId: string): void {
+  // Array.from() snapshot avoids the "can't iterate MapIterator at current
+  // target" TS complaint and also means we can safely delete during
+  // iteration without mutating the underlying Map's iterator state.
+  for (const [hash, entry] of Array.from(apiKeyCache.entries())) {
+    if (entry.data.organizationId === organizationId) {
+      apiKeyCache.delete(hash);
+    }
+  }
 }
 
 // Validate origin against allowed domains (deterministic, no regex)
@@ -155,7 +179,7 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
             organizationId: true,
             organization: {
               select: {
-                subscription: { select: { plan: true } },
+                subscription: { select: { plan: true, status: true } },
               },
             },
           },
@@ -174,11 +198,24 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
       };
     }
 
+    // Effective plan = actual plan, but downgraded to FREE when the
+    // subscription status isn't ACTIVE or TRIALING. Dunning (PAST_DUE),
+    // cancellation (CANCELED), and failed-payment (incomplete) all fall
+    // back to FREE so we stop granting PRO benefits (unlimited responses,
+    // webhooks, bug-report emails) to non-paying customers. Stripe
+    // webhooks flip `status` within seconds; cache eviction on the
+    // relevant events makes this take effect on the next submission.
+    const subscription = apiKey.project.organization.subscription;
+    const rawPlan = subscription?.plan ?? 'FREE';
+    const subStatus = subscription?.status ?? 'ACTIVE';
+    const effectivePlan =
+      rawPlan === 'PRO' && subStatus !== 'ACTIVE' && subStatus !== 'TRIALING' ? 'FREE' : rawPlan;
+
     apiKeyData = {
       id: apiKey.id,
       projectId: apiKey.projectId,
       organizationId: apiKey.project.organizationId,
-      plan: apiKey.project.organization.subscription?.plan ?? 'FREE',
+      plan: effectivePlan,
       allowedDomains: apiKey.allowedDomains,
     };
     cacheSet(keyHash, apiKeyData);

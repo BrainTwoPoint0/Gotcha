@@ -5,10 +5,10 @@ describe('Email Templates', () => {
     it('should generate welcome email with name', () => {
       const result = welcomeEmail({ name: 'John' });
 
-      expect(result.subject).toBe('Welcome to Gotcha!');
+      expect(result.subject).toBe('Welcome to Gotcha');
       expect(result.html).toContain('Hey John');
       expect(result.html).toContain('npm install gotcha-feedback');
-      expect(result.html).toContain('Go to Dashboard');
+      expect(result.html).toContain('Go to dashboard');
     });
 
     it('should use fallback when name is empty', () => {
@@ -22,7 +22,7 @@ describe('Email Templates', () => {
 
       expect(result.html).toContain('Create a project');
       expect(result.html).toContain('Install the SDK');
-      expect(result.html).toContain('Add the G button');
+      expect(result.html).toContain('&lt;Gotcha /&gt;');
     });
   });
 
@@ -30,7 +30,7 @@ describe('Email Templates', () => {
     it('should generate pro activation email with name and org', () => {
       const result = proActivatedEmail({ name: 'Jane', orgName: 'Acme Inc' });
 
-      expect(result.subject).toBe("You're now on Gotcha Pro!");
+      expect(result.subject).toBe("You're on Gotcha Pro");
       expect(result.html).toContain('Hey Jane');
       expect(result.html).toContain('Acme Inc');
       expect(result.html).toContain('Unlimited responses');
@@ -46,8 +46,8 @@ describe('Email Templates', () => {
       const result = proActivatedEmail({ name: 'Test', orgName: 'Test Org' });
 
       expect(result.html).toContain('Unlimited responses');
-      expect(result.html).toContain('Advanced analytics');
-      expect(result.html).toContain('CSV/JSON export');
+      expect(result.html).toContain('Full analytics dashboard');
+      expect(result.html).toContain('CSV / JSON export');
       expect(result.html).toContain('Priority support');
     });
 
@@ -104,7 +104,7 @@ describe('Email Templates', () => {
         percentage: 80,
       });
 
-      expect(result.html).toContain("won't be recorded");
+      expect(result.html).toContain('aren&rsquo;t recorded');
     });
   });
 });

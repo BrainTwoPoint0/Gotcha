@@ -215,10 +215,11 @@ describe('POST /api/v1/responses integration', () => {
   });
 
   it('gated flag set when FREE plan over limit', async () => {
-    (prisma.subscription.findUnique as jest.Mock).mockImplementation(async () => {
-      callOrder.push('subscription.findUnique');
-      // 501 exceeds the 500 free limit
-      return { responsesThisMonth: 501 };
+    // Sprint 2: the gating count now comes back from atomicIncrementUsage via
+    // the RETURNING clause — no more follow-up subscription.findUnique.
+    (atomicIncrementUsage as jest.Mock).mockImplementationOnce(async () => {
+      callOrder.push('atomicIncrementUsage');
+      return 501; // 501 exceeds the 500 free limit
     });
 
     await POST(makeRequest(validBody));

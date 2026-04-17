@@ -421,6 +421,24 @@ enum SubStatus {
   TRIALING
 }
 
+// Stripe event deduplication. A row per delivered event.id from Stripe's
+// webhook stream so a retry (same event.id within Stripe's 3-day retry
+// window) is skipped rather than re-applying side effects — activation
+// emails, cache invalidations, downstream fan-out. The handlers' DB writes
+// are idempotent on their own, but the side-effect surface grows over time;
+// dedup at the front door is the durable fix.
+//
+// Retention: drop rows older than 30 days via a scheduled cleanup if the
+// table ever grows large. Stripe only retries for 3 days so anything older
+// is historical-only.
+model ProcessedStripeEvent {
+  id          String   @id // stripe event.id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
+
 // ============================================
 // WEBHOOKS
 // ============================================

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
 import { validateApiKey, apiError, apiSuccess, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import {
   checkRateLimit,
@@ -10,14 +10,6 @@ import {
   checkReadRateLimit,
   type PlanType,
 } from '@/lib/rate-limit';
-
-// Direct Redis client for lightweight cache-coordination reads. Shares
-// the same Upstash instance as the rate limiter — we just need a
-// raw SET NX EX for the analytics-revalidate debounce.
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 import { sendUsageWarningEmail, sendBugReportEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
@@ -411,7 +403,22 @@ export async function POST(request: NextRequest) {
       'POST /api/v1/responses error:',
       error instanceof Error ? error.message : 'Unknown error'
     );
-    return apiError('INTERNAL_ERROR', 'An unexpected error occurred', 500, reqOrigin);
+    // Emit Server-Timing on the failure path too. The stages that completed
+    // before the throw let us see WHERE in the pipeline the 500 happened
+    // (e.g. `auth;dur=12, body;dur=3` with no later stages → write failed).
+    // Cheap to add, high-value for incident triage.
+    stages.total = Math.round((performance.now() - pipelineT0) * 10) / 10;
+    const serverTiming = Object.entries(stages)
+      .map(([name, dur]) => `${name};dur=${dur}`)
+      .concat('failed;dur=0')
+      .join(', ');
+    return Response.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred', status: 500 } },
+      {
+        status: 500,
+        headers: { ...getCorsHeaders(reqOrigin), 'Server-Timing': serverTiming },
+      }
+    );
   }
 }
 

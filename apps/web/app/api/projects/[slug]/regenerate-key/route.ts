@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { getActiveOrganization } from '@/lib/auth';
-import { generateApiKey } from '@/lib/api-auth';
+import { generateApiKey, invalidateApiKeyCache } from '@/lib/api-auth';
 import { orgManagementLimiter } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -62,11 +62,17 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Revoke all existing keys
+    // Revoke all existing keys. Capture the hashes first so we can evict
+    // them from the in-process auth cache — without this, revoked keys
+    // continue to authenticate on warm Lambdas for up to one cache TTL.
+    const revokedHashes = project.apiKeys.map((k) => k.keyHash);
     await prisma.apiKey.updateMany({
       where: { projectId: project.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    for (const hash of revokedHashes) {
+      invalidateApiKeyCache(hash);
+    }
 
     // Generate new key
     const { key, hash } = generateApiKey('live');
