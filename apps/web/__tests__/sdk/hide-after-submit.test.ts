@@ -227,8 +227,7 @@ describe('SDK Hide After Submit', () => {
     });
 
     it('should isolate hiding per element and user', () => {
-      const getKey = (elementId: string, userId: string) =>
-        `gotcha_hidden_${elementId}_${userId}`;
+      const getKey = (elementId: string, userId: string) => `gotcha_hidden_${elementId}_${userId}`;
 
       // Simulate a storage map
       const storage: Record<string, string> = {};

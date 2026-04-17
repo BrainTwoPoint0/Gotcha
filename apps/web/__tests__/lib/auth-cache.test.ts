@@ -132,11 +132,7 @@ describe('NPS SQL Aggregation Parity', () => {
 
   it('should match calculateNPS for typical distribution', () => {
     // 30 promoters (9-10), 50 passives (7-8), 20 detractors (0-6)
-    const ratings = [
-      ...Array(30).fill(9),
-      ...Array(50).fill(8),
-      ...Array(20).fill(5),
-    ];
+    const ratings = [...Array(30).fill(9), ...Array(50).fill(8), ...Array(20).fill(5)];
 
     const fromLib = calculateNPS(ratings);
     const fromSql = npsFromSql({

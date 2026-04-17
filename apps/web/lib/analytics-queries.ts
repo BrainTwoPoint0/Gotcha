@@ -26,7 +26,13 @@ export type PollOptionRow = { elementIdRaw: string; option: string };
 export type NpsAggRow = { promoters: bigint; passives: bigint; detractors: bigint; total: bigint };
 export type HeatmapRow = { dow: number; hour: number; count: bigint };
 export type SparklineRow = { element: string; day: string; avg: number };
-export type TrendsRow = { day: string; avg_rating: number | null; response_count: bigint; up_count: bigint; down_count: bigint };
+export type TrendsRow = {
+  day: string;
+  avg_rating: number | null;
+  response_count: bigint;
+  up_count: bigint;
+  down_count: bigint;
+};
 export type DailyNpsRow = { day: string; ratings: number[] };
 export type PivotRow = { row_val: string; col_val: string; cnt: bigint };
 export type TagRow = { tag: string; count: bigint };
@@ -35,8 +41,11 @@ export type TagRow = { tag: string; count: bigint };
 
 /** Response count per day */
 export async function getDailyTrend(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<DailyTrendRow[]> {
   return prisma.$queryRaw<DailyTrendRow[]>`
     SELECT DATE("createdAt") as day, COUNT(*) as count
@@ -50,8 +59,11 @@ export async function getDailyTrend(
 
 /** Poll selected option counts via jsonb unnest */
 export async function getPollSelectedCounts(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<PollCountRow[]> {
   return prisma.$queryRaw<PollCountRow[]>`
     SELECT "elementIdRaw", jsonb_array_elements_text("pollSelected") as selected_option, COUNT(*) as count
@@ -66,8 +78,11 @@ export async function getPollSelectedCounts(
 
 /** Distinct poll options per element (for zero-count display) */
 export async function getPollAvailableOptions(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<PollOptionRow[]> {
   return prisma.$queryRaw<PollOptionRow[]>`
     SELECT DISTINCT "elementIdRaw", jsonb_array_elements_text("pollOptions") as option
@@ -81,8 +96,11 @@ export async function getPollAvailableOptions(
 
 /** NPS promoter/passive/detractor counts */
 export async function getNpsAggregation(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<NpsAggRow[]> {
   return prisma.$queryRaw<NpsAggRow[]>`
     SELECT
@@ -100,8 +118,11 @@ export async function getNpsAggregation(
 
 /** Activity heatmap: day-of-week x hour */
 export async function getHeatmap(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<HeatmapRow[]> {
   return prisma.$queryRaw<HeatmapRow[]>`
     SELECT EXTRACT(DOW FROM "createdAt")::int as dow, EXTRACT(HOUR FROM "createdAt")::int as hour, COUNT(*) as count
@@ -115,8 +136,11 @@ export async function getHeatmap(
 
 /** Daily avg rating per element (top 20 by response count) */
 export async function getElementSparklines(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<SparklineRow[]> {
   return prisma.$queryRaw<SparklineRow[]>`
     SELECT "elementIdRaw" as element, DATE("createdAt") as day, AVG("rating") as avg
@@ -141,8 +165,11 @@ export async function getElementSparklines(
 
 /** Daily trends: avg rating, response count, vote counts */
 export async function getDailyTrends(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<TrendsRow[]> {
   return prisma.$queryRaw<TrendsRow[]>`
     SELECT
@@ -162,8 +189,11 @@ export async function getDailyTrends(
 
 /** Daily NPS ratings (for per-day NPS score calculation) */
 export async function getDailyNpsRatings(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date
 ): Promise<DailyNpsRow[]> {
   return prisma.$queryRaw<DailyNpsRow[]>`
     SELECT
@@ -193,9 +223,13 @@ export type PivotDimension = keyof typeof PIVOT_COLS;
 
 /** Dynamic 2-dimension pivot (only for DB-column dimensions) */
 export async function getPivotData(
-  orgId: string, projectId: string | undefined, elementId: string | undefined,
-  startDate: Date, endDate: Date,
-  rowKey: string, colKey: string
+  orgId: string,
+  projectId: string | undefined,
+  elementId: string | undefined,
+  startDate: Date,
+  endDate: Date,
+  rowKey: string,
+  colKey: string
 ): Promise<PivotRow[]> {
   const rowExpr = PIVOT_COLS[rowKey];
   const colExpr = PIVOT_COLS[colKey];

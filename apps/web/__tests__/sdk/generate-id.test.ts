@@ -18,9 +18,7 @@ describe('SDK Generate ID', () => {
 
     it('should match UUID v4 format', () => {
       const id = generateIdFallback();
-      expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-      );
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     });
 
     it('should have "4" at position 14 (version nibble)', () => {
@@ -99,9 +97,7 @@ describe('SDK Generate ID', () => {
 
     it('should return a valid UUID when crypto.randomUUID is available', () => {
       const id = generateId();
-      expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-      );
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     });
 
     it('should return a 36-character string from crypto.randomUUID', () => {
@@ -137,9 +133,7 @@ describe('SDK Generate ID', () => {
         };
 
         const id = generateId();
-        expect(id).toMatch(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-        );
+        expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
       } finally {
         crypto.randomUUID = originalRandomUUID;
       }

@@ -129,4 +129,3 @@ export async function fetchActiveOrganization(userEmail: string): Promise<Active
  * Cached version — deduplicates across layout + page within a single request.
  */
 export const getActiveOrganization = cache(fetchActiveOrganization);
-

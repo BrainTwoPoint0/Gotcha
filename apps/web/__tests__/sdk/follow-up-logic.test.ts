@@ -270,21 +270,13 @@ describe('SDK Follow-Up Logic', () => {
 
     it('should trigger follow-up for feedback mode with low rating', () => {
       expect(
-        shouldShowFollowUp(
-          'feedback',
-          { ratingThreshold: 3, question: 'Why?' },
-          { rating: 2 }
-        )
+        shouldShowFollowUp('feedback', { ratingThreshold: 3, question: 'Why?' }, { rating: 2 })
       ).toBe(true);
     });
 
     it('should trigger follow-up for vote mode with negative vote', () => {
       expect(
-        shouldShowFollowUp(
-          'vote',
-          { onNegativeVote: true, question: 'Why?' },
-          { vote: 'down' }
-        )
+        shouldShowFollowUp('vote', { onNegativeVote: true, question: 'Why?' }, { vote: 'down' })
       ).toBe(true);
     });
 
@@ -310,31 +302,19 @@ describe('SDK Follow-Up Logic', () => {
 
     it('should NOT trigger for poll mode with negative vote', () => {
       expect(
-        shouldShowFollowUp(
-          'poll',
-          { onNegativeVote: true, question: 'Why?' },
-          { vote: 'down' }
-        )
+        shouldShowFollowUp('poll', { onNegativeVote: true, question: 'Why?' }, { vote: 'down' })
       ).toBe(false);
     });
 
     it('should NOT trigger for feedback mode with high rating', () => {
       expect(
-        shouldShowFollowUp(
-          'feedback',
-          { ratingThreshold: 2, question: 'Why?' },
-          { rating: 5 }
-        )
+        shouldShowFollowUp('feedback', { ratingThreshold: 2, question: 'Why?' }, { rating: 5 })
       ).toBe(false);
     });
 
     it('should NOT trigger for vote mode with positive vote', () => {
       expect(
-        shouldShowFollowUp(
-          'vote',
-          { onNegativeVote: true, question: 'Why?' },
-          { vote: 'up' }
-        )
+        shouldShowFollowUp('vote', { onNegativeVote: true, question: 'Why?' }, { vote: 'up' })
       ).toBe(false);
     });
   });
@@ -393,11 +373,7 @@ describe('SDK Follow-Up Logic', () => {
       ratingThreshold: number | undefined | null,
       rating: number | undefined | null
     ): boolean => {
-      return (
-        ratingThreshold != null &&
-        rating != null &&
-        rating <= ratingThreshold
-      );
+      return ratingThreshold != null && rating != null && rating <= ratingThreshold;
     };
 
     const votePassesCheck = (

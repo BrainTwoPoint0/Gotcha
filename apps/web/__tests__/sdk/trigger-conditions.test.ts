@@ -11,7 +11,7 @@ describe('SDK Trigger Conditions', () => {
       scrollHeight: number
     ): number => {
       if (scrollHeight <= 0) return 100;
-      return (scrollY + innerHeight) / scrollHeight * 100;
+      return ((scrollY + innerHeight) / scrollHeight) * 100;
     };
 
     it('should return 0% at top of tall page', () => {
@@ -194,10 +194,7 @@ describe('SDK Trigger Conditions', () => {
       visitsMet: boolean;
     }
 
-    const evaluateConditions = (
-      config: TriggerConfig,
-      state: TriggerState
-    ): boolean => {
+    const evaluateConditions = (config: TriggerConfig, state: TriggerState): boolean => {
       // If a condition is not specified, it is considered met
       const timeOk = config.showAfterSeconds === undefined || state.timeMet;
       const scrollOk = config.showAfterScrollPercent === undefined || state.scrollMet;
@@ -206,7 +203,9 @@ describe('SDK Trigger Conditions', () => {
     };
 
     it('should return true when no conditions are specified', () => {
-      expect(evaluateConditions({}, { timeMet: false, scrollMet: false, visitsMet: false })).toBe(true);
+      expect(evaluateConditions({}, { timeMet: false, scrollMet: false, visitsMet: false })).toBe(
+        true
+      );
     });
 
     it('should return true when all specified conditions are met', () => {
@@ -215,7 +214,9 @@ describe('SDK Trigger Conditions', () => {
         showAfterScrollPercent: 50,
         showAfterVisits: 3,
       };
-      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: true })).toBe(true);
+      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: true })).toBe(
+        true
+      );
     });
 
     it('should return false when time condition is unmet', () => {
@@ -223,7 +224,9 @@ describe('SDK Trigger Conditions', () => {
         showAfterSeconds: 5,
         showAfterScrollPercent: 50,
       };
-      expect(evaluateConditions(config, { timeMet: false, scrollMet: true, visitsMet: true })).toBe(false);
+      expect(evaluateConditions(config, { timeMet: false, scrollMet: true, visitsMet: true })).toBe(
+        false
+      );
     });
 
     it('should return false when scroll condition is unmet', () => {
@@ -231,7 +234,9 @@ describe('SDK Trigger Conditions', () => {
         showAfterSeconds: 5,
         showAfterScrollPercent: 50,
       };
-      expect(evaluateConditions(config, { timeMet: true, scrollMet: false, visitsMet: true })).toBe(false);
+      expect(evaluateConditions(config, { timeMet: true, scrollMet: false, visitsMet: true })).toBe(
+        false
+      );
     });
 
     it('should return false when visits condition is unmet', () => {
@@ -239,7 +244,9 @@ describe('SDK Trigger Conditions', () => {
         showAfterSeconds: 5,
         showAfterVisits: 3,
       };
-      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: false })).toBe(false);
+      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: false })).toBe(
+        false
+      );
     });
 
     it('should return false when all specified conditions are unmet', () => {
@@ -248,49 +255,75 @@ describe('SDK Trigger Conditions', () => {
         showAfterScrollPercent: 50,
         showAfterVisits: 3,
       };
-      expect(evaluateConditions(config, { timeMet: false, scrollMet: false, visitsMet: false })).toBe(false);
+      expect(
+        evaluateConditions(config, { timeMet: false, scrollMet: false, visitsMet: false })
+      ).toBe(false);
     });
 
     it('should ignore unspecified time condition', () => {
       const config: TriggerConfig = { showAfterScrollPercent: 50 };
       // timeMet is false but time is not specified, so it doesn't matter
-      expect(evaluateConditions(config, { timeMet: false, scrollMet: true, visitsMet: false })).toBe(true);
+      expect(
+        evaluateConditions(config, { timeMet: false, scrollMet: true, visitsMet: false })
+      ).toBe(true);
     });
 
     it('should ignore unspecified scroll condition', () => {
       const config: TriggerConfig = { showAfterSeconds: 5 };
-      expect(evaluateConditions(config, { timeMet: true, scrollMet: false, visitsMet: false })).toBe(true);
+      expect(
+        evaluateConditions(config, { timeMet: true, scrollMet: false, visitsMet: false })
+      ).toBe(true);
     });
 
     it('should ignore unspecified visits condition', () => {
       const config: TriggerConfig = { showAfterSeconds: 5, showAfterScrollPercent: 50 };
-      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: false })).toBe(true);
+      expect(evaluateConditions(config, { timeMet: true, scrollMet: true, visitsMet: false })).toBe(
+        true
+      );
     });
 
     it('should handle single condition: time only', () => {
       expect(
-        evaluateConditions({ showAfterSeconds: 10 }, { timeMet: true, scrollMet: false, visitsMet: false })
+        evaluateConditions(
+          { showAfterSeconds: 10 },
+          { timeMet: true, scrollMet: false, visitsMet: false }
+        )
       ).toBe(true);
       expect(
-        evaluateConditions({ showAfterSeconds: 10 }, { timeMet: false, scrollMet: true, visitsMet: true })
+        evaluateConditions(
+          { showAfterSeconds: 10 },
+          { timeMet: false, scrollMet: true, visitsMet: true }
+        )
       ).toBe(false);
     });
 
     it('should handle single condition: scroll only', () => {
       expect(
-        evaluateConditions({ showAfterScrollPercent: 75 }, { timeMet: false, scrollMet: true, visitsMet: false })
+        evaluateConditions(
+          { showAfterScrollPercent: 75 },
+          { timeMet: false, scrollMet: true, visitsMet: false }
+        )
       ).toBe(true);
       expect(
-        evaluateConditions({ showAfterScrollPercent: 75 }, { timeMet: true, scrollMet: false, visitsMet: true })
+        evaluateConditions(
+          { showAfterScrollPercent: 75 },
+          { timeMet: true, scrollMet: false, visitsMet: true }
+        )
       ).toBe(false);
     });
 
     it('should handle single condition: visits only', () => {
       expect(
-        evaluateConditions({ showAfterVisits: 2 }, { timeMet: false, scrollMet: false, visitsMet: true })
+        evaluateConditions(
+          { showAfterVisits: 2 },
+          { timeMet: false, scrollMet: false, visitsMet: true }
+        )
       ).toBe(true);
       expect(
-        evaluateConditions({ showAfterVisits: 2 }, { timeMet: true, scrollMet: true, visitsMet: false })
+        evaluateConditions(
+          { showAfterVisits: 2 },
+          { timeMet: true, scrollMet: true, visitsMet: false }
+        )
       ).toBe(false);
     });
   });
@@ -303,7 +336,7 @@ describe('SDK Trigger Conditions', () => {
         scrollHeight: number
       ): number => {
         if (scrollHeight <= 0) return 100;
-        return (scrollY + innerHeight) / scrollHeight * 100;
+        return ((scrollY + innerHeight) / scrollHeight) * 100;
       };
 
       it('should auto-satisfy scroll when content fits viewport', () => {
@@ -325,7 +358,7 @@ describe('SDK Trigger Conditions', () => {
         scrollHeight: number
       ): number => {
         if (scrollHeight <= 0) return 100;
-        return (scrollY + innerHeight) / scrollHeight * 100;
+        return ((scrollY + innerHeight) / scrollHeight) * 100;
       };
 
       it('should handle scrollHeight of 0', () => {
@@ -372,7 +405,7 @@ describe('SDK Trigger Conditions', () => {
         scrollHeight: number
       ): number => {
         if (scrollHeight <= 0) return 100;
-        return (scrollY + innerHeight) / scrollHeight * 100;
+        return ((scrollY + innerHeight) / scrollHeight) * 100;
       };
 
       it('should handle very tall pages', () => {

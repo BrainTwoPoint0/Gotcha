@@ -5,7 +5,9 @@
 
 describe('SDK Context Collector', () => {
   // Replicate the context collection logic
-  const collectContext = (recentErrors: Array<{ message: string; source?: string; timestamp: number }> = []) => {
+  const collectContext = (
+    recentErrors: Array<{ message: string; source?: string; timestamp: number }> = []
+  ) => {
     return {
       url: window.location.origin + window.location.pathname,
       userAgent: navigator.userAgent,
@@ -200,7 +202,11 @@ describe('SDK Context Collector', () => {
 
     it('should include provided errors', () => {
       const errors = [
-        { message: 'TypeError: undefined is not a function', source: 'app.js', timestamp: 1700000000000 },
+        {
+          message: 'TypeError: undefined is not a function',
+          source: 'app.js',
+          timestamp: 1700000000000,
+        },
         { message: 'ReferenceError: x is not defined', timestamp: 1700000001000 },
       ];
       const ctx = collectContext(errors);
@@ -227,9 +233,7 @@ describe('SDK Context Collector', () => {
 
   describe('Serialization safety', () => {
     it('should be JSON-serializable', () => {
-      const ctx = collectContext([
-        { message: 'Test', source: 'test.js', timestamp: Date.now() },
-      ]);
+      const ctx = collectContext([{ message: 'Test', source: 'test.js', timestamp: Date.now() }]);
       expect(() => JSON.stringify(ctx)).not.toThrow();
     });
 

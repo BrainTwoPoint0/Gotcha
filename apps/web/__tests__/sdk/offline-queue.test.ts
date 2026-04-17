@@ -42,9 +42,7 @@ function createQueue(initial: QueueItem[] = []): {
       queue = queue.filter((item) => item.id !== id);
     },
     incrementRetries(id: string) {
-      queue = queue.map((item) =>
-        item.id === id ? { ...item, retries: item.retries + 1 } : item
-      );
+      queue = queue.map((item) => (item.id === id ? { ...item, retries: item.retries + 1 } : item));
     },
     getAll() {
       queue = filterExpiredAndExhausted(queue);
@@ -341,10 +339,7 @@ describe('SDK Offline Queue', () => {
 
   describe('Corrupt Data Handling', () => {
     it('should initialize from valid pre-existing items', () => {
-      const existing: QueueItem[] = [
-        makeItem({ id: 'pre-1' }),
-        makeItem({ id: 'pre-2' }),
-      ];
+      const existing: QueueItem[] = [makeItem({ id: 'pre-1' }), makeItem({ id: 'pre-2' })];
       const q = createQueue(existing);
       expect(q.getAll()).toHaveLength(2);
     });

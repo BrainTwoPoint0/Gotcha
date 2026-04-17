@@ -73,16 +73,12 @@ describe('SDK Cooldown Expiry', () => {
     });
 
     it('should return false 1ms before cooldown expires', () => {
-      const justBefore = new Date(
-        Date.now() - (30 * 24 * 60 * 60 * 1000 - 1)
-      ).toISOString();
+      const justBefore = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000 - 1)).toISOString();
       expect(isResponseExpired(justBefore, 30)).toBe(false);
     });
 
     it('should return true 1ms after cooldown expires', () => {
-      const justAfter = new Date(
-        Date.now() - (30 * 24 * 60 * 60 * 1000 + 1)
-      ).toISOString();
+      const justAfter = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000 + 1)).toISOString();
       expect(isResponseExpired(justAfter, 30)).toBe(true);
     });
   });
@@ -145,9 +141,7 @@ describe('SDK Cooldown Expiry', () => {
 
     it('should still expire very old responses even with large cooldown', () => {
       // 20 years ago with 10-year cooldown
-      const twentyYearsAgo = new Date(
-        Date.now() - 20 * 365 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      const twentyYearsAgo = new Date(Date.now() - 20 * 365 * 24 * 60 * 60 * 1000).toISOString();
       expect(isResponseExpired(twentyYearsAgo, 3650)).toBe(true);
     });
   });
