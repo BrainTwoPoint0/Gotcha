@@ -2,13 +2,11 @@ import Link from 'next/link';
 import { PricingToggle } from './pricing-toggle';
 import { CtaSection } from '../cta-section';
 import { PricingHero } from './pricing-hero';
-import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
 
 const programs = [
   {
-    name: 'Education',
-    icon: '🎓',
-    description: 'Students & universities',
+    eyebrow: 'Education',
+    title: 'Students & universities',
     benefits: [
       'Validate thesis projects with real user feedback',
       'Run usability studies on class assignments',
@@ -16,19 +14,17 @@ const programs = [
     ],
   },
   {
-    name: 'Startups',
-    icon: '🚀',
-    description: 'Early-stage teams',
+    eyebrow: 'Startups',
+    title: 'Early-stage teams',
     benefits: [
       'Measure product-market fit with NPS scores',
-      'Prioritize your roadmap with actual user votes',
+      'Prioritise your roadmap with actual user votes',
       'Export feedback data to share with investors',
     ],
   },
   {
-    name: 'Product Teams',
-    icon: '🏢',
-    description: 'Growing organizations',
+    eyebrow: 'Product teams',
+    title: 'Growing organisations',
     benefits: [
       'Track satisfaction across features as a team',
       'Route bug reports and feedback to Slack',
@@ -39,14 +35,14 @@ const programs = [
 
 const buildVsBuy = {
   build: {
-    title: 'Build It Yourself',
+    title: 'Build it yourself',
     items: [
-      { label: 'Engineering time (20-40 hours)', cost: '$3,000+' },
+      { label: 'Engineering time (20–40 hours)', cost: '$3,000+' },
       { label: 'Database & infrastructure', cost: '$20/mo' },
       { label: 'Ongoing maintenance', cost: '$100/mo' },
     ],
-    total: '$3,000+ upfront + $120/mo',
-    time: '1-3 weeks to build',
+    total: '$3,000+ upfront · $120/mo',
+    time: '1–3 weeks to build',
   },
   buy: {
     title: 'Use Gotcha',
@@ -62,21 +58,21 @@ const buildVsBuy = {
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Hero */}
+    <main className="editorial min-h-screen bg-editorial-paper text-editorial-ink">
       <PricingHero />
 
-      {/* Pricing Tiers */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-8 py-20">
+      {/* Tiers */}
+      <div className="mx-auto max-w-4xl px-6 py-16 sm:py-20 lg:px-8">
         <PricingToggle />
 
-        {/* Need more? */}
-        <div className="mt-8 bg-white rounded-2xl p-6 text-center border border-gray-200/60 shadow-sm">
-          <p className="text-gray-600">
+        {/* Need more? — centred editorial aside, hairline above + below
+            so it reads as a margin note, not a boxed system banner. */}
+        <div className="mt-12 border-y border-editorial-neutral-2 py-6 text-center">
+          <p className="text-[14px] leading-[1.55] text-editorial-neutral-3">
             Need SSO, SLA, or custom integrations?{' '}
             <a
               href="mailto:info@braintwopoint0.com"
-              className="text-slate-700 font-medium underline underline-offset-4 decoration-slate-300 hover:decoration-slate-600 transition-colors"
+              className="text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
             >
               Contact us
             </a>
@@ -84,159 +80,201 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Special Programs */}
-      <div className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Who uses Gotcha?</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From solo founders to product teams — here&apos;s how people use Gotcha.
+      {/* Programs */}
+      <section className="border-t border-editorial-neutral-2 bg-editorial-paper py-20 sm:py-24">
+        <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 inline-flex items-center gap-3">
+              <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Who uses Gotcha
+              </span>
+            </div>
+            <h2 className="mx-auto max-w-2xl font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink sm:text-5xl">
+              From solo founders to product teams
+              <span className="text-editorial-accent">.</span>
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-[15px] leading-[1.55] text-editorial-neutral-3">
+              Three patterns that come up the most.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-px bg-editorial-neutral-2 md:grid-cols-3 [&>*]:bg-editorial-paper">
             {programs.map((program) => (
-              <SpotlightCard
-                key={program.name}
-                className="p-6"
-                spotlightColor="rgba(148, 163, 184, 0.1)"
-              >
-                <div className="text-4xl mb-4">{program.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900">{program.name}</h3>
-                <p className="text-gray-500 text-sm mt-2">{program.description}</p>
-                <ul className="space-y-2 mt-4 mb-6">
+              <article key={program.eyebrow} className="p-8">
+                {/* Neutral eyebrow rule — sienna reserved for 2 jobs per
+                    section; Programs cadence uses the neutral one. */}
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    {program.eyebrow}
+                  </span>
+                </div>
+                <h3 className="font-display text-[1.375rem] font-normal leading-[1.25] tracking-[-0.01em] text-editorial-ink">
+                  {program.title}
+                </h3>
+                <ul className="mt-5 space-y-2.5">
                   {program.benefits.map((benefit) => (
-                    <li key={benefit} className="flex items-start gap-2 text-sm">
+                    <li
+                      key={benefit}
+                      className="flex items-start gap-2.5 text-[14px] leading-[1.55] text-editorial-neutral-3"
+                    >
                       <svg
-                        className="w-5 h-5 text-green-500 flex-shrink-0"
+                        className="mt-1 h-3 w-3 shrink-0 text-editorial-neutral-3"
+                        viewBox="0 0 14 14"
                         fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        aria-hidden="true"
                       >
                         <path
+                          d="M3 7.5L6 10L11 4"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <span className="text-gray-600">{benefit}</span>
+                      <span>{benefit}</span>
                     </li>
                   ))}
                 </ul>
                 <Link
                   href="/signup"
-                  className="block text-center py-2 px-4 rounded-lg font-medium bg-gray-100 text-gray-900 hover:bg-gray-200 transition"
+                  className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-[6px] transition-colors hover:decoration-editorial-accent"
                 >
-                  Get Started
+                  Get started
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 8H13M13 8L9 4M13 8L9 12"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </Link>
-              </SpotlightCard>
+              </article>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Build vs Buy */}
-      <div className="py-20 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Build vs Buy</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Why spend weeks building when you can integrate in minutes?
-            </p>
+      <section className="border-t border-editorial-neutral-2 bg-editorial-paper py-20 sm:py-24">
+        <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 inline-flex items-center gap-3">
+              <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                Build vs buy
+              </span>
+            </div>
+            <h2 className="mx-auto max-w-2xl font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink sm:text-5xl">
+              Weeks of engineering, or five minutes
+              <span className="text-editorial-accent">.</span>
+            </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
             {/* Build */}
-            <div className="bg-white rounded-2xl p-6 border border-red-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-red-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">{buildVsBuy.build.title}</h3>
+            <article className="rounded-md border border-editorial-neutral-2 bg-editorial-paper p-6 md:p-8">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                  Build
+                </span>
               </div>
-              <ul className="space-y-3 mb-6">
+              <h3 className="font-display text-[1.5rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
+                {buildVsBuy.build.title}
+              </h3>
+              <ul className="mt-5 space-y-3">
                 {buildVsBuy.build.items.map((item) => (
-                  <li key={item.label} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{item.label}</span>
-                    <span className="font-medium text-red-600">{item.cost}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="border-t pt-4">
-                <div className="flex justify-between mb-2">
-                  <span className="font-semibold text-gray-900">Total Cost</span>
-                  <span className="font-bold text-red-600">{buildVsBuy.build.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Time to launch</span>
-                  <span className="text-gray-900">{buildVsBuy.build.time}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Buy */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-green-500 shadow-lg">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-green-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  <li
+                    key={item.label}
+                    className="flex items-center justify-between gap-4 border-b border-editorial-neutral-2 pb-3 text-[14px] text-editorial-neutral-3 last:border-b-0 last:pb-0"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">{buildVsBuy.buy.title}</h3>
-              </div>
-              <ul className="space-y-3 mb-6">
-                {buildVsBuy.buy.items.map((item) => (
-                  <li key={item.label} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{item.label}</span>
-                    <span className="font-medium text-green-600">{item.cost}</span>
+                    <span className="min-w-0">{item.label}</span>
+                    <span className="shrink-0 font-mono text-[13px] tabular-nums text-editorial-ink">
+                      {item.cost}
+                    </span>
                   </li>
                 ))}
               </ul>
-              <div className="border-t pt-4">
-                <div className="flex justify-between mb-2">
-                  <span className="font-semibold text-gray-900">Total Cost</span>
-                  <span className="font-bold text-green-600">{buildVsBuy.buy.total}</span>
+              <dl className="mt-5 space-y-2 border-t border-editorial-neutral-2 pt-5">
+                <div className="flex items-center justify-between">
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Total cost
+                  </dt>
+                  <dd className="font-display text-[1rem] text-editorial-ink">
+                    {buildVsBuy.build.total}
+                  </dd>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Time to launch</span>
-                  <span className="text-gray-900">{buildVsBuy.buy.time}</span>
+                <div className="flex items-center justify-between">
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Time to launch
+                  </dt>
+                  <dd className="text-[13px] text-editorial-ink">{buildVsBuy.build.time}</dd>
                 </div>
+              </dl>
+            </article>
+
+            {/* Buy — single brand moment for this section. One solid
+                sienna border instead of a doubled border+shadow combo so
+                the edge reads as one clean stroke at every DPI. Eyebrow
+                rule + label stay neutral — the border already says
+                "this one". */}
+            <article className="rounded-md border border-editorial-accent/70 bg-editorial-paper p-6 md:p-8">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                  Buy
+                </span>
               </div>
-            </div>
+              <h3 className="font-display text-[1.5rem] font-normal leading-[1.2] tracking-[-0.01em] text-editorial-ink">
+                {buildVsBuy.buy.title}
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {buildVsBuy.buy.items.map((item) => (
+                  <li
+                    key={item.label}
+                    className="flex items-center justify-between gap-4 border-b border-editorial-neutral-2 pb-3 text-[14px] text-editorial-neutral-3 last:border-b-0 last:pb-0"
+                  >
+                    <span>{item.label}</span>
+                    <span className="font-mono text-[13px] tabular-nums text-editorial-ink">
+                      {item.cost}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <dl className="mt-5 space-y-2 border-t border-editorial-neutral-2 pt-5">
+                <div className="flex items-center justify-between">
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Total cost
+                  </dt>
+                  <dd className="font-display text-[1rem] text-editorial-ink">
+                    {buildVsBuy.buy.total}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                    Time to launch
+                  </dt>
+                  <dd className="text-[13px] text-editorial-ink">{buildVsBuy.buy.time}</dd>
+                </div>
+              </dl>
+            </article>
           </div>
 
-          {/* Code Example */}
-          <div className="mt-12 bg-gray-800 rounded-2xl p-6 overflow-hidden">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="ml-2 text-gray-400 text-sm">It&apos;s this simple</span>
-            </div>
-            <pre className="text-sm text-gray-300 overflow-x-auto">
+          {/* Code example — editorial paper frame. Ink slab removed; the
+              rest of the marketing site stays on paper, this does too.
+              Neutral eyebrow rule so sienna stays disciplined. */}
+          <figure className="mt-12 overflow-hidden rounded-md border border-editorial-neutral-2 bg-editorial-paper">
+            <figcaption className="flex items-center gap-3 border-b border-editorial-neutral-2 bg-editorial-paper px-5 py-3">
+              <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                It&rsquo;s this simple
+              </span>
+            </figcaption>
+            <pre className="overflow-x-auto bg-editorial-ink/[0.02] p-5 font-mono text-[13px] leading-[1.6] text-editorial-ink">
               <code>{`npm install gotcha-feedback
 
 import { GotchaProvider, Gotcha } from 'gotcha-feedback';
@@ -251,60 +289,101 @@ function App() {
   );
 }`}</code>
             </pre>
-          </div>
+          </figure>
         </div>
-      </div>
+      </section>
 
       {/* FAQ */}
-      <div className="bg-white py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">What counts as a response?</h3>
-              <p className="text-gray-600">
-                A response is any feedback submission from your users — whether it&apos;s a star
-                rating, thumbs up/down vote, poll selection, NPS score, bug report, or written
-                feedback. Each unique submission counts as one response.
-              </p>
+      <section className="border-t border-editorial-neutral-2 bg-editorial-paper py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 inline-flex items-center gap-3">
+              <span className="h-px w-6 bg-editorial-neutral-3/60" aria-hidden="true" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+                FAQ
+              </span>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Can I upgrade or downgrade anytime?
-              </h3>
-              <p className="text-gray-600">
-                Yes! You can upgrade from Free to Pro at any time and it takes effect immediately.
-                If you want to downgrade, changes apply at the start of your next billing cycle.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                What happens if I exceed my free tier limit?
-              </h3>
-              <p className="text-gray-600">
-                We&apos;ll notify you when you reach 80% of your 500 responses. If you exceed it,
-                responses are still collected but you&apos;ll need to upgrade to Pro to access new
-                data. Pro has unlimited responses.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                How do the special programs work?
-              </h3>
-              <p className="text-gray-600">
-                We offer special pricing for students, universities, accelerators, and investors.
-                Contact us to discuss partnership opportunities and custom pricing for your
-                organization.
-              </p>
-            </div>
+            <h2 className="font-display text-4xl font-normal leading-[1.1] tracking-[-0.02em] text-editorial-ink sm:text-5xl">
+              Frequently asked questions
+            </h2>
           </div>
-        </div>
-      </div>
 
-      {/* CTA */}
+          <dl className="divide-y divide-editorial-neutral-2 border-y border-editorial-neutral-2">
+            <FaqItem
+              q="Is there a trial of Pro?"
+              a="The Free plan is the trial — 500 responses/month, forever, no credit card. It's the full widget, the full dashboard, and every SDK feature. Upgrade to Pro only when you need unlimited responses, team workspaces, or advanced analytics."
+            />
+            <FaqItem
+              q="What counts as a response?"
+              a="Any feedback submission from your users — a star rating, thumbs up/down vote, poll selection, NPS score, bug report, or written feedback. Each unique submission counts as one response."
+            />
+            <FaqItem
+              q="Can I upgrade or downgrade anytime?"
+              a="Yes. Upgrade from Free to Pro takes effect immediately. Downgrades apply at the start of your next billing cycle. No refunds for partial billing periods."
+            />
+            <FaqItem
+              q="What happens if I exceed the free limit?"
+              a="We notify you at 80% of your 500 responses. Past the cap, new responses are still collected but marked as gated — you'll need to upgrade to Pro to access them. Pro has unlimited responses."
+            />
+            <FaqItem
+              q="What happens to my data if I cancel?"
+              a="Cancelling Pro drops you back to Free — all your historical responses stay in the dashboard, but anything collected above the 500/month Free limit becomes gated (visible in summary, content redacted) until you re-upgrade. If you fully terminate your account, we keep your data exportable for 30 days (CSV or JSON via the dashboard or the export API), then delete it."
+            />
+            <FaqItem
+              q="Do you offer an SLA?"
+              a={
+                <>
+                  Not on Free or Pro — we strive for high availability but don&rsquo;t commit to an
+                  uptime number on self-serve plans. If you need a formal SLA, SSO, DPA, or a custom
+                  contract,{' '}
+                  <a
+                    href="mailto:info@braintwopoint0.com"
+                    className="text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+                  >
+                    contact us
+                  </a>
+                  .
+                </>
+              }
+            />
+            <FaqItem
+              q="Where is data stored? Is it GDPR-compliant?"
+              a={
+                <>
+                  Yes. Data is stored in managed Supabase Postgres (EU region) and screenshots in
+                  private Supabase Storage. We provide data-export and deletion APIs scoped per
+                  project so customers can fulfil GDPR data-subject requests from their own users.
+                  See the{' '}
+                  <a
+                    href="/privacy"
+                    className="text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+                  >
+                    Privacy Policy
+                  </a>{' '}
+                  for the full detail.
+                </>
+              }
+            />
+            <FaqItem
+              q="How do the special programs work?"
+              a="We offer custom pricing for students, universities, accelerators, and investors. Contact us to discuss partnership opportunities for your organisation."
+            />
+          </dl>
+        </div>
+      </section>
+
       <CtaSection />
     </main>
+  );
+}
+
+function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
+  return (
+    <div className="grid gap-3 py-6 md:grid-cols-[220px_1fr] md:gap-10">
+      <dt className="font-display text-[1.125rem] font-normal leading-[1.3] tracking-[-0.01em] text-editorial-ink">
+        {q}
+      </dt>
+      <dd className="text-[15px] leading-[1.6] text-editorial-neutral-3">{a}</dd>
+    </div>
   );
 }

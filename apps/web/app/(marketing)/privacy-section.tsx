@@ -1,6 +1,6 @@
 const refusals = [
   {
-    title: 'No analytics',
+    title: 'No trackers',
     body: 'The SDK talks to one origin — ours. No Segment, no PostHog, no Google, no Sentry. Nothing piggybacks.',
   },
   {

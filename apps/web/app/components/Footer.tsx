@@ -43,6 +43,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/roadmap/gotcha" className="transition-colors hover:text-editorial-ink">
+                  Roadmap
+                </Link>
+              </li>
+              <li>
                 <a
                   href="https://www.npmjs.com/package/gotcha-feedback"
                   className="transition-colors hover:text-editorial-ink"
@@ -90,21 +95,23 @@ export function Footer() {
 
         {/* AI links — quieter, text-only */}
         <div className="mt-16 border-t border-editorial-neutral-2 pt-8">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px]">
+          <div className="flex flex-col gap-3 text-[12px] sm:flex-row sm:items-center sm:gap-6">
             <span className="font-mono uppercase tracking-[0.18em] text-editorial-neutral-3">
               Ask AI about Gotcha
             </span>
-            {AI_LINKS.map((ai) => (
-              <a
-                key={ai.name}
-                href={ai.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
-              >
-                {ai.name}
-              </a>
-            ))}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {AI_LINKS.map((ai) => (
+                <a
+                  key={ai.name}
+                  href={ai.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-editorial-neutral-2 decoration-1 underline-offset-4 transition-colors hover:decoration-editorial-accent"
+                >
+                  {ai.name}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -105,8 +105,8 @@ export function HeroSection() {
           style={{ animationDelay: '120ms' }}
         >
           A React feedback widget and dashboard that closes the loop. Users leave a rating, a vote,
-          or a bug report — and hear back when you ship. No analytics, no cookies, no tracking. Just
-          a direct line.
+          or a bug report — and hear back when you ship. No trackers, no cookies, no third-party
+          scripts. Just a direct line.
         </p>
 
         {/* Actions — one accent CTA, one hairline secondary. Not two equal buttons. */}

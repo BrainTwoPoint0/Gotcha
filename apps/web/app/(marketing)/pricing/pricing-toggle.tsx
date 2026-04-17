@@ -2,12 +2,40 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SpotlightCard } from '@/app/components/ui/aceternity/spotlight';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
-const tiers = {
+interface Tier {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  responses: string;
+  features: string[];
+  cta: string;
+  href: string;
+  highlighted: boolean;
+}
+
+// Pro feature list lives in one place so the monthly and annual tiers
+// can't drift when a new feature ships.
+const proFeatures = [
+  'Unlimited responses',
+  'Unlimited projects',
+  'Full analytics dashboard',
+  'NPS & satisfaction tracking',
+  'Bug tracking & flagging',
+  'Follow-up questions on low scores',
+  'Smart triggers (scroll, delay, visits)',
+  'Auto-captured context & JS errors',
+  'Team workspaces & roles',
+  'Webhooks (Slack, Discord)',
+  'Export to CSV & JSON',
+  'User segmentation',
+  'GDPR data export & deletion API',
+];
+
+const freeFeatures = ['500 responses/month', '1 project', 'Response viewer', 'Email support'];
+
+const tiers: Record<'monthly' | 'annual', Tier[]> = {
   monthly: [
     {
       name: 'Free',
@@ -15,8 +43,8 @@ const tiers = {
       period: 'forever',
       description: 'Perfect for trying out Gotcha',
       responses: '500',
-      features: ['500 responses/month', '1 project', 'Response viewer', 'Email support'],
-      cta: 'Get Started',
+      features: freeFeatures,
+      cta: 'Start free',
       href: '/signup',
       highlighted: false,
     },
@@ -26,22 +54,8 @@ const tiers = {
       period: '/month',
       description: 'For individuals & teams',
       responses: 'Unlimited',
-      features: [
-        'Unlimited responses',
-        'Unlimited projects',
-        'Full analytics dashboard',
-        'NPS & satisfaction tracking',
-        'Bug tracking & flagging',
-        'Follow-up questions on low scores',
-        'Smart triggers (scroll, delay, visits)',
-        'Auto-captured context & JS errors',
-        'Team workspaces & roles',
-        'Webhooks (Slack, Discord)',
-        'Export to CSV & JSON',
-        'User segmentation',
-        'GDPR data export & deletion API',
-      ],
-      cta: 'Get Started',
+      features: proFeatures,
+      cta: 'Go Pro',
       href: '/signup?plan=pro',
       highlighted: true,
     },
@@ -53,8 +67,8 @@ const tiers = {
       period: 'forever',
       description: 'Perfect for trying out Gotcha',
       responses: '500',
-      features: ['500 responses/month', '1 project', 'Response viewer', 'Email support'],
-      cta: 'Get Started',
+      features: freeFeatures,
+      cta: 'Start free',
       href: '/signup',
       highlighted: false,
     },
@@ -64,22 +78,8 @@ const tiers = {
       period: '/month',
       description: 'Billed annually ($288/yr)',
       responses: 'Unlimited',
-      features: [
-        'Unlimited responses',
-        'Unlimited projects',
-        'Full analytics dashboard',
-        'NPS & satisfaction tracking',
-        'Bug tracking & flagging',
-        'Follow-up questions on low scores',
-        'Smart triggers (scroll, delay, visits)',
-        'Auto-captured context & JS errors',
-        'Team workspaces & roles',
-        'Webhooks (Slack, Discord)',
-        'Export to CSV & JSON',
-        'User segmentation',
-        'GDPR data export & deletion API',
-      ],
-      cta: 'Get Started',
+      features: proFeatures,
+      cta: 'Go Pro',
       href: '/signup?plan=pro&billing=annual',
       highlighted: true,
     },
@@ -92,132 +92,179 @@ export function PricingToggle() {
 
   return (
     <div>
-      {/* Toggle */}
-      <div className="flex items-center justify-center gap-3 mb-12">
-        <span
-          className={`text-sm font-medium ${billing === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}
+      {/* Billing period selector — tablist semantics (Tab to focus, click
+          or Enter/Space to activate). We previously used role=radiogroup
+          here which requires arrow-key nav + single tab stop; the page's
+          actual behaviour matches tablist, so the semantics follow.
+          Stacks vertically on mobile so the annotation doesn't wrap
+          awkwardly next to the toggle. */}
+      <div className="mb-12 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+        <div
+          role="tablist"
+          aria-label="Billing period"
+          className="inline-flex items-center rounded-md border border-editorial-neutral-2 bg-editorial-paper p-1"
         >
-          Monthly
-        </span>
-        <button
-          onClick={() => setBilling(billing === 'monthly' ? 'annual' : 'monthly')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            billing === 'annual' ? 'bg-slate-700' : 'bg-gray-300'
-          }`}
-          aria-label="Toggle annual billing"
-        >
-          <motion.span
-            layout
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={`inline-block h-4 w-4 rounded-full bg-white ${
-              billing === 'annual' ? 'translate-x-6' : 'translate-x-1'
-            }`}
+          <BillingTab
+            active={billing === 'monthly'}
+            onClick={() => setBilling('monthly')}
+            label="Monthly"
           />
-        </button>
+          <BillingTab
+            active={billing === 'annual'}
+            onClick={() => setBilling('annual')}
+            label="Annual"
+          />
+        </div>
+        {/* Always visible — the nudge pulls users toward annual. Copy flips
+            on activation. Pointer-events-none + aria-hidden because the
+            label is a decorative reinforcement of toggle state, not a
+            second interaction target. */}
         <span
-          className={`text-sm font-medium ${billing === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}
+          aria-hidden="true"
+          className="pointer-events-none font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-accent"
         >
-          Annual
+          {billing === 'annual' ? 'Saving 17%' : 'Save 17% with annual'}
         </span>
-        <Badge
-          variant="secondary"
-          className={`transition-opacity ${
-            billing === 'annual'
-              ? 'bg-green-100 text-green-700 opacity-100'
-              : 'bg-green-100 text-green-700 opacity-0'
-          }`}
-        >
-          Save 17%
-        </Badge>
       </div>
 
-      {/* Tier Cards */}
-      <motion.div
-        className="grid md:grid-cols-2 gap-8"
-        initial="hidden"
-        animate="visible"
-        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
-      >
+      {/* Tier cards */}
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
         {currentTiers.map((tier) => (
-          <motion.div
-            key={tier.name + '-wrapper'}
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: {
-                opacity: 1,
-                y: 0,
-                transition: { type: 'spring', stiffness: 100, damping: 20 },
-              },
-            }}
-          >
-            <SpotlightCard
-              key={tier.name}
-              className={`p-8 ${
-                tier.highlighted
-                  ? 'ring-2 ring-slate-600 shadow-xl md:scale-[1.03]'
-                  : 'shadow-sm opacity-90'
-              }`}
-              spotlightColor={
-                tier.highlighted ? 'rgba(71, 85, 105, 0.15)' : 'rgba(148, 163, 184, 0.1)'
-              }
-            >
-              {tier.highlighted && (
-                <div className="text-center mb-4">
-                  <Badge className="bg-slate-700 text-white hover:bg-slate-700">Recommended</Badge>
-                </div>
-              )}
-              <h3 className="text-xl font-semibold text-gray-900">{tier.name}</h3>
-              <p className="text-gray-500 text-sm mt-1">{tier.description}</p>
-              <div className="mt-4 mb-6">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={tier.price}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-4xl font-bold text-gray-900 inline-block"
-                  >
-                    {tier.price}
-                  </motion.span>
-                </AnimatePresence>
-                <span className="text-gray-500 ml-1">{tier.period}</span>
-              </div>
-              <div className="mb-6">
-                <div className="text-2xl font-semibold text-slate-600">{tier.responses}</div>
-                <div className="text-sm text-gray-500">responses/month</div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
-                    <svg
-                      className="w-5 h-5 text-green-500 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="text-gray-600">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant={tier.highlighted ? 'default' : 'secondary'}
-                className={`w-full ${tier.highlighted ? 'bg-slate-800 shadow-lg shadow-slate-800/25 hover:bg-slate-900 hover:-translate-y-0.5 transition-all' : ''}`}
-                asChild
-              >
-                <Link href={tier.href}>{tier.cta}</Link>
-              </Button>
-            </SpotlightCard>
-          </motion.div>
+          <TierCard key={tier.name} tier={tier} />
         ))}
-      </motion.div>
+      </div>
     </div>
+  );
+}
+
+function BillingTab({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`rounded-[4px] px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors duration-240 ease-page-turn ${
+        active
+          ? 'bg-editorial-ink text-editorial-paper'
+          : 'bg-transparent text-editorial-neutral-3 hover:text-editorial-ink'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TierCard({ tier }: { tier: Tier }) {
+  // Pro gets a single hairline sienna top edge + an inline "Recommended"
+  // label sibling to the tier name — no floating absolute pill. Accent
+  // discipline: max 2 jobs on this card (top-edge + label).
+  return (
+    <article
+      className={`relative flex flex-col rounded-md border border-editorial-neutral-2 bg-editorial-paper p-8 ${
+        tier.highlighted ? 'border-t border-t-editorial-accent' : ''
+      }`}
+    >
+      <header>
+        <div className="flex items-baseline gap-3">
+          <h3 className="font-display text-[1.75rem] font-normal leading-[1.15] tracking-[-0.01em] text-editorial-ink">
+            {tier.name}
+          </h3>
+          {tier.highlighted && (
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-accent">
+              Recommended
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 text-[13px] leading-[1.55] text-editorial-neutral-3">
+          {tier.description}
+        </p>
+      </header>
+
+      <div className="mt-6 flex items-baseline gap-2">
+        <span className="font-display text-5xl font-normal leading-none tracking-[-0.02em] text-editorial-ink">
+          {tier.price}
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+          {tier.period}
+        </span>
+      </div>
+
+      <div className="mt-6 flex items-baseline gap-2 border-t border-editorial-neutral-2 pt-5">
+        <span className="font-display text-[1.5rem] font-normal text-editorial-ink">
+          {tier.responses}
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-editorial-neutral-3">
+          responses / month
+        </span>
+      </div>
+
+      <ul className="mt-6 flex-1 space-y-2.5">
+        {tier.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2.5 text-[14px] text-editorial-ink">
+            <svg
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-editorial-neutral-3"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 7.5L6 10L11 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="leading-[1.5]">{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA balance — Pro is the single button, Free is a text link
+          (matches the Programs "Get started" pattern). One primary per
+          visible area, not two equal-weight buttons. */}
+      {tier.highlighted ? (
+        <Link
+          href={tier.href}
+          className="mt-8 inline-flex items-center justify-center gap-2 rounded-md bg-editorial-ink px-6 py-3 text-[15px] font-medium text-editorial-paper transition-colors duration-240 ease-page-turn hover:bg-editorial-ink/90"
+        >
+          {tier.cta}
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M3 8H13M13 8L9 4M13 8L9 12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+      ) : (
+        <Link
+          href={tier.href}
+          className="mt-8 inline-flex items-center gap-2 self-start font-mono text-[11px] uppercase tracking-[0.18em] text-editorial-ink underline decoration-editorial-neutral-2 decoration-1 underline-offset-[6px] transition-colors hover:decoration-editorial-accent"
+        >
+          {tier.cta}
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M3 8H13M13 8L9 4M13 8L9 12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+      )}
+    </article>
   );
 }

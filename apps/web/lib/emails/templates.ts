@@ -63,55 +63,174 @@ interface ShippedNotificationEmailProps {
   unsubscribeUrl: string | null;
 }
 
-const baseStyles = `
+// ── Editorial palette ─────────────────────────────────────────
+// Mirrors app/globals.css. Kept as literal hex strings since email
+// clients don't honour CSS custom properties reliably.
+const INK = '#1A1714';
+const PAPER = '#FAF8F4';
+const ACCENT = '#D4532A'; // burnt sienna
+const RULE = '#E8E3DA';
+const MUTED = '#6B655D';
+const SUCCESS = '#4A6B3E'; // sage
+const ALERT = '#9B3A2E'; // clay
+
+// ── Shared style fragments ────────────────────────────────────
+// Email clients don't support flexbox or custom fonts reliably.
+// Fraunces falls back to Georgia (ships in every default mail UA).
+// System sans stack for body. All styles inlined so Gmail's CSS
+// stripper can't eat them.
+
+const containerStyle = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 40px 28px;
+  color: ${INK};
   line-height: 1.6;
-  color: #1f2937;
+  background: ${PAPER};
 `;
 
-const buttonStyles = `
+const eyebrowStyle = `
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: ${MUTED};
+  margin: 0 0 16px 0;
+`;
+
+const h1Style = `
+  font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: ${INK};
+  margin: 0 0 24px 0;
+`;
+
+const bodyStyle = `
+  font-size: 15px;
+  line-height: 1.6;
+  color: ${INK};
+  margin: 0 0 16px 0;
+`;
+
+// Same as bodyStyle but without the trailing margin — used when the
+// caller needs to override margin (e.g. list items where the list's
+// own spacing applies). Outlook's CSS stripper occasionally chokes on
+// duplicate margin declarations when we concatenated on top of
+// bodyStyle, so we split cleanly here.
+const bodyStyleNoMargin = `
+  font-size: 15px;
+  line-height: 1.6;
+  color: ${INK};
+`;
+
+const mutedStyle = `
+  font-size: 13px;
+  line-height: 1.55;
+  color: ${MUTED};
+  margin: 0 0 16px 0;
+`;
+
+// Primary action — ink on paper. Used where the email is operational
+// (welcome, bug report). Sienna reserved for product-loop moments.
+const buttonInk = `
   display: inline-block;
-  background-color: #334155;
-  color: white;
+  background: ${INK};
+  color: ${PAPER};
   padding: 12px 24px;
   text-decoration: none;
   border-radius: 6px;
+  font-size: 15px;
   font-weight: 500;
 `;
 
+const buttonAccent = `
+  display: inline-block;
+  background: ${ACCENT};
+  color: ${PAPER};
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+`;
+
+const calloutStyle = (accentColor: string) => `
+  border-left: 2px solid ${accentColor};
+  padding: 6px 0 6px 18px;
+  margin: 24px 0;
+  color: ${INK};
+`;
+
+const footerStyle = `
+  margin: 40px 0 0 0;
+  padding-top: 20px;
+  border-top: 1px solid ${RULE};
+  font-size: 12px;
+  line-height: 1.5;
+  color: ${MUTED};
+`;
+
+const codeStyle = `
+  background: rgba(26,23,20,0.04);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 13px;
+  color: ${INK};
+`;
+
+const signoffStyle = `
+  font-size: 14px;
+  line-height: 1.6;
+  color: ${INK};
+  margin: 24px 0 0 0;
+`;
+
+const footer = (eyebrow = 'Gotcha') => `
+  <p style="${footerStyle}">
+    <span style="font-family: Menlo, Monaco, 'Courier New', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: ${MUTED};">${escapeHtml(eyebrow)}</span>
+    &middot;
+    <a href="https://gotcha.cx" style="color: ${MUTED}; text-decoration: underline;">gotcha.cx</a>
+  </p>
+`;
+
+// ── Templates ─────────────────────────────────────────────────
+
 export function welcomeEmail({ name }: WelcomeEmailProps): { subject: string; html: string } {
-  const displayName = name || 'there';
+  const displayName = name ? escapeHtml(name) : 'there';
 
   return {
-    subject: 'Welcome to Gotcha!',
+    subject: 'Welcome to Gotcha',
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #0f172a; margin-bottom: 24px;">Welcome to Gotcha!</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; Welcome</p>
 
-        <p>Hey ${escapeHtml(displayName)},</p>
+        <h1 style="${h1Style}">Your feedback loop starts here<span style="color: ${ACCENT};">.</span></h1>
 
-        <p>Thanks for signing up for Gotcha! We're excited to help you collect better feedback from your users.</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <h2 style="color: #334155; margin-top: 32px;">Getting Started</h2>
+        <p style="${bodyStyle}">Thanks for signing up. Three steps to your first response:</p>
 
-        <ol style="padding-left: 20px;">
-          <li style="margin-bottom: 12px;"><strong>Create a project</strong> in your dashboard to get an API key</li>
-          <li style="margin-bottom: 12px;"><strong>Install the SDK:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">npm install gotcha-feedback</code></li>
-          <li style="margin-bottom: 12px;"><strong>Add the G button</strong> to your app and start collecting feedback</li>
+        <ol style="padding-left: 18px; margin: 0 0 24px 0;">
+          <li style="${bodyStyleNoMargin} margin: 0 0 8px 0;">Create a project and grab your API key.</li>
+          <li style="${bodyStyleNoMargin} margin: 0 0 8px 0;">Install the SDK &mdash; <code style="${codeStyle}">npm install gotcha-feedback</code>.</li>
+          <li style="${bodyStyleNoMargin} margin: 0 0 8px 0;">Drop a &lt;Gotcha /&gt; component anywhere you want feedback.</li>
         </ol>
 
-        <div style="margin-top: 32px;">
-          <a href="https://gotcha.cx/dashboard" style="${buttonStyles}">Go to Dashboard</a>
+        <div style="margin: 32px 0;">
+          <a href="https://gotcha.cx/dashboard" style="${buttonInk}">Go to dashboard</a>
         </div>
 
-        <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-          If you have any questions, just reply to this email. We're here to help!
-        </p>
+        <p style="${mutedStyle}">Questions? Reply to this email &mdash; it reaches a human.</p>
 
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The Gotcha Team
-        </p>
+        <p style="${signoffStyle}">Cheers,<br/>The Gotcha team</p>
+
+        ${footer()}
       </div>
     `,
   };
@@ -121,37 +240,39 @@ export function proActivatedEmail({ name, orgName }: ProActivatedEmailProps): {
   subject: string;
   html: string;
 } {
-  const displayName = name || 'there';
+  const displayName = name ? escapeHtml(name) : 'there';
+  const safeOrg = escapeHtml(orgName);
 
   return {
-    subject: "You're now on Gotcha Pro!",
+    subject: "You're on Gotcha Pro",
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #0f172a; margin-bottom: 24px;">Welcome to Gotcha Pro!</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; Pro activated</p>
 
-        <p>Hey ${escapeHtml(displayName)},</p>
+        <h1 style="${h1Style}">Welcome to Pro<span style="color: ${ACCENT};">.</span></h1>
 
-        <p>Thanks for upgrading <strong>${escapeHtml(orgName)}</strong> to Gotcha Pro! You now have access to:</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <ul style="padding-left: 20px;">
-          <li style="margin-bottom: 8px;"><strong>Unlimited responses</strong> - No more monthly limits</li>
-          <li style="margin-bottom: 8px;"><strong>Advanced analytics</strong> - Deep insights into your feedback</li>
-          <li style="margin-bottom: 8px;"><strong>CSV/JSON export</strong> - Download your data anytime</li>
-          <li style="margin-bottom: 8px;"><strong>Priority support</strong> - We're here when you need us</li>
+        <p style="${bodyStyle}"><strong>${safeOrg}</strong> is now on Pro. You have:</p>
+
+        <ul style="padding-left: 18px; margin: 0 0 24px 0;">
+          <li style="${bodyStyleNoMargin} margin: 0 0 6px 0;">Unlimited responses &mdash; no monthly cap.</li>
+          <li style="${bodyStyleNoMargin} margin: 0 0 6px 0;">Full analytics dashboard &mdash; trends, segments, NPS, elements.</li>
+          <li style="${bodyStyleNoMargin} margin: 0 0 6px 0;">CSV / JSON export &mdash; yours whenever you need it.</li>
+          <li style="${bodyStyleNoMargin} margin: 0 0 6px 0;">Priority support &mdash; reply here, we'll see it.</li>
         </ul>
 
-        <div style="margin-top: 32px;">
-          <a href="https://gotcha.cx/dashboard/analytics" style="${buttonStyles}">View Analytics</a>
+        <div style="margin: 32px 0;">
+          <a href="https://gotcha.cx/dashboard/analytics" style="${buttonInk}">View analytics</a>
         </div>
 
-        <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-          Your subscription renews monthly. You can manage your subscription anytime from the Settings page.
+        <p style="${mutedStyle}">
+          Your subscription renews monthly. Manage billing from Settings at any time.
         </p>
 
-        <p style="margin-top: 24px;">
-          Thanks for your support!<br/>
-          The Gotcha Team
-        </p>
+        <p style="${signoffStyle}">Thanks for the support,<br/>The Gotcha team</p>
+
+        ${footer()}
       </div>
     `,
   };
@@ -161,32 +282,38 @@ export function usageWarningEmail({ name, current, limit, percentage }: UsageWar
   subject: string;
   html: string;
 } {
-  const displayName = name || 'there';
+  const displayName = name ? escapeHtml(name) : 'there';
 
   return {
     subject: `You've used ${percentage}% of your monthly responses`,
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #b45309; margin-bottom: 24px;">Approaching Your Response Limit</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; Approaching limit</p>
 
-        <p>Hey ${escapeHtml(displayName)},</p>
+        <h1 style="${h1Style}">You&rsquo;re at ${percentage}% of your monthly cap.</h1>
 
-        <p>You've used <strong>${current} of ${limit}</strong> responses this month (${percentage}%).</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <p>Once you hit the limit, new responses won't be recorded until next month or until you upgrade.</p>
+        <p style="${bodyStyle}">
+          You&rsquo;ve collected <strong>${current} of ${limit}</strong> responses this month.
+        </p>
 
-        <div style="margin-top: 32px;">
-          <a href="https://gotcha.cx/dashboard/settings" style="${buttonStyles}">Upgrade to Pro</a>
+        <div style="${calloutStyle(ACCENT)}">
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: ${INK};">
+            Once you hit the cap, new responses aren&rsquo;t recorded until next month
+            &mdash; or until you upgrade.
+          </p>
         </div>
 
-        <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
-          Pro gives you unlimited responses for just $29/month.
-        </p>
+        <div style="margin: 32px 0;">
+          <a href="https://gotcha.cx/dashboard/settings" style="${buttonAccent}">Upgrade to Pro</a>
+        </div>
 
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The Gotcha Team
-        </p>
+        <p style="${mutedStyle}">Pro is $29/month for unlimited responses.</p>
+
+        <p style="${signoffStyle}">Cheers,<br/>The Gotcha team</p>
+
+        ${footer()}
       </div>
     `,
   };
@@ -201,48 +328,52 @@ export function bugReportEmail({
   pageUrl,
   bugId,
 }: BugReportEmailProps): { subject: string; html: string } {
-  const displayName = name || 'there';
+  const displayName = name ? escapeHtml(name) : 'there';
+  const safeProject = escapeHtml(projectName);
+  const safeTitle = escapeHtml(title);
+  const safeDesc = escapeHtml(description);
+  const safeElement = escapeHtml(elementId);
+  const safeBugId = escapeHtml(bugId);
 
   return {
-    subject: `New issue reported on ${projectName}`,
+    subject: `New issue on ${projectName}`,
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #b45309; margin-bottom: 24px;">New Issue Reported</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; New issue</p>
 
-        <p>Hey ${escapeHtml(displayName)},</p>
+        <h1 style="${h1Style}">A user flagged something on ${safeProject}.</h1>
 
-        <p>A user flagged an issue on <strong>${escapeHtml(projectName)}</strong>:</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-          <p style="margin: 0 0 8px 0; font-weight: 600; color: #92400e;">${escapeHtml(title)}</p>
-          <p style="margin: 0; color: #78350f; font-size: 14px;">${escapeHtml(description)}</p>
+        <div style="${calloutStyle(ALERT)}">
+          <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: ${INK};">${safeTitle}</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: ${INK}; white-space: pre-wrap;">${safeDesc}</p>
         </div>
 
-        <table style="font-size: 14px; color: #4b5563; margin: 16px 0;">
+        <table style="font-size: 13px; color: ${MUTED}; margin: 16px 0 24px 0; border-collapse: collapse;">
           <tr>
-            <td style="padding: 4px 16px 4px 0; font-weight: 500;">Element</td>
-            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${escapeHtml(elementId)}</code></td>
+            <td style="padding: 4px 16px 4px 0; font-family: Menlo, Monaco, 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px;">Element</td>
+            <td style="padding: 4px 0;"><code style="${codeStyle}">${safeElement}</code></td>
           </tr>
           ${
             pageUrl
               ? `
           <tr>
-            <td style="padding: 4px 16px 4px 0; font-weight: 500;">Page</td>
-            <td>${escapeHtml(pageUrl)}</td>
+            <td style="padding: 4px 16px 4px 0; font-family: Menlo, Monaco, 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px;">Page</td>
+            <td style="padding: 4px 0; color: ${INK};">${escapeHtml(pageUrl)}</td>
           </tr>
           `
               : ''
           }
         </table>
 
-        <div style="margin-top: 32px;">
-          <a href="https://gotcha.cx/dashboard/bugs/${escapeHtml(bugId)}" style="${buttonStyles}">View Issue</a>
+        <div style="margin: 24px 0;">
+          <a href="https://gotcha.cx/dashboard/bugs/${safeBugId}" style="${buttonInk}">View issue</a>
         </div>
 
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The Gotcha Team
-        </p>
+        <p style="${signoffStyle}">Cheers,<br/>The Gotcha team</p>
+
+        ${footer()}
       </div>
     `,
   };
@@ -253,61 +384,73 @@ export function inviteEmail({ inviterName, orgName, role, acceptUrl }: InviteEma
   html: string;
 } {
   const roleLabel = role.charAt(0) + role.slice(1).toLowerCase();
+  const safeInviter = escapeHtml(inviterName);
+  const safeOrg = escapeHtml(orgName);
+  const safeRole = escapeHtml(roleLabel);
+  const safeUrl = escapeHtml(acceptUrl);
 
   return {
-    subject: `${inviterName} invited you to join ${orgName} on Gotcha`,
+    subject: `${inviterName} invited you to ${orgName} on Gotcha`,
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #0f172a; margin-bottom: 24px;">You're Invited!</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; Invitation</p>
 
-        <p>Hey there,</p>
+        <h1 style="${h1Style}">You&rsquo;re invited<span style="color: ${ACCENT};">.</span></h1>
 
-        <p><strong>${escapeHtml(inviterName)}</strong> has invited you to join <strong>${escapeHtml(orgName)}</strong> on Gotcha as <strong>${escapeHtml(roleLabel)}</strong>.</p>
+        <p style="${bodyStyle}">Hey there,</p>
 
-        <div style="margin-top: 32px;">
-          <a href="${escapeHtml(acceptUrl)}" style="${buttonStyles}">Accept Invitation</a>
+        <p style="${bodyStyle}">
+          <strong>${safeInviter}</strong> invited you to join <strong>${safeOrg}</strong> on Gotcha as <strong>${safeRole}</strong>.
+        </p>
+
+        <div style="margin: 32px 0;">
+          <a href="${safeUrl}" style="${buttonInk}">Accept invitation</a>
         </div>
 
-        <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
-          This invitation will expire in 7 days. Don't have an account yet? No problem — click the link above and you'll be prompted to create one. You'll be automatically added to the team once you sign up.
+        <p style="${mutedStyle}">
+          This invitation expires in 7 days. No account yet? The link will prompt you to
+          create one and you&rsquo;ll be added automatically.
         </p>
 
-        <p style="margin-top: 24px;">
-          Cheers,<br/>
-          The Gotcha Team
-        </p>
+        <p style="${signoffStyle}">Cheers,<br/>The Gotcha team</p>
+
+        ${footer()}
       </div>
     `,
   };
 }
 
 export function bugUpdateEmail({
-  reporterName,
   projectName,
+  reporterName,
   bugTitle,
   note,
   authorName,
 }: BugUpdateEmailProps): { subject: string; html: string } {
   const displayName = reporterName ? escapeHtml(reporterName) : 'there';
+  const safeProject = escapeHtml(projectName);
+  const safeTitle = escapeHtml(bugTitle);
+  const safeNote = escapeHtml(note);
+  const safeAuthor = escapeHtml(authorName);
 
   return {
     subject: `Update: ${bugTitle}`,
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #1e293b; margin-bottom: 24px;">Bug Update</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; Update on ${safeProject}</p>
 
-        <p>Hey ${displayName},</p>
+        <h1 style="${h1Style}">${safeAuthor} left you a note.</h1>
 
-        <p>${escapeHtml(authorName)} left an update on an issue you reported:</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
-          <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">${escapeHtml(bugTitle)}</p>
-          <p style="margin: 0; color: #1e3a5f; font-size: 14px; white-space: pre-wrap;">${escapeHtml(note)}</p>
+        <p style="${bodyStyle}">There&rsquo;s an update on the issue you reported:</p>
+
+        <div style="${calloutStyle(ACCENT)}">
+          <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: ${INK};">${safeTitle}</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: ${INK}; white-space: pre-wrap;">${safeNote}</p>
         </div>
 
-        <p style="color: #9ca3af; font-size: 12px; margin-top: 32px;">
-          Powered by <a href="https://gotcha.cx" style="color: #64748b; text-decoration: none; font-weight: 500;">Gotcha</a>
-        </p>
+        ${footer('Powered by Gotcha')}
       </div>
     `,
   };
@@ -320,9 +463,8 @@ export function shippedNotificationEmail({
   adminNote,
   unsubscribeUrl,
 }: ShippedNotificationEmailProps): { subject: string; html: string } {
-  // Editorial voice — quiet, transactional, no marketing chrome. Fraunces
-  // serif isn't web-safe in email clients, so the headline falls back to
-  // Georgia (close enough, ships in every default mail UA).
+  // Notify-back for end users whose feedback was just shipped. Quiet,
+  // editorial, no marketing chrome — this is the "we listened" moment.
   const safeProject = escapeHtml(projectName);
   const safeElement = escapeHtml(elementLabel);
   const safeExcerpt = excerpt ? escapeHtml(excerpt) : null;
@@ -331,53 +473,47 @@ export function shippedNotificationEmail({
   return {
     subject: 'You asked — we shipped.',
     html: `
-      <div style="${baseStyles} max-width: 560px; margin: 0 auto; padding: 32px 24px;">
-        <h1 style="font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; line-height: 1.2; color: #1A1714; margin: 0 0 24px 0;">
-          You asked — we shipped.
-        </h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; ${safeProject}</p>
 
-        <p style="margin: 0 0 16px 0;">
-          A while back you submitted feedback on
-          <strong>${safeProject}</strong>${safeExcerpt ? '' : ` (<code style="background:#f1f5f9;padding:1px 6px;border-radius:3px;font-size:13px;">${safeElement}</code>)`}.
+        <h1 style="${h1Style}">You asked &mdash; we shipped<span style="color: ${ACCENT};">.</span></h1>
+
+        <p style="${bodyStyle}">
+          A while back you submitted feedback on <strong>${safeProject}</strong>${safeExcerpt ? '' : ` (<code style="${codeStyle}">${safeElement}</code>)`}.
         </p>
 
         ${
           safeExcerpt
             ? `
-        <blockquote style="border-left: 2px solid #D4532A; margin: 24px 0; padding: 8px 0 8px 16px; color: #4b5563; font-style: italic; font-size: 15px;">
+        <blockquote style="${calloutStyle(RULE)} font-style: italic; font-size: 15px; color: ${MUTED};">
           &ldquo;${safeExcerpt}&rdquo;
         </blockquote>
         `
             : ''
         }
 
-        <p style="margin: 24px 0 0 0;">
-          We shipped it. It&rsquo;s live now.
-        </p>
+        <p style="${bodyStyle}">It&rsquo;s live now.</p>
 
         ${
           safeNote
             ? `
-        <div style="margin: 32px 0; padding: 16px 20px; background: #FAF8F4; border-radius: 4px;">
-          <p style="margin: 0; font-size: 14px; color: #4b5563; white-space: pre-wrap;">${safeNote}</p>
+        <div style="margin: 24px 0; padding: 16px 20px; background: rgba(26,23,20,0.04); border-radius: 4px;">
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: ${INK}; white-space: pre-wrap;">${safeNote}</p>
         </div>
         `
             : ''
         }
 
-        <p style="margin: 32px 0 0 0; color: #6b7280; font-size: 13px; line-height: 1.55;">
-          You&rsquo;re receiving this because you left feedback with an email
-          address.
+        <p style="${mutedStyle} margin-top: 32px;">
+          You&rsquo;re receiving this because you left feedback with an email address.
           ${
             unsubscribeUrl
-              ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#6b7280;text-decoration:underline;">Don&rsquo;t notify me again</a>.`
+              ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color: ${MUTED}; text-decoration: underline;">Don&rsquo;t notify me again</a>.`
               : ''
           }
         </p>
 
-        <p style="margin: 24px 0 0 0; color: #9ca3af; font-size: 11px;">
-          Powered by <a href="https://gotcha.cx" style="color:#9ca3af;text-decoration:none;">Gotcha</a> — feedback that closes the loop.
-        </p>
+        ${footer('Feedback that closes the loop')}
       </div>
     `,
   };
@@ -390,25 +526,28 @@ export function bugResolutionEmail({
   message,
 }: BugResolutionEmailProps): { subject: string; html: string } {
   const displayName = reporterName ? escapeHtml(reporterName) : 'there';
+  const safeProject = escapeHtml(projectName);
+  const safeTitle = escapeHtml(bugTitle);
+  const safeMessage = escapeHtml(message);
 
   return {
     subject: `Resolved: ${bugTitle}`,
     html: `
-      <div style="${baseStyles}">
-        <h1 style="color: #059669; margin-bottom: 24px;">Issue Resolved</h1>
+      <div style="${containerStyle}">
+        <p style="${eyebrowStyle}">&mdash; ${safeProject}</p>
 
-        <p>Hey ${displayName},</p>
+        <h1 style="${h1Style}">Issue resolved<span style="color: ${ACCENT};">.</span></h1>
 
-        <p>An issue you reported has been resolved:</p>
+        <p style="${bodyStyle}">Hey ${displayName},</p>
 
-        <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
-          <p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46;">${escapeHtml(bugTitle)}</p>
-          <p style="margin: 0; color: #047857; font-size: 14px;">${escapeHtml(message)}</p>
+        <p style="${bodyStyle}">An issue you reported has been resolved:</p>
+
+        <div style="${calloutStyle(SUCCESS)}">
+          <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: ${INK};">${safeTitle}</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: ${INK}; white-space: pre-wrap;">${safeMessage}</p>
         </div>
 
-        <p style="color: #9ca3af; font-size: 12px; margin-top: 32px;">
-          Powered by <a href="https://gotcha.cx" style="color: #64748b; text-decoration: none; font-weight: 500;">Gotcha</a>
-        </p>
+        ${footer('Powered by Gotcha')}
       </div>
     `,
   };
