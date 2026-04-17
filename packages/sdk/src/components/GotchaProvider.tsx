@@ -1,10 +1,17 @@
-import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
-import { createApiClient, ApiClient } from '../api/client';
-import { GotchaUser } from '../types';
-import { GotchaThemeConfig } from '../theme/tokens';
-import { resolveTheme } from '../theme/resolveTheme';
-import { injectStyles } from '../theme/styles';
-import { startErrorCapture, stopErrorCapture } from '../utils/errorBuffer';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
+import { createApiClient, ApiClient } from "../api/client";
+import { GotchaUser } from "../types";
+import { GotchaThemeConfig } from "../theme/tokens";
+import { resolveTheme } from "../theme/resolveTheme";
+import { injectStyles } from "../theme/styles";
+import { startErrorCapture, stopErrorCapture } from "../utils/errorBuffer";
 
 export interface GotchaProviderProps {
   /** Your Gotcha API key */
@@ -59,26 +66,33 @@ export function GotchaProvider({
 }: GotchaProviderProps) {
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
 
-  if (baseUrl && !baseUrl.startsWith('https://') && !baseUrl.startsWith('/') && !baseUrl.includes('localhost')) {
-    console.warn('[Gotcha] baseUrl should use HTTPS in production:', baseUrl);
+  if (
+    baseUrl &&
+    !baseUrl.startsWith("https://") &&
+    !baseUrl.startsWith("/") &&
+    !baseUrl.includes("localhost")
+  ) {
+    console.warn("[Gotcha] baseUrl should use HTTPS in production:", baseUrl);
   }
 
   const client = useMemo(
     () => createApiClient({ apiKey, baseUrl, debug }),
-    [apiKey, baseUrl, debug]
+    [apiKey, baseUrl, debug],
   );
 
   // Stabilize defaultUser reference
   const stableDefaultUser = useMemo(
     () => defaultUser ?? EMPTY_USER,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(defaultUser)]
+    [JSON.stringify(defaultUser)],
   );
 
-  // Inject styles on mount. Carter One @font-face is injected at module-load time
-  // (styles.ts:37) so it's already available before this runs.
+  // Inject styles on mount. The embedded Fraunces @font-face is part of the
+  // stylesheet produced by generateStyleTag(), so the branded serif is
+  // available for both the "G" button glyph and the "Gotcha!" success
+  // headline without a network round-trip.
   useEffect(() => {
-    const resolved = resolveTheme('light', 'light', themeConfig);
+    const resolved = resolveTheme("light", "light", themeConfig);
     injectStyles(resolved);
   }, [themeConfig]);
 
@@ -92,8 +106,8 @@ export function GotchaProvider({
   useEffect(() => {
     client.flushQueue();
     const handleOnline = () => client.flushQueue();
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [client]);
 
   const openModal = useCallback((elementId: string) => {
@@ -126,7 +140,7 @@ export function GotchaProvider({
       openModal,
       closeModal,
       themeConfig,
-    ]
+    ],
   );
 
   return (
@@ -137,7 +151,7 @@ export function GotchaProvider({
 export function useGotchaContext(): GotchaContextValue {
   const context = useContext(GotchaContext);
   if (!context) {
-    throw new Error('useGotchaContext must be used within a GotchaProvider');
+    throw new Error("useGotchaContext must be used within a GotchaProvider");
   }
   return context;
 }

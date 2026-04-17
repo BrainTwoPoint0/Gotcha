@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Size, Theme, GotchaStyles } from '../types';
-import { cn } from '../utils/cn';
-import { isTouchDevice, getResponsiveSize } from '../utils/device';
-import { resolveTheme } from '../theme/resolveTheme';
-import { useGotchaContext } from './GotchaProvider';
+import React, { useState, useEffect, useMemo } from "react";
+import { Size, Theme, GotchaStyles } from "../types";
+import { cn } from "../utils/cn";
+import { isTouchDevice, getResponsiveSize } from "../utils/device";
+import { resolveTheme } from "../theme/resolveTheme";
+import { useGotchaContext } from "./GotchaProvider";
 
 export interface GotchaButtonProps {
   size: Size;
   theme: Theme;
   customStyles?: GotchaStyles;
   showOnHover: boolean;
-  touchBehavior: 'always-visible' | 'tap-to-reveal';
+  touchBehavior: "always-visible" | "tap-to-reveal";
   onClick: () => void;
   isOpen: boolean;
   isParentHovered?: boolean;
@@ -20,11 +20,11 @@ export interface GotchaButtonProps {
   queuedCount?: number;
 }
 
-function getInitialSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
+function getInitialSystemTheme(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 /**
@@ -59,7 +59,9 @@ export function GotchaButton({
 }: GotchaButtonProps) {
   const [isTouch, setIsTouch] = useState(false);
   const [tapRevealed, setTapRevealed] = useState(false);
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(getInitialSystemTheme);
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
+    getInitialSystemTheme,
+  );
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
@@ -69,19 +71,19 @@ export function GotchaButton({
   useEffect(() => {
     setIsTouch(isTouchDevice());
 
-    if (typeof window === 'undefined') return;
-    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (typeof window === "undefined") return;
+    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) =>
-      setSystemTheme(e.matches ? 'dark' : 'light');
-    darkQuery.addEventListener('change', handler);
-    return () => darkQuery.removeEventListener('change', handler);
+      setSystemTheme(e.matches ? "dark" : "light");
+    darkQuery.addEventListener("change", handler);
+    return () => darkQuery.removeEventListener("change", handler);
   }, []);
 
   // Determine visibility
   const shouldShow = (() => {
     if (isOpen) return true;
     if (!isTouch && showOnHover) return isParentHovered;
-    if (isTouch && touchBehavior === 'tap-to-reveal') return tapRevealed;
+    if (isTouch && touchBehavior === "tap-to-reveal") return tapRevealed;
     return true;
   })();
 
@@ -95,7 +97,7 @@ export function GotchaButton({
   }, [shouldShow, hasEntered]);
 
   const handleClick = () => {
-    if (isTouch && touchBehavior === 'tap-to-reveal' && !tapRevealed) {
+    if (isTouch && touchBehavior === "tap-to-reveal" && !tapRevealed) {
       setTapRevealed(true);
       return;
     }
@@ -105,15 +107,13 @@ export function GotchaButton({
   const buttonSize = getResponsiveSize(size, isTouch);
   const t = useMemo(
     () => resolveTheme(theme, systemTheme, themeConfig),
-    [theme, systemTheme, themeConfig]
+    [theme, systemTheme, themeConfig],
   );
 
   // The open-state brand moment — border + glyph colour switch to the
   // editorial accent. Computed once per render so the transition can
   // interpolate borderColor smoothly.
-  const borderColor = isOpen
-    ? t.colors.warning /* sienna */
-    : t.colors.border;
+  const borderColor = isOpen ? t.colors.warning /* sienna */ : t.colors.border;
   const glyphColor = isOpen ? t.colors.warning : t.colors.glassColor;
 
   // Transform ladder — editorial button stays put on hover. Lift-on-hover
@@ -124,35 +124,34 @@ export function GotchaButton({
   //   press:   scale(0.97)
   //   rest/hover: scale(1)  — shadow + border-color carry the hover cue
   const getTransform = () => {
-    if (!shouldShow) return 'scale(0.96)';
-    if (isPressed) return 'scale(0.97)';
-    return 'scale(1)';
+    if (!shouldShow) return "scale(0.96)";
+    if (isPressed) return "scale(0.97)";
+    return "scale(1)";
   };
 
   // Asymmetric press timing: fast on the way in (80ms = "you registered my
   // click immediately"), slower on the way out (160ms = "settling back"),
   // smoothest on rest hover (180ms). Open-state colour swap gets its own
   // 240ms curve — deliberate brand moment, not a reactive flicker.
-  const transitionDur = isPressed ? '80ms' : '160ms';
+  const transitionDur = isPressed ? "80ms" : "160ms";
   const easing = t.animation.easing.default;
 
   // Hover cue: background warms one step (paper → surface-hover) + shadow
   // deepens. Glyph stays untouched — no scale, no opacity shift. Button
   // geometry stays put (no lift).
-  const backgroundColor = isHovered && !isOpen
-    ? t.colors.surfaceHover
-    : t.colors.glassBackground;
+  const backgroundColor =
+    isHovered && !isOpen ? t.colors.surfaceHover : t.colors.glassBackground;
 
   const baseStyles: React.CSSProperties = {
-    position: 'relative',
+    position: "relative",
     width: buttonSize,
     height: buttonSize,
     borderRadius: t.borders.radius.full,
     border: `1px solid ${borderColor}`,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     background: backgroundColor,
     color: glyphColor,
     boxShadow: isHovered ? t.colors.glassHoverShadow : t.colors.glassShadow,
@@ -161,7 +160,7 @@ export function GotchaButton({
       : `opacity 320ms ${easing}, transform 320ms ${easing}`,
     opacity: shouldShow ? 1 : 0,
     transform: getTransform(),
-    pointerEvents: shouldShow ? 'auto' : 'none',
+    pointerEvents: shouldShow ? "auto" : "none",
     ...customStyles?.button,
   };
 
@@ -170,13 +169,16 @@ export function GotchaButton({
       type="button"
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); setIsPressed(false); }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPressed(false);
+      }}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onTouchStart={() => setIsPressed(true)}
       onTouchEnd={() => setIsPressed(false)}
       style={baseStyles}
-      className={cn('gotcha-button', isOpen && 'gotcha-button--open')}
+      className={cn("gotcha-button", isOpen && "gotcha-button--open")}
       aria-label="Give feedback on this feature"
       aria-expanded={isOpen}
       aria-haspopup="dialog"
@@ -191,12 +193,12 @@ export function GotchaButton({
         <span
           aria-label={`${queuedCount} queued`}
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: -2,
             right: -2,
             width: 8,
             height: 8,
-            borderRadius: '50%',
+            borderRadius: "50%",
             backgroundColor: t.colors.warning,
             border: `1.5px solid ${t.colors.background}`,
           }}
@@ -218,20 +220,22 @@ function GotchaIcon({
   animated: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <span
       aria-hidden="true"
       style={{
         // The serif G is the brand mark. Fraunces-first with system-serif
-        // fallback. Weight 500 renders as true Georgia Regular (no fake-
-        // bold synthesis artifact); Fraunces 144 at its real 500 master
-        // will take over once the subset ships in 1.2.1.
+        // fallback. Weight 400 (Regular) matches the embedded Fraunces 9pt
+        // subset and the marketing navbar's effective weight. Avoids the
+        // browser synthesizing bold against a regular-only @font-face.
         fontFamily: fontFamilyDisplay,
-        fontWeight: 500,
+        fontWeight: 400,
         fontSize: size,
-        fontStyle: 'normal',
+        fontStyle: "normal",
         lineHeight: 1,
         color,
         // Optical centering — a capital G's visible bowl sits slightly
@@ -243,15 +247,15 @@ function GotchaIcon({
         // at this size) and promote to its own compositor layer via
         // translateZ(0) + will-change: transform so the glyph is
         // composited once and not repainted with the button.
-        transform: 'translateY(1px) translateZ(0)',
-        willChange: 'transform',
-        letterSpacing: 'normal',
-        userSelect: 'none',
-        display: 'inline-block',
+        transform: "translateY(1px) translateZ(0)",
+        willChange: "transform",
+        letterSpacing: "normal",
+        userSelect: "none",
+        display: "inline-block",
         opacity: animated ? (mounted ? 1 : 0) : 1,
         transition: animated
-          ? 'opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms'
-          : 'none',
+          ? "opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms"
+          : "none",
       }}
     >
       G

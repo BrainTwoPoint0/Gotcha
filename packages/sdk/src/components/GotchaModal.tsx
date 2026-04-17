@@ -1,16 +1,16 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { Theme, GotchaStyles, ResponseMode, ExistingResponse } from '../types';
-import { ResolvedTheme } from '../theme/tokens';
-import { resolveTheme } from '../theme/resolveTheme';
-import { injectStyles } from '../theme/styles';
-import { cn } from '../utils/cn';
-import { useGotchaContext } from './GotchaProvider';
-import { FeedbackMode } from './modes/FeedbackMode';
-import { VoteMode } from './modes/VoteMode';
-import { PollMode } from './modes/PollMode';
-import { Spinner } from './Spinner';
-import { NpsMode } from './modes/NpsMode';
-import { FollowUpPrompt } from './FollowUpPrompt';
+import React, { useRef, useEffect, useState, useMemo } from "react";
+import { Theme, GotchaStyles, ResponseMode, ExistingResponse } from "../types";
+import { ResolvedTheme } from "../theme/tokens";
+import { resolveTheme } from "../theme/resolveTheme";
+import { injectStyles } from "../theme/styles";
+import { cn } from "../utils/cn";
+import { useGotchaContext } from "./GotchaProvider";
+import { FeedbackMode } from "./modes/FeedbackMode";
+import { VoteMode } from "./modes/VoteMode";
+import { PollMode } from "./modes/PollMode";
+import { Spinner } from "./Spinner";
+import { NpsMode } from "./modes/NpsMode";
+import { FollowUpPrompt } from "./FollowUpPrompt";
 
 export interface GotchaModalProps {
   mode: ResponseMode;
@@ -24,7 +24,7 @@ export interface GotchaModalProps {
   isLoading: boolean;
   isCheckingExisting?: boolean;
   isSubmitted: boolean;
-  phase?: 'form' | 'followUp' | 'success';
+  phase?: "form" | "followUp" | "success";
   followUpConfig?: { promptText: string; placeholder?: string };
   followUpLoading?: boolean;
   onFollowUpSubmit?: (content: string) => void;
@@ -51,7 +51,14 @@ export interface GotchaModalProps {
   bugFlagLabel?: string;
   enableScreenshot?: boolean;
   // Handlers
-  onSubmit: (data: { content?: string; rating?: number; vote?: 'up' | 'down'; pollSelected?: string[]; isBug?: boolean; screenshot?: string }) => void;
+  onSubmit: (data: {
+    content?: string;
+    rating?: number;
+    vote?: "up" | "down";
+    pollSelected?: string[];
+    isBug?: boolean;
+    screenshot?: string;
+  }) => void;
   onClose: () => void;
   // Position info from parent
   anchorRect?: DOMRect;
@@ -77,30 +84,30 @@ export interface GotchaModalProps {
 // decoration, without colour. It's the editorial "section name" above the
 // headline.
 const MODE_LABEL: Record<ResponseMode, string> = {
-  feedback: 'Feedback',
-  vote: 'Vote',
-  poll: 'Poll',
-  nps: 'Rate',
+  feedback: "Feedback",
+  vote: "Vote",
+  poll: "Poll",
+  nps: "Rate",
 };
 
 // ── Default prompts ──────────────────────────────────────────
 function getDefaultPrompt(mode: ResponseMode, npsQuestion?: string): string {
   switch (mode) {
-    case 'vote':
-      return 'What do you think?';
-    case 'poll':
-      return 'Cast your vote.';
-    case 'nps':
-      return npsQuestion || 'How likely are you to recommend us?';
-    case 'feedback':
+    case "vote":
+      return "What do you think?";
+    case "poll":
+      return "Cast your vote.";
+    case "nps":
+      return npsQuestion || "How likely are you to recommend us?";
+    case "feedback":
     default:
-      return 'What do you think of this feature?';
+      return "What do you think of this feature?";
   }
 }
 
 // Autoclose timeout in ms — must match the value in Gotcha.tsx so the
 // progress rule finishes just as the modal dismisses. 4s gives the
-// reading tempo room: the user can take in the "Thanks." + subline
+// reading tempo room: the user can take in the "Gotcha!" + subline
 // before the modal slides away.
 const AUTOCLOSE_MS = 4000;
 
@@ -115,7 +122,7 @@ export function GotchaModal({
   isLoading,
   isCheckingExisting = false,
   isSubmitted,
-  phase = 'form',
+  phase = "form",
   followUpConfig,
   followUpLoading = false,
   onFollowUpSubmit,
@@ -152,7 +159,7 @@ export function GotchaModal({
   // or direct instantiation path).
   const [internalIsMobile, setInternalIsMobile] = useState(false);
   const isMobile = isMobileProp ?? internalIsMobile;
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">("light");
 
   const { themeConfig } = useGotchaContext();
 
@@ -162,25 +169,27 @@ export function GotchaModal({
   // matchMedia listener so the modal still self-adapts when rendered
   // standalone.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
-    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const syncTheme = (e: MediaQueryListEvent | MediaQueryList) =>
-      setSystemTheme(e.matches ? 'dark' : 'light');
+      setSystemTheme(e.matches ? "dark" : "light");
     syncTheme(darkQuery);
     const darkHandler = (e: MediaQueryListEvent) => syncTheme(e);
-    darkQuery.addEventListener('change', darkHandler);
+    darkQuery.addEventListener("change", darkHandler);
 
     const listeners: Array<() => void> = [
-      () => darkQuery.removeEventListener('change', darkHandler),
+      () => darkQuery.removeEventListener("change", darkHandler),
     ];
 
     if (isMobileProp === undefined) {
-      const mobileQuery = window.matchMedia('(max-width: 1023px)');
+      const mobileQuery = window.matchMedia("(max-width: 1023px)");
       const syncMobile = () => setInternalIsMobile(mobileQuery.matches);
       syncMobile();
-      mobileQuery.addEventListener('change', syncMobile);
-      listeners.push(() => mobileQuery.removeEventListener('change', syncMobile));
+      mobileQuery.addEventListener("change", syncMobile);
+      listeners.push(() =>
+        mobileQuery.removeEventListener("change", syncMobile),
+      );
     }
 
     return () => {
@@ -191,7 +200,7 @@ export function GotchaModal({
   // Resolve theme with provider config
   const t: ResolvedTheme = useMemo(
     () => resolveTheme(theme, systemTheme, themeConfig),
-    [theme, systemTheme, themeConfig]
+    [theme, systemTheme, themeConfig],
   );
 
   // Re-inject styles when theme changes
@@ -201,7 +210,7 @@ export function GotchaModal({
 
   // Determine if modal should appear above or below the anchor.
   const showAbove = (() => {
-    if (typeof window === 'undefined' || !anchorRect) return false;
+    if (typeof window === "undefined" || !anchorRect) return false;
     const spaceBelow = window.innerHeight - anchorRect.bottom;
     return spaceBelow < 340;
   })();
@@ -214,14 +223,14 @@ export function GotchaModal({
     firstFocusableRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onCloseRef.current();
         return;
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         const focusableElements = modal.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
@@ -236,8 +245,8 @@ export function GotchaModal({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const prompt = promptText || getDefaultPrompt(mode, npsQuestion);
@@ -246,16 +255,16 @@ export function GotchaModal({
   // Slightly wider on NPS because the 0–10 scale needs elbow room; poll
   // wants room for 4-word options. Feedback/vote stay tight.
   const modalPadding = isMobile ? 24 : 28;
-  const modalWidth = mode === 'nps' ? 420 : mode === 'poll' ? 400 : 360;
+  const modalWidth = mode === "nps" ? 420 : mode === "poll" ? 400 : 360;
 
   // Animation class
   const animationClass = isMobile
-    ? 'gotcha-modal-enter-center'
+    ? "gotcha-modal-enter-center"
     : showAbove
-    ? 'gotcha-modal-enter-above'
-    : 'gotcha-modal-enter';
+      ? "gotcha-modal-enter-above"
+      : "gotcha-modal-enter";
 
-  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+  const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 0;
 
   // Modal container styles. Editorial card: flat paper, hairline border,
   // soft layered shadow, no gradient, no backdrop blur. The container is
@@ -268,52 +277,59 @@ export function GotchaModal({
     boxShadow: t.shadows.modal,
     border: `${t.borders.width}px solid ${t.colors.border}`,
     fontFamily: t.typography.fontFamily,
-    textAlign: 'left' as const,
-    overflow: 'hidden', // so the success-autoclose progress rule clips cleanly
+    textAlign: "left" as const,
+    overflow: "hidden", // so the success-autoclose progress rule clips cleanly
   };
 
   const modalStyles: React.CSSProperties = isMobile
     ? {
         ...baseContainer,
-        position: 'fixed',
-        left: '50%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 'calc(100vw - 32px)',
+        position: "fixed",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "calc(100vw - 32px)",
         maxWidth: modalWidth,
         zIndex: 9999,
         ...customStyles?.modal,
       }
     : useFixedPosition && anchorRect && viewportHeight
-    ? (() => {
-        const viewportWidth = window.innerWidth;
-        const edgePadding = 24;
-        const centerX = anchorRect.left + anchorRect.width / 2;
-        const idealLeft = centerX - modalWidth / 2;
-        const clampedLeft = Math.max(edgePadding, Math.min(idealLeft, viewportWidth - modalWidth - edgePadding));
-        return {
+      ? (() => {
+          const viewportWidth = window.innerWidth;
+          const edgePadding = 24;
+          const centerX = anchorRect.left + anchorRect.width / 2;
+          const idealLeft = centerX - modalWidth / 2;
+          const clampedLeft = Math.max(
+            edgePadding,
+            Math.min(idealLeft, viewportWidth - modalWidth - edgePadding),
+          );
+          return {
+            ...baseContainer,
+            position: "fixed" as const,
+            left: clampedLeft,
+            width: modalWidth,
+            zIndex: 99999,
+            ...(showAbove
+              ? { bottom: viewportHeight - anchorRect.top + 10 }
+              : { top: anchorRect.bottom + 10 }),
+            ...customStyles?.modal,
+          };
+        })()
+      : {
           ...baseContainer,
-          position: 'fixed' as const,
-          left: clampedLeft,
+          position: "absolute" as const,
+          left: "50%",
           width: modalWidth,
-          zIndex: 99999,
+          zIndex: 9999,
           ...(showAbove
-            ? { bottom: viewportHeight - anchorRect.top + 10 }
-            : { top: anchorRect.bottom + 10 }),
+            ? {
+                bottom: "100%",
+                marginBottom: 10,
+                transform: "translateX(-50%)",
+              }
+            : { top: "100%", marginTop: 10, transform: "translateX(-50%)" }),
           ...customStyles?.modal,
         };
-      })()
-    : {
-        ...baseContainer,
-        position: 'absolute' as const,
-        left: '50%',
-        width: modalWidth,
-        zIndex: 9999,
-        ...(showAbove
-          ? { bottom: '100%', marginBottom: 10, transform: 'translateX(-50%)' }
-          : { top: '100%', marginTop: 10, transform: 'translateX(-50%)' }),
-        ...customStyles?.modal,
-      };
 
   // Form-field stagger (desktop only — on mobile the modal centers via
   // translate, which conflicts with per-child translateY animations).
@@ -329,27 +345,27 @@ export function GotchaModal({
   // keeps the rule 20px off the content (vs the header's 16px rule gap) —
   // ~36px total around the hairline, matching editorial print discipline
   // of ~1.5× cap-height.
-  const bodyPadding = isMobile ? '20px 24px 24px' : '20px 28px 24px';
+  const bodyPadding = isMobile ? "20px 24px 24px" : "20px 28px 24px";
 
   return (
     <div
       ref={modalRef}
       role="dialog"
       aria-modal="true"
-      aria-label={isSubmitted ? 'Feedback submitted' : undefined}
-      aria-labelledby={isSubmitted ? undefined : 'gotcha-modal-title'}
+      aria-label={isSubmitted ? "Feedback submitted" : undefined}
+      aria-labelledby={isSubmitted ? undefined : "gotcha-modal-title"}
       data-gotcha
       style={modalStyles}
-      className={cn('gotcha-modal', 'gotcha-root', animationClass)}
+      className={cn("gotcha-modal", "gotcha-root", animationClass)}
     >
       {/* Header — small-caps eyebrow, serif H1, hairline rule beneath.
           Not rendered on success state (see below). */}
       {!isSubmitted && (
         <header
           style={{
-            padding: isMobile ? '20px 24px 16px' : '22px 28px 16px',
+            padding: isMobile ? "20px 24px 16px" : "22px 28px 16px",
             borderBottom: `${t.borders.width}px solid ${t.colors.border}`,
-            position: 'relative',
+            position: "relative",
           }}
         >
           {/* Small-caps mode label — eyebrow hairline at 16px + 8px gap
@@ -357,8 +373,8 @@ export function GotchaModal({
               parts of a form. */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 8,
               marginBottom: 10,
               ...fadeUpStyle(0),
@@ -367,10 +383,11 @@ export function GotchaModal({
             <span
               aria-hidden="true"
               style={{
-                display: 'inline-block',
+                display: "inline-block",
                 width: 16,
                 height: 1,
-                backgroundColor: t.colors.warning /* sienna hairline — brand accent */,
+                backgroundColor:
+                  t.colors.warning /* sienna hairline — brand accent */,
               }}
             />
             <span
@@ -378,8 +395,8 @@ export function GotchaModal({
                 fontFamily: t.typography.fontFamily,
                 fontSize: 10,
                 fontWeight: t.typography.fontWeight.medium,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
                 color: t.colors.textSecondary,
               }}
             >
@@ -388,8 +405,9 @@ export function GotchaModal({
           </div>
 
           {/* Serif H1 — the prompt itself. Tracking -0.01em matches
-              Georgia's already-narrow letter-fit. Fraunces at display
-              optical sizes will tolerate -0.015em; guard that for 1.2.1. */}
+              Fraunces 9pt's letter-fit at this scale. Weight 400
+              matches our embedded subset (see fonts/fraunces-subset.ts)
+              so the browser never synthesizes bold. */}
           <h2
             id="gotcha-modal-title"
             style={{
@@ -397,8 +415,8 @@ export function GotchaModal({
               paddingRight: isMobile ? 52 : 44,
               fontFamily: t.typography.fontFamilyDisplay,
               fontSize: isMobile ? 22 : 20,
-              fontWeight: t.typography.fontWeight.semibold,
-              letterSpacing: '-0.01em',
+              fontWeight: t.typography.fontWeight.normal,
+              letterSpacing: "-0.01em",
               lineHeight: 1.25,
               color: t.colors.text,
               ...fadeUpStyle(1),
@@ -418,19 +436,19 @@ export function GotchaModal({
             onClick={onClose}
             aria-label="Close feedback form"
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: isMobile ? 14 : 16,
               right: isMobile ? 14 : 18,
               width: isMobile ? 44 : 32,
               height: isMobile ? 44 : 32,
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
-              cursor: 'pointer',
+              border: "none",
+              background: "transparent",
+              outline: "none",
+              cursor: "pointer",
               color: t.colors.closeButton,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               borderRadius: t.borders.radius.sm,
               transition: `color ${t.animation.duration.fast} ${t.animation.easing.default}`,
               ...customStyles?.closeButton,
@@ -455,7 +473,9 @@ export function GotchaModal({
       )}
 
       {/* Body */}
-      <div style={{ padding: isSubmitted ? 0 : bodyPadding, position: 'relative' }}>
+      <div
+        style={{ padding: isSubmitted ? 0 : bodyPadding, position: "relative" }}
+      >
         {/* Error — left-edge clay bar only. No tinted background; the
             edge + ink body carries the signal with editorial restraint.
             The " — try again?" suffix uses a real em-dash (already in
@@ -464,7 +484,7 @@ export function GotchaModal({
           <div
             role="alert"
             style={{
-              padding: '2px 0 2px 14px',
+              padding: "2px 0 2px 14px",
               marginBottom: 16,
               borderLeft: `2px solid ${t.colors.error}`,
               color: t.colors.text,
@@ -475,19 +495,17 @@ export function GotchaModal({
             }}
           >
             {error}
-            <span style={{ color: t.colors.textSecondary }}>
-              {' '}— try again?
-            </span>
+            <span style={{ color: t.colors.textSecondary }}> — try again?</span>
           </div>
         )}
 
-        {/* Success — editorial checkmark + serif "Thanks." + progress rule */}
+        {/* Success — editorial checkmark + serif "Gotcha!" + progress rule */}
         {isSubmitted && (
           <div
             style={{
-              padding: isMobile ? '32px 24px 28px' : '36px 28px 28px',
-              textAlign: 'center',
-              position: 'relative',
+              padding: isMobile ? "32px 24px 28px" : "36px 28px 28px",
+              textAlign: "center",
+              position: "relative",
             }}
           >
             {/* Check path length ~30 units — dasharray + offset 30 means
@@ -498,8 +516,8 @@ export function GotchaModal({
               viewBox="0 0 40 40"
               fill="none"
               style={{
-                display: 'block',
-                margin: '0 auto 14px',
+                display: "block",
+                margin: "0 auto 14px",
                 ...customStyles?.successIcon,
               }}
             >
@@ -522,24 +540,25 @@ export function GotchaModal({
                 margin: 0,
                 fontFamily: t.typography.fontFamilyDisplay,
                 fontSize: 22,
-                fontWeight: t.typography.fontWeight.semibold,
-                letterSpacing: '-0.015em',
+                // Regular weight matches the embedded Fraunces 9pt subset
+                // and the marketing navbar's treatment — avoids faux-bold
+                // against a regular-only @font-face.
+                fontWeight: t.typography.fontWeight.normal,
+                letterSpacing: "-0.01em",
                 color: t.colors.text,
                 ...customStyles?.successMessage,
               }}
             >
-              {thankYouMessage === 'Gotcha!' || thankYouMessage === 'Thanks for your feedback!'
-                ? 'Thanks.'
-                : thankYouMessage}
+              {thankYouMessage}
             </p>
 
             <p
               style={{
-                margin: '8px 0 0',
+                margin: "8px 0 0",
                 fontFamily: t.typography.fontFamily,
                 fontSize: t.typography.fontSize.sm,
                 color: t.colors.textSecondary,
-                fontStyle: 'italic',
+                fontStyle: "italic",
               }}
             >
               We&rsquo;ll close this in a moment.
@@ -553,13 +572,13 @@ export function GotchaModal({
             <span
               aria-hidden="true"
               style={{
-                position: 'absolute',
+                position: "absolute",
                 left: 1,
                 right: 1,
                 bottom: 1,
                 height: 1,
                 backgroundColor: t.colors.success,
-                transformOrigin: 'left center',
+                transformOrigin: "left center",
                 animation: `gotcha-progress ${AUTOCLOSE_MS}ms linear forwards`,
               }}
             />
@@ -567,34 +586,39 @@ export function GotchaModal({
         )}
 
         {/* Follow-up question */}
-        {phase === 'followUp' && followUpConfig && onFollowUpSubmit && !isSubmitted && (
-          <div style={fadeUpStyle(2)}>
-            <FollowUpPrompt
-              resolvedTheme={t}
-              promptText={followUpConfig.promptText}
-              placeholder={followUpConfig.placeholder}
-              isLoading={followUpLoading}
-              onSubmit={onFollowUpSubmit}
-            />
-          </div>
-        )}
+        {phase === "followUp" &&
+          followUpConfig &&
+          onFollowUpSubmit &&
+          !isSubmitted && (
+            <div style={fadeUpStyle(2)}>
+              <FollowUpPrompt
+                resolvedTheme={t}
+                promptText={followUpConfig.promptText}
+                placeholder={followUpConfig.placeholder}
+                isLoading={followUpLoading}
+                onSubmit={onFollowUpSubmit}
+              />
+            </div>
+          )}
 
         {/* Checking for existing response */}
-        {phase === 'form' && isCheckingExisting && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '24px 0',
-            ...fadeUpStyle(2),
-          }}>
+        {phase === "form" && isCheckingExisting && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "24px 0",
+              ...fadeUpStyle(2),
+            }}
+          >
             <Spinner size={20} color={t.colors.textSecondary} />
           </div>
         )}
 
         {/* Form content based on mode */}
-        {phase === 'form' && !isCheckingExisting && !isSubmitted && (
+        {phase === "form" && !isCheckingExisting && !isSubmitted && (
           <div style={fadeUpStyle(2)}>
-            {mode === 'feedback' && (
+            {mode === "feedback" && (
               <FeedbackMode
                 resolvedTheme={t}
                 placeholder={placeholder}
@@ -602,10 +626,14 @@ export function GotchaModal({
                 isLoading={isLoading}
                 onSubmit={onSubmit}
                 customStyles={customStyles}
-                initialValues={existingResponse ? {
-                  content: existingResponse.content,
-                  rating: existingResponse.rating,
-                } : undefined}
+                initialValues={
+                  existingResponse
+                    ? {
+                        content: existingResponse.content,
+                        rating: existingResponse.rating,
+                      }
+                    : undefined
+                }
                 isEditing={isEditing}
                 showText={showText}
                 showRating={showRating}
@@ -614,7 +642,7 @@ export function GotchaModal({
                 enableScreenshot={enableScreenshot}
               />
             )}
-            {mode === 'vote' && (
+            {mode === "vote" && (
               <VoteMode
                 resolvedTheme={t}
                 isLoading={isLoading}
@@ -624,7 +652,7 @@ export function GotchaModal({
                 labels={voteLabels}
               />
             )}
-            {mode === 'nps' && (
+            {mode === "nps" && (
               <NpsMode
                 resolvedTheme={t}
                 submitText={submitText}
@@ -635,14 +663,18 @@ export function GotchaModal({
                 lowLabel={npsLowLabel}
                 highLabel={npsHighLabel}
                 customStyles={customStyles}
-                initialValues={existingResponse ? {
-                  rating: existingResponse.rating,
-                  content: existingResponse.content,
-                } : undefined}
+                initialValues={
+                  existingResponse
+                    ? {
+                        rating: existingResponse.rating,
+                        content: existingResponse.content,
+                      }
+                    : undefined
+                }
                 isEditing={isEditing}
               />
             )}
-            {mode === 'poll' && options && options.length > 0 && (
+            {mode === "poll" && options && options.length > 0 && (
               <PollMode
                 resolvedTheme={t}
                 options={options}
@@ -659,12 +691,16 @@ export function GotchaModal({
 
       {/* Screen reader announcement — single announcement at a time so
           AT doesn't read both "submitted" and "error" if a race occurs. */}
-      <div aria-live="polite" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
+      <div
+        aria-live="polite"
+        className="sr-only"
+        style={{ position: "absolute", left: -9999 }}
+      >
         {isSubmitted
-          ? 'Thank you. Your feedback has been submitted.'
+          ? "Thank you. Your feedback has been submitted."
           : error
             ? `Error: ${error}`
-            : ''}
+            : ""}
       </div>
     </div>
   );

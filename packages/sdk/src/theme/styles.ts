@@ -1,6 +1,7 @@
-import { ResolvedTheme } from './tokens';
+import { ResolvedTheme } from "./tokens";
+import { FRAUNCES_FONT_FACE } from "../fonts/fraunces-subset";
 
-const STYLE_ID = 'gotcha-styles';
+const STYLE_ID = "gotcha-styles";
 
 /**
  * Strip characters that could break out of a CSS value context. Defensive
@@ -8,15 +9,15 @@ const STYLE_ID = 'gotcha-styles';
  * malicious string via `themeConfig`.
  */
 function sanitizeCSS(value: string): string {
-  return value.replace(/[{}<>;@\\]/g, '');
+  return value.replace(/[{}<>;@\\]/g, "");
 }
 
 /**
- * Build the SDK's stylesheet. The editorial refresh drops Carter One
- * base64 embedding — the display stack now relies on system serifs
- * (Georgia, Iowan Old Style, Charter, Source Serif Pro) with Fraunces
- * as an aspirational first-stack entry for hosts that load it. A
- * subsetted Fraunces woff2 is planned for 1.2.1.
+ * Build the SDK's stylesheet. The editorial refresh drops Carter One and
+ * embeds a subsetted Fraunces 144 SemiBold instead (see
+ * `fonts/fraunces-subset.ts`). The @font-face is prepended to the stylesheet
+ * so the branded serif is available for the "G" glyph and "Gotcha!" success
+ * headline on any host page — zero third-party font requests.
  *
  * Keyframes kept lean: a single page-turn entrance (opacity + 8px rise),
  * a stroke-draw for the success check, a textarea expand, a spinner, and
@@ -32,6 +33,8 @@ export function generateStyleTag(theme: ResolvedTheme): string {
   const borderFocus = sanitizeCSS(theme.colors.borderFocus);
 
   return `
+/* ── Embedded Fraunces 144 SemiBold (OFL, subsetted to ASCII) ── */
+${FRAUNCES_FONT_FACE}
 /* ── Gotcha keyframes (editorial) ───────────────────────────── */
 
 @keyframes gotcha-fade-up {
@@ -161,15 +164,17 @@ export function generateStyleTag(theme: ResolvedTheme): string {
  * Inject the style tag into the document head (idempotent).
  *
  * Privacy: makes zero third-party network calls. No Google Fonts link,
- * no CDN, no base64 font blob in 1.2.0 (Fraunces subset arrives in
- * 1.2.1). Display typography relies on system serifs.
+ * no CDN fetch. The Fraunces 144 SemiBold subset is base64-embedded as
+ * a data URL inside the @font-face rule, so the branded serif is
+ * available for the "G" glyph and "Gotcha!" success headline on any
+ * host page without an outbound request.
  */
 export function injectStyles(theme: ResolvedTheme): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
 
   let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
   if (!styleEl) {
-    styleEl = document.createElement('style');
+    styleEl = document.createElement("style");
     styleEl.id = STYLE_ID;
     document.head.appendChild(styleEl);
   }

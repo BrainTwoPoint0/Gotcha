@@ -57,6 +57,22 @@ function FeatureCard() {
 - **Accessible** - Full keyboard navigation and screen reader support
 - **Animated** - Smooth enter/exit animations with CSS transitions
 
+## Content Security Policy
+
+The SDK injects its stylesheet as an inline `<style>` tag and embeds its
+display font as a `data:` URL inside that stylesheet. If your site runs
+a strict CSP, you will need the following directives:
+
+- `style-src 'unsafe-inline'` (or a matching nonce) — the SDK injects
+  its own stylesheet at runtime.
+- `font-src data:` (or `font-src 'self' data:`) — the branded serif font
+  is embedded as a base64 data URL so the SDK makes **zero** third-party
+  font requests.
+
+The SDK makes no other external requests for fonts, analytics, or
+tracking. See `LICENSE.FRAUNCES.txt` for the bundled Fraunces subset
+license (OFL 1.1).
+
 ## Props
 
 ### GotchaProvider
