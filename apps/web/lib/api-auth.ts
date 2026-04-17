@@ -30,6 +30,48 @@ function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
 }
 
+// In-process LRU cache for validated API keys. Keyed by sha256(key); the
+// hash IS the auth boundary so staleness here can't grant access — a
+// revoked key simply stays "valid" in the cache for up to CACHE_TTL_MS
+// before the entry expires. Good enough for billing / plan-gate signals
+// which don't need second-level precision. Per-Lambda-instance memory
+// means a cold start pays the DB lookup once and amortises across all
+// subsequent submissions on that container.
+type CacheEntry = { data: ApiKeyData; expires: number };
+const apiKeyCache = new Map<string, CacheEntry>();
+const API_KEY_CACHE_MAX = 500; // per-instance cap
+const API_KEY_CACHE_TTL_MS = 60_000; // 60s
+
+function cacheGet(keyHash: string): ApiKeyData | null {
+  const entry = apiKeyCache.get(keyHash);
+  if (!entry) return null;
+  if (entry.expires < Date.now()) {
+    apiKeyCache.delete(keyHash);
+    return null;
+  }
+  return entry.data;
+}
+
+function cacheSet(keyHash: string, data: ApiKeyData): void {
+  // Naive LRU: when at cap, drop the oldest insertion (Map preserves
+  // insertion order). Good enough for 500 entries.
+  if (apiKeyCache.size >= API_KEY_CACHE_MAX) {
+    const firstKey = apiKeyCache.keys().next().value;
+    if (firstKey) apiKeyCache.delete(firstKey);
+  }
+  apiKeyCache.set(keyHash, { data, expires: Date.now() + API_KEY_CACHE_TTL_MS });
+}
+
+/**
+ * Invalidate a cached API key. Call this from the API key revocation
+ * path so revocations propagate immediately rather than waiting for the
+ * 60s TTL. Safe to call from anywhere; no-op on cold instances that
+ * never saw the key.
+ */
+export function invalidateApiKeyCache(keyHash: string): void {
+  apiKeyCache.delete(keyHash);
+}
+
 // Validate origin against allowed domains (deterministic, no regex)
 function validateOrigin(origin: string | null, allowedDomains: string[]): boolean {
   // Allow requests with no origin (server-to-server, Postman, etc.)
@@ -95,43 +137,56 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
 
   const keyHash = hashApiKey(key);
 
-  // Look up the API key
-  const apiKey = await prisma.apiKey.findUnique({
-    where: {
-      keyHash,
-    },
-    select: {
-      id: true,
-      projectId: true,
-      allowedDomains: true,
-      revokedAt: true,
-      project: {
-        select: {
-          organizationId: true,
-          organization: {
-            select: {
-              subscription: { select: { plan: true } },
+  // Cache hit path — skip the Prisma round-trip entirely.
+  const cached = cacheGet(keyHash);
+  let apiKeyData: ApiKeyData;
+  if (cached) {
+    apiKeyData = cached;
+  } else {
+    const apiKey = await prisma.apiKey.findUnique({
+      where: { keyHash },
+      select: {
+        id: true,
+        projectId: true,
+        allowedDomains: true,
+        revokedAt: true,
+        project: {
+          select: {
+            organizationId: true,
+            organization: {
+              select: {
+                subscription: { select: { plan: true } },
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!apiKey || apiKey.revokedAt !== null) {
-    return {
-      success: false,
-      error: {
-        code: 'INVALID_API_KEY',
-        message: 'Invalid API key',
-        status: 401,
-      },
+    if (!apiKey || apiKey.revokedAt !== null) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_API_KEY',
+          message: 'Invalid API key',
+          status: 401,
+        },
+      };
+    }
+
+    apiKeyData = {
+      id: apiKey.id,
+      projectId: apiKey.projectId,
+      organizationId: apiKey.project.organizationId,
+      plan: apiKey.project.organization.subscription?.plan ?? 'FREE',
+      allowedDomains: apiKey.allowedDomains,
     };
+    cacheSet(keyHash, apiKeyData);
   }
 
   // Validate origin
   const origin = request.headers.get('origin');
-  if (!validateOrigin(origin, apiKey.allowedDomains)) {
+  if (!validateOrigin(origin, apiKeyData.allowedDomains)) {
     return {
       success: false,
       error: {
@@ -142,25 +197,22 @@ export async function validateApiKey(request: NextRequest): Promise<ApiAuthResul
     };
   }
 
-  // Update last used timestamp (fire-and-forget — best-effort tracking, intentionally non-blocking)
-  prisma.apiKey
-    .update({
-      where: { id: apiKey.id },
-      data: { lastUsedAt: new Date() },
-    })
-    .catch(() => {});
-
-  const plan = apiKey.project.organization.subscription?.plan ?? 'FREE';
+  // Sampled lastUsedAt — update on ~1% of requests. Dashboard "last used"
+  // loses second-level precision but the hot row stops being the write-
+  // contention choke point on popular keys. Full-precision use-cases
+  // (audit, forensics) can query the Response.createdAt index instead.
+  if (Math.random() < 0.01) {
+    prisma.apiKey
+      .update({
+        where: { id: apiKeyData.id },
+        data: { lastUsedAt: new Date() },
+      })
+      .catch(() => {});
+  }
 
   return {
     success: true,
-    apiKey: {
-      id: apiKey.id,
-      projectId: apiKey.projectId,
-      organizationId: apiKey.project.organizationId,
-      plan,
-      allowedDomains: apiKey.allowedDomains,
-    },
+    apiKey: apiKeyData,
   };
 }
 

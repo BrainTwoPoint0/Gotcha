@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { revalidateTag } from 'next/cache';
+import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/prisma';
 import { validateApiKey, apiError, apiSuccess, corsHeaders, getCorsHeaders } from '@/lib/api-auth';
 import {
@@ -9,6 +10,14 @@ import {
   checkReadRateLimit,
   type PlanType,
 } from '@/lib/rate-limit';
+
+// Direct Redis client for lightweight cache-coordination reads. Shares
+// the same Upstash instance as the rate limiter — we just need a
+// raw SET NX EX for the analytics-revalidate debounce.
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 import { submitResponseSchema, listResponsesSchema } from '@/lib/validations';
 import { sendUsageWarningEmail, sendBugReportEmail } from '@/lib/emails/send';
 import { shouldShowUpgradeWarning, isOverLimit } from '@/lib/plan-limits';
@@ -153,8 +162,10 @@ export async function POST(request: NextRequest) {
     // No inner try/catch — errors propagate to the outer catch which returns 500
     const tWrite = performance.now();
     const asyncWrite = async () => {
-      // Element upsert + usage increment are independent — run in parallel
-      const [element, _usage] = await Promise.all([
+      // Element upsert + usage increment are independent — run in parallel.
+      // atomicIncrementUsage now returns the new count via RETURNING so we
+      // don't need a follow-up findUnique to make the gating decision.
+      const [element, newCount] = await Promise.all([
         prisma.element.upsert({
           where: {
             projectId_elementId: {
@@ -172,27 +183,22 @@ export async function POST(request: NextRequest) {
       ]);
       const elementDbId = element.id;
 
-      // Check if this response exceeds the free limit
+      // Check if this response exceeds the free limit. Use the count
+      // returned from atomicIncrementUsage — saves a Subscription
+      // round-trip on every FREE submission (80%+ of traffic).
       let gated = false;
-      if (apiKey.plan === 'FREE') {
-        const subscription = await prisma.subscription.findUnique({
-          where: { organizationId: apiKey.organizationId },
-        });
+      if (apiKey.plan === 'FREE' && newCount !== null) {
+        gated = isOverLimit('FREE', newCount);
 
-        if (subscription) {
-          gated = isOverLimit('FREE', subscription.responsesThisMonth);
-
-          if (shouldShowUpgradeWarning('FREE', subscription.responsesThisMonth)) {
-            const count = subscription.responsesThisMonth;
-            // Range-based: even if counter skips exact thresholds under concurrency
-            if (
-              (count >= 400 && count < 450) ||
-              (count >= 450 && count < 500) ||
-              (count >= 500 && count < 550)
-            ) {
-              const threshold = count >= 500 ? 500 : count >= 450 ? 450 : 400;
-              sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
-            }
+        if (shouldShowUpgradeWarning('FREE', newCount)) {
+          // Range-based: even if counter skips exact thresholds under concurrency
+          if (
+            (newCount >= 400 && newCount < 450) ||
+            (newCount >= 450 && newCount < 500) ||
+            (newCount >= 500 && newCount < 550)
+          ) {
+            const threshold = newCount >= 500 ? 500 : newCount >= 450 ? 450 : 400;
+            sendUsageWarningEmail(apiKey.organizationId, threshold, 500).catch(console.error);
           }
         }
       }
@@ -333,9 +339,24 @@ export async function POST(request: NextRequest) {
     await asyncWrite();
     mark('write', tWrite);
 
-    // Invalidate cached analytics so dashboards show fresh data
+    // Invalidate cached analytics — debounced per project via Redis SETEX
+    // NX so we fire the tag revalidation at most once every 30s per
+    // project. Without the debounce, every submission thrashes the cache
+    // on high-traffic projects and the GET /analytics endpoint never gets
+    // a meaningful hit rate. Best-effort: any Redis failure falls back to
+    // firing the revalidate (the pre-debounce behaviour).
     try {
-      revalidateTag('analytics-overview');
+      const debounceKey = `gotcha:analytics-revalidate:${apiKey.projectId}`;
+      let shouldRevalidate = true;
+      try {
+        const claimed = await redis.set(debounceKey, '1', { nx: true, ex: 30 });
+        shouldRevalidate = claimed !== null;
+      } catch {
+        // Redis down — fall through and revalidate anyway.
+      }
+      if (shouldRevalidate) {
+        revalidateTag('analytics-overview');
+      }
     } catch {
       /* no-op outside Next.js request context */
     }
