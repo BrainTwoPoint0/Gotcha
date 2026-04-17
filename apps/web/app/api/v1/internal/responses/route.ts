@@ -76,6 +76,17 @@ async function getInternalApiKey() {
 }
 
 export async function POST(request: NextRequest) {
+  // Per-stage wall-clock markers matching the public /api/v1/responses
+  // pipeline. Makes this endpoint correlatable with the SDK's client-side
+  // click→ack measurement in browser devtools (Network → Timing tab) so
+  // the dogfood widget doubles as a production canary for submission
+  // latency. Zero overhead beyond performance.now().
+  const pipelineT0 = performance.now();
+  const stages: Record<string, number> = {};
+  const mark = (name: string, startedAt: number) => {
+    stages[name] = Math.round((performance.now() - startedAt) * 10) / 10;
+  };
+
   try {
     // Only allow requests from the same origin (our own website)
     const origin = request.headers.get('origin');
@@ -88,12 +99,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Run rate limit + body parsing + API key lookup in parallel
+    const tGuards = performance.now();
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
     const [rateLimit, body, apiKey] = await Promise.all([
       checkRateLimit(`internal:${ip}`, 'free'),
       request.json(),
       getInternalApiKey(),
     ]);
+    mark('guards', tGuards);
 
     if (!rateLimit.success) {
       return NextResponse.json(
@@ -111,6 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate request body
+    const tValidate = performance.now();
     const validation = submitResponseSchema.safeParse(body);
     if (!validation.success) {
       const firstError = validation.error.issues?.[0];
@@ -119,6 +133,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    mark('validate', tValidate);
 
     const data = validation.data as typeof validation.data & {
       experimentId?: string;
@@ -131,6 +146,7 @@ export async function POST(request: NextRequest) {
 
     // --- Respond immediately after validation ---
     // DB writes happen async (fire-and-forget), same pattern as external API
+    const tWrite = performance.now();
     const asyncWrite = async () => {
       try {
         // Get or create element (upsert to avoid race conditions)
@@ -249,6 +265,7 @@ export async function POST(request: NextRequest) {
 
     // Await DB writes to ensure they complete on serverless (Netlify)
     await asyncWrite();
+    mark('write', tWrite);
 
     // Fire webhooks (non-blocking)
     fireWebhooks(apiKey.projectId, 'response.created', {
@@ -261,19 +278,29 @@ export async function POST(request: NextRequest) {
       createdAt: createdAt.toISOString(),
     }).catch(console.error);
 
+    stages.total = Math.round((performance.now() - pipelineT0) * 10) / 10;
+    const serverTiming = Object.entries(stages)
+      .map(([name, dur]) => `${name};dur=${dur}`)
+      .join(', ');
+
     return NextResponse.json(
       {
         id: responseId,
         status: 'created',
         createdAt: createdAt.toISOString(),
       },
-      { status: 201 }
+      { status: 201, headers: { 'Server-Timing': serverTiming } }
     );
   } catch (error) {
     console.error('POST /api/v1/internal/responses error:', error);
+    stages.total = Math.round((performance.now() - pipelineT0) * 10) / 10;
+    const serverTiming = Object.entries(stages)
+      .map(([name, dur]) => `${name};dur=${dur}`)
+      .concat('failed;dur=0')
+      .join(', ');
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } },
-      { status: 500 }
+      { status: 500, headers: { 'Server-Timing': serverTiming } }
     );
   }
 }
