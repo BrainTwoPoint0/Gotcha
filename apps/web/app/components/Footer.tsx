@@ -50,6 +50,8 @@ export function Footer() {
               <li>
                 <a
                   href="https://www.npmjs.com/package/gotcha-feedback"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="transition-colors hover:text-editorial-ink"
                 >
                   npm
