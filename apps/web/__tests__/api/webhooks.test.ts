@@ -444,13 +444,13 @@ describe('Webhook Logic', () => {
     });
 
     it('slack type should not generate a secret on creation', () => {
-      const type = 'slack';
+      const type = 'slack' as 'slack' | 'discord' | 'custom';
       const secret = type === 'custom' ? generateSecret() : null;
       expect(secret).toBeNull();
     });
 
     it('discord type should not generate a secret on creation', () => {
-      const type = 'discord';
+      const type = 'discord' as 'slack' | 'discord' | 'custom';
       const secret = type === 'custom' ? generateSecret() : null;
       expect(secret).toBeNull();
     });

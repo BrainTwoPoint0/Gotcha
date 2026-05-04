@@ -59,7 +59,7 @@ describe('Metadata Fields API Logic', () => {
       });
 
       if (types.size === 1) {
-        return types.values().next().value;
+        return types.values().next().value as string;
       }
       return 'string'; // Mixed types default to string
     };

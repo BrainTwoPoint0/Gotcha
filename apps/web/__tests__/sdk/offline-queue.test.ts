@@ -201,11 +201,21 @@ describe('SDK Offline Queue', () => {
     });
 
     it('should keep items exactly at 7-day boundary (not strictly older)', () => {
-      const exactlySevenDays = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const q = createQueue();
-      // At exactly TTL_MS, now - queuedAt === TTL_MS, which is NOT > TTL_MS
-      q.enqueue(makeItem({ id: 'boundary', queuedAt: exactlySevenDays }));
-      expect(q.getAll()).toHaveLength(1);
+      // Freeze time so the boundary calculation in `getAll()` matches the
+      // queuedAt anchor exactly. Without fake timers, microsecond drift
+      // between `Date.now()` here and `Date.now()` inside the filter pushes
+      // the item past the boundary and the test flakes.
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      try {
+        const exactlySevenDays = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const q = createQueue();
+        // At exactly TTL_MS, now - queuedAt === TTL_MS, which is NOT > TTL_MS
+        q.enqueue(makeItem({ id: 'boundary', queuedAt: exactlySevenDays }));
+        expect(q.getAll()).toHaveLength(1);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('should filter expired items but keep fresh ones', () => {

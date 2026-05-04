@@ -540,7 +540,7 @@ test.describe('SDK Widget Features', () => {
 
       // Verify the payload had enriched context
       expect(capturedPayload).toBeTruthy();
-      const context = (capturedPayload as Record<string, unknown>).context as Record<
+      const context = (capturedPayload as unknown as Record<string, unknown>).context as Record<
         string,
         unknown
       >;

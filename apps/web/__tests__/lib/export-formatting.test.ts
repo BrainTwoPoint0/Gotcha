@@ -392,6 +392,7 @@ describe('Export Formatting', () => {
       rating: number;
       userId: string;
       createdAt: string;
+      [key: string]: unknown;
     }
 
     const selectColumns = <T extends Record<string, unknown>>(
